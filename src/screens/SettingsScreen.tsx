@@ -1,23 +1,32 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { VoicePreference } from '../data/types';
 import { signOut } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
-import { theme } from '../theme';
+import { useTheme } from '../theme';
+
 
 export const SettingsScreen = () => {
-    const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus } = useAppStore();
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const navigation = useNavigation<any>();
+    const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode } = useAppStore();
+    const { colors, spacing, typography, borderRadius } = useTheme();
+
+    const isDarkMode = themeMode === 'dark';
+
+    const handleToggleTheme = () => {
+        setThemeMode(isDarkMode ? 'light' : 'dark');
+    };
 
     const handleVoiceSelect = (voice: VoicePreference) => {
         setVoicePreference(voice);
     };
 
-    const handleToggleAccount = () => {
-        setAccountStatus(accountStatus === 'free' ? 'supporter' : 'free');
+    const handleBecomeSupporter = () => {
+        navigation.navigate('SupportMangalam');
     };
 
     const handleSignOut = async () => {
@@ -45,71 +54,68 @@ export const SettingsScreen = () => {
         >
             <Text style={[
                 styles.optionText,
-                voicePreference === value && styles.optionTextActive
+                { color: colors.text },
+                voicePreference === value && styles.optionTextActive,
+                voicePreference === value && { color: colors.primary }
             ]}>
                 {label}
             </Text>
             {voicePreference === value && (
-                <Ionicons name="checkmark" size={24} color={theme.colors.primary} />
+                <Ionicons name="checkmark" size={24} color={colors.primary} />
             )}
         </TouchableOpacity>
     );
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            <Text style={styles.screenTitle}>Settings</Text>
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.xl * 2, paddingBottom: spacing.xl }]}>
+            <View style={styles.headerRow}>
+                <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
+                <TouchableOpacity onPress={handleSignOut} style={styles.signOutIcon}>
+                    <Ionicons name="log-out-outline" size={28} color={colors.error} />
+                </TouchableOpacity>
+            </View>
 
             {/* Account Section */}
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
-                    <Ionicons name="person-circle-outline" size={24} color={theme.colors.primary} />
-                    <Text style={styles.sectionTitle}>Account</Text>
+                    <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
                 </View>
 
-                <View style={[styles.accountStatus, { marginBottom: theme.spacing.s }]}>
-                    <Text style={styles.accountLabel}>Email:</Text>
-                    <Text style={styles.accountValue}>{session?.user?.email || 'Not signed in'}</Text>
+                <View style={[styles.accountStatus, { marginBottom: spacing.s }]}>
+                    <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Email:</Text>
+                    <Text style={[styles.accountValue, { color: colors.text }]}>{session?.user?.email || 'Not signed in'}</Text>
                 </View>
 
                 <View style={styles.accountStatus}>
-                    <Text style={styles.accountLabel}>Current Plan:</Text>
-                    <Text style={[
-                        styles.accountValue,
-                        accountStatus === 'supporter' && styles.supporterText
-                    ]}>
-                        {accountStatus === 'free' ? 'Free (3 sessions/day)' : 'Supporter (Unlimited)'}
-                    </Text>
+                    <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Plan:</Text>
+                    <Text style={[styles.accountValue, { color: colors.text }]}>Free & Ad-free</Text>
                 </View>
 
                 <Button
-                    title={accountStatus === 'free' ? "Become a Supporter" : "Revert to Free"}
-                    variant={accountStatus === 'free' ? 'primary' : 'outline'}
-                    onPress={handleToggleAccount}
+                    title="Support Mangalam"
+                    variant="primary"
+                    onPress={handleBecomeSupporter}
                     style={styles.accountButton}
                 />
-
-                <Button
-                    title="Sign Out"
-                    variant="outline"
-                    onPress={handleSignOut}
-                    style={{ borderColor: theme.colors.error }}
-                    textStyle={{ color: theme.colors.error }}
-                />
+                <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginTop: -spacing.s, fontStyle: 'italic' }}>
+                    Help keep Mangalam free and ad-free.
+                </Text>
             </Card>
 
             {/* Voice Preferences */}
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
-                    <Ionicons name="volume-high-outline" size={24} color={theme.colors.primary} />
-                    <Text style={styles.sectionTitle}>Voice Preference</Text>
+                    <Ionicons name="volume-high-outline" size={24} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Voice Preference</Text>
                 </View>
-                <View style={styles.optionsContainer}>
+                <View style={[styles.optionsContainer, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}>
                     <VoiceOption label="English - Male" value="english-male" />
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
                     <VoiceOption label="English - Female" value="english-female" />
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
                     <VoiceOption label="Hindi - Male" value="hindi-male" />
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
                     <VoiceOption label="Hindi - Female" value="hindi-female" />
                 </View>
             </Card>
@@ -117,21 +123,34 @@ export const SettingsScreen = () => {
             {/* Display Preferences */}
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
-                    <Ionicons name="color-palette-outline" size={24} color={theme.colors.primary} />
-                    <Text style={styles.sectionTitle}>Display</Text>
+                    <Ionicons name="color-palette-outline" size={24} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Display</Text>
                 </View>
-                <View style={styles.toggleRow}>
-                    <Text style={styles.optionText}>Dark Mode (Coming Soon)</Text>
+                <View style={[styles.toggleRow, { paddingVertical: spacing.s }]}>
+                    <Text style={[styles.optionText, { color: colors.text }]}>Dark Mode</Text>
                     <Switch
-                        trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-                        thumbColor={isDarkMode ? theme.colors.primary : theme.colors.surfaceSecondary}
-                        onValueChange={() => setIsDarkMode(!isDarkMode)}
+                        trackColor={{ false: colors.border, true: colors.primaryLight }}
+                        thumbColor={isDarkMode ? colors.primary : colors.surfaceSecondary}
+                        onValueChange={handleToggleTheme}
                         value={isDarkMode}
-                        disabled
                     />
                 </View>
             </Card>
 
+            {/* About Section */}
+            <Card style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                    <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+                </View>
+                <TouchableOpacity 
+                    style={[styles.optionRow, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}
+                    onPress={() => navigation.navigate('About')}
+                >
+                    <Text style={[styles.optionText, { color: colors.text }]}>About Mangalam</Text>
+                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+            </Card>
         </ScrollView>
     );
 };
@@ -139,84 +158,71 @@ export const SettingsScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
     },
     content: {
-        padding: theme.spacing.l,
-        paddingTop: theme.spacing.xl * 2,
-        paddingBottom: theme.spacing.xl,
     },
     screenTitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.xl,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.l,
+        fontWeight: 'bold',
+        fontSize: 32,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 24, // spacing.l
+    },
+    signOutIcon: {
+        padding: 4,
     },
     sectionCard: {
-        marginBottom: theme.spacing.l,
-        padding: theme.spacing.l,
+        marginBottom: 24, // spacing.l
+        padding: 24, // spacing.l
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: theme.spacing.l,
+        marginBottom: 24, // spacing.l
     },
     sectionTitle: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
-        marginLeft: theme.spacing.s,
+        fontSize: 20, // typography.sizes.l
+        marginLeft: 8, // spacing.s
     },
     accountStatus: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: theme.spacing.l,
+        marginBottom: 24, // spacing.l
     },
     accountLabel: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
+        fontSize: 16, // typography.sizes.m
     },
     accountValue: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.text,
-    },
-    supporterText: {
-        color: theme.colors.primary,
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '600',
     },
     accountButton: {
-        marginBottom: theme.spacing.m,
+        marginBottom: 16, // spacing.m
     },
     optionsContainer: {
-        backgroundColor: theme.colors.surfaceSecondary,
-        borderRadius: theme.borderRadius.m,
     },
     optionRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: theme.spacing.m,
+        padding: 16, // spacing.m
     },
     optionText: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.text,
+        fontSize: 16, // typography.sizes.m
     },
     optionTextActive: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        color: theme.colors.primary,
+        fontWeight: '500',
     },
     divider: {
         height: 1,
-        backgroundColor: theme.colors.border,
-        marginHorizontal: theme.spacing.m,
     },
     toggleRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: theme.spacing.s,
     },
 });

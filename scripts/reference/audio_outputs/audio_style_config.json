@@ -1,0 +1,21 @@
+{
+  "voice_name": "en-IN-Neural2-D",
+  "story_profile": "storytelling",
+  "sentence_pause_ms": 280,
+  "paragraph_pause_ms": 550,
+  "chunk_pause_ms": 100,
+  "crossfade_ms": 4000,
+  "ending_fade_ms": 8000,
+  "voice_high_pass_hz": 100,
+  "voice_low_pass_hz": 8000,
+  "background_high_pass_hz": 80,
+  "background_low_pass_hz": 5500,
+  "volumes_db_before_lift": {
+    "tanpura": -24,
+    "ambient": -21,
+    "flute": -18,
+    "other": -21
+  },
+  "global_background_lift_db": 2,
+  "story_middle_lift_db": 1.5
+}

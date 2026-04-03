@@ -3,9 +3,10 @@ import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { useAppStore } from '../store/useAppStore';
-import { theme } from '../theme';
+import { theme, useTheme } from '../theme';
 
 export const WelcomeScreen = () => {
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const { setUserName, setHasCompletedOnboarding } = useAppStore();
     const [name, setName] = useState('');
 
@@ -17,29 +18,29 @@ export const WelcomeScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
             >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                    <View style={styles.content}>
+                    <View style={[styles.content, { padding: spacing.xl }]}>
                         <View style={styles.headerSpacer} />
 
                         {/* Branding/Logo Area */}
                         <View style={styles.brandingContainer}>
-                            <View style={styles.sunCircle} />
-                            <Text style={styles.appName}>Daily Shlokya</Text>
-                            <Text style={styles.tagline}>A warm, reflective space for your daily spiritual habit.</Text>
+                            <View style={[styles.sunCircle, { backgroundColor: colors.primaryLight, marginBottom: spacing.l }]} />
+                            <Text style={[styles.appName, { color: colors.text, marginBottom: spacing.s }]}>Mangalam</Text>
+                            <Text style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>Ancient Wisdom for Modern Life</Text>
                         </View>
 
                         {/* Input Area */}
                         <View style={styles.inputContainer}>
-                            <Text style={styles.inputLabel}>What should we call you?</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>What should we call you?</Text>
                             <TextInput
-                                style={styles.input}
+                                style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.m, padding: spacing.l, color: colors.text, marginBottom: spacing.xl }]}
                                 placeholder="Enter your name"
-                                placeholderTextColor={theme.colors.textSecondary}
+                                placeholderTextColor={colors.textSecondary}
                                 value={name}
                                 onChangeText={setName}
                                 autoFocus

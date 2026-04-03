@@ -1,27 +1,65 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { theme } from '../theme';
+import Animated, {
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withSpring,
+    withSequence
+} from 'react-native-reanimated';
+import { useTheme } from '../theme';
+import { RollingNumber } from './RollingNumber';
 
 interface WeeklyStreakProps {
     currentStreak: number;
     sessionsToday: number;
 }
 
+const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boolean; isToday: boolean; color: string; delay: number; }) => {
+    const scale = useSharedValue(0);
+    const opacity = useSharedValue(0);
+
+    useEffect(() => {
+        scale.value = withDelay(
+            delay,
+            withSpring(1, { damping: 10, stiffness: 100 })
+        );
+        opacity.value = withDelay(
+            delay,
+            withSpring(1)
+        );
+    }, [isCompleted, isToday]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+        opacity: opacity.value,
+    }));
+
+    return (
+        <Animated.View style={animatedStyle}>
+            {isCompleted ? (
+                <Ionicons name="checkmark-circle" size={24} color={color} />
+            ) : isToday ? (
+                <Ionicons name="ellipse" size={24} color={color} />
+            ) : (
+                <Ionicons name="ellipse-outline" size={24} color={color} />
+            )}
+        </Animated.View>
+    );
+};
+
 export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps) => {
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    // 0 = Monday, 6 = Sunday for our UI logic
     let todayIndex = new Date().getDay() - 1;
     if (todayIndex < 0) todayIndex = 6;
 
-    // Calculate how many days we have completed this week (0-7)
-    // This is a naive calculation based on the streak for the UI mockup
     let weekCompleted = 0;
 
     const history = days.map((day, index) => {
         let status: 'completed' | 'today' | 'upcoming' | 'missed' = 'upcoming';
-
         if (index === todayIndex) {
             if (sessionsToday > 0) {
                 status = 'completed';
@@ -30,11 +68,8 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
                 status = 'today';
             }
         } else if (index < todayIndex) {
-            // If the day is in the past, and it falls within the current streak length
-            // For instance, if today is Wed (2) and streak is 3 (Mon, Tue, Wed)
             const relativeDaysAgo = todayIndex - index;
             const isWithinStreak = relativeDaysAgo <= (currentStreak - (sessionsToday > 0 ? 1 : 0));
-
             if (isWithinStreak) {
                 status = 'completed';
                 weekCompleted++;
@@ -42,17 +77,38 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
                 status = 'missed';
             }
         }
-
         return { day, status };
     });
 
+    const streakTitleScale = useSharedValue(1);
+    
+    useEffect(() => {
+        if (sessionsToday > 0) {
+            streakTitleScale.value = withSequence(
+                withSpring(1.2),
+                withSpring(1)
+            );
+        }
+    }, [sessionsToday]);
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.xl, padding: spacing.l }]}>
             <View style={styles.headerRow}>
-                <Text style={styles.title}>This Week</Text>
+                <Animated.Text style={[
+                    styles.title, 
+                    { 
+                        color: colors.text, 
+                        fontFamily: typography.fontFamilies.semiBold, 
+                        fontSize: typography.sizes.l,
+                        transform: [{ scale: streakTitleScale.value }]
+                    }
+                ]}>
+                    This Week
+                </Animated.Text>
                 <View style={styles.scoreBadge}>
-                    <Ionicons name="book-outline" size={16} color={theme.colors.primary} />
-                    <Text style={styles.scoreText}> {weekCompleted}/7</Text>
+                    <Ionicons name="flame" size={20} color={colors.primary} style={{ marginRight: 4 }} />
+                    <RollingNumber value={weekCompleted} fontSize={typography.sizes.l} color={colors.primary} />
+                    <Text style={[styles.scoreText, { color: colors.textSecondary, fontFamily: typography.fontFamilies.semiBold, fontSize: typography.sizes.m }]}>/7</Text>
                 </View>
             </View>
 
@@ -60,28 +116,30 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
                 {history.map((item, i) => {
                     const isCompleted = item.status === 'completed';
                     const isToday = item.status === 'today';
+                    const iconColor = isCompleted ? colors.secondary : isToday ? colors.primary : colors.border;
 
                     return (
                         <View
                             key={i}
                             style={[
                                 styles.dayColumn,
-                                isToday && styles.dayColumnToday
+                                { paddingVertical: spacing.s, borderRadius: borderRadius.m },
+                                isToday && { backgroundColor: colors.primary + '15' }
                             ]}
                         >
                             <View style={styles.iconContainer}>
-                                {isCompleted ? (
-                                    <Ionicons name="checkmark-circle-outline" size={24} color={theme.colors.secondary} />
-                                ) : isToday ? (
-                                    <Ionicons name="ellipse-outline" size={24} color={theme.colors.primary} />
-                                ) : (
-                                    <Ionicons name="ellipse-outline" size={24} color={theme.colors.border} />
-                                )}
+                                <AnimatedIcon 
+                                    isCompleted={isCompleted} 
+                                    isToday={isToday} 
+                                    color={iconColor} 
+                                    delay={300 + (i * 100)} 
+                                />
                             </View>
                             <Text style={[
                                 styles.dayText,
-                                isCompleted && styles.dayTextCompleted,
-                                isToday && styles.dayTextToday
+                                { color: colors.textSecondary, fontFamily: typography.fontFamilies.medium },
+                                isCompleted && { color: colors.secondary },
+                                isToday && { color: colors.primary }
                             ]}>
                                 {item.day}
                             </Text>
@@ -95,30 +153,21 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: theme.colors.surfaceSecondary,
-        borderRadius: theme.borderRadius.xl,
-        padding: theme.spacing.l,
-        marginBottom: theme.spacing.xl,
+        marginBottom: 32, // theme.spacing.xl
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: theme.spacing.l,
+        marginBottom: 24, // theme.spacing.l
     },
     title: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
     },
     scoreBadge: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     scoreText: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
     },
     daysRow: {
         flexDirection: 'row',
@@ -126,25 +175,12 @@ const styles = StyleSheet.create({
     },
     dayColumn: {
         alignItems: 'center',
-        paddingVertical: theme.spacing.s,
         paddingHorizontal: 4,
-        borderRadius: theme.borderRadius.m,
-    },
-    dayColumnToday: {
-        backgroundColor: theme.colors.primaryLight + '50', // translucent orange
     },
     iconContainer: {
-        marginBottom: theme.spacing.xs,
+        marginBottom: 4, // theme.spacing.xs
     },
     dayText: {
-        fontFamily: theme.typography.fontFamilies.medium,
         fontSize: 12,
-        color: theme.colors.textSecondary,
     },
-    dayTextCompleted: {
-        color: theme.colors.secondary,
-    },
-    dayTextToday: {
-        color: theme.colors.primary,
-    }
 });

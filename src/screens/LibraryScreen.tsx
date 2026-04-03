@@ -3,21 +3,28 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { ContentPath } from '../data/types';
-import { fetchActiveBooks, fetchEpisodes, fetchVerses } from '../lib/queries';
+import { fetchActiveBooks, fetchVersesWithContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
-import { theme } from '../theme';
+import { useAppStore } from '../store/useAppStore';
+import { useTheme } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 export const LibraryScreen = () => {
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const [selectedBook, setSelectedBook] = useState<any | null>(null);
+    const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
     const [books, setBooks] = useState<any[]>([]);
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [itemsLoading, setItemsLoading] = useState(false);
+
+    const { completedVerses, voicePreference } = useAppStore();
+    const lang = voicePreference.startsWith('hindi') ? 'hi' : 'en';
 
     useEffect(() => {
         loadBooks();
@@ -38,9 +45,7 @@ export const LibraryScreen = () => {
     const loadItems = async (book: any) => {
         try {
             setItemsLoading(true);
-            const data = book.content_type === 'verse'
-                ? await fetchVerses(book.book_id)
-                : await fetchEpisodes(book.book_id);
+            const data = await fetchVersesWithContent(book.book_id, lang);
             setItems(data);
         } catch (error) {
             console.error('Error loading items:', error);
@@ -74,75 +79,131 @@ export const LibraryScreen = () => {
 
         const chapterNumbers = Object.keys(chapters).map(Number).sort((a, b) => a - b);
 
+        if (selectedChapter === null) {
+            return (
+                <View style={styles.chapterGrid}>
+                    {chapterNumbers.map((chNo) => {
+                        const chapterVerses = chapters[chNo];
+                        const completedInChapter = chapterVerses.filter(v => completedVerses.includes(v.verse_id)).length;
+                        const totalInChapter = chapterVerses.length;
+                        const isFullyDone = completedInChapter === totalInChapter && totalInChapter > 0;
+
+                        return (
+                            <TouchableOpacity
+                                key={chNo}
+                                style={[
+                                    styles.chapterTile,
+                                    { backgroundColor: colors.surface, borderColor: colors.border },
+                                    isFullyDone && { borderColor: colors.primary, backgroundColor: colors.primary + '08' }
+                                ]}
+                                onPress={() => setSelectedChapter(chNo)}
+                                onLongPress={() => {
+                                    // Play first verse of chapter directly
+                                    const firstVerse = chapterVerses.sort((a, b) => a.verse_no - b.verse_no)[0];
+                                    if (firstVerse) handlePlayItem(firstVerse.verse_id, 'verse');
+                                }}
+                            >
+                                <Text style={[styles.chapterTileNumber, { color: colors.primary }]}>{chNo}</Text>
+                                <Text style={[styles.chapterTileLabel, { color: colors.textSecondary }]}>Chapter</Text>
+                                <View style={[styles.tileProgressContainer, { backgroundColor: colors.surfaceSecondary }]}>
+                                    <View style={[styles.tileProgressBar, { backgroundColor: colors.primary, width: `${(completedInChapter / totalInChapter) * 100}%` }]} />
+                                </View>
+                                <Text style={[styles.tileProgressText, { color: colors.textSecondary }]}>{completedInChapter}/{totalInChapter}</Text>
+                                <TouchableOpacity 
+                                    style={{ marginTop: 8 }} 
+                                    onPress={() => {
+                                        const firstVerse = chapterVerses.sort((a, b) => a.verse_no - b.verse_no)[0];
+                                        if (firstVerse) handlePlayItem(firstVerse.verse_id, 'verse');
+                                    }}
+                                >
+                                    <Ionicons name="play-circle" size={24} color={colors.primary} />
+                                </TouchableOpacity>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
+            );
+        }
+
+        // Show verses for specific chapter
+        const selectedVerses = chapters[selectedChapter] || [];
+
         return (
             <View style={styles.listContainer}>
-                {chapterNumbers.map((chNo) => (
-                    <View key={chNo} style={styles.chapterBlock}>
-                        <Text style={styles.chapterTitle}>Chapter {chNo}</Text>
-                        {chapters[chNo].map((verse) => (
-                            <TouchableOpacity
-                                key={verse.verse_id}
-                                style={styles.verseItem}
-                                onPress={() => handlePlayItem(verse.verse_id, 'verse')}
-                            >
-                                <View style={styles.verseHeader}>
-                                    <Text style={styles.verseNumber}>{verse.chapter_no}.{verse.verse_no}</Text>
-                                    <Text style={styles.previewText} numberOfLines={1}>
-                                        {verse.sanskrit || verse.reference || 'Verse'}
+                <View style={styles.verseHeaderChapter}>
+                    <Text style={styles.chapterHeaderTitle}>Chapter {selectedChapter}</Text>
+                </View>
+                {selectedVerses.map((verse) => {
+                    const isCompleted = completedVerses.includes(verse.verse_id);
+                    return (
+                        <TouchableOpacity
+                            key={verse.verse_id}
+                            style={[
+                                styles.verseItem,
+                                { backgroundColor: colors.surface, borderColor: colors.border },
+                                isCompleted && { borderColor: colors.primary + '40', backgroundColor: colors.primary + '05' }
+                            ]}
+                            onPress={() => handlePlayItem(verse.verse_id, 'verse')}
+                        >
+                            <View style={styles.verseHeader}>
+                                <View style={[
+                                    styles.verseNumberBadge,
+                                    { backgroundColor: colors.surfaceSecondary },
+                                    isCompleted && { backgroundColor: colors.primary }
+                                ]}>
+                                    <Text style={[styles.verseNumberText, { color: colors.primary }, isCompleted && { color: '#FFF' }]}>
+                                        {verse.verse_no}
                                     </Text>
                                 </View>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                ))}
+                                <View style={styles.verseInfo}>
+                                    <Text style={[styles.previewText, { color: colors.textSecondary }, isCompleted && { color: colors.text }]} numberOfLines={2}>
+                                        {verse.title || verse.sanskrit || verse.reference || 'Verse'}
+                                    </Text>
+                                    <Text style={[styles.verseChapterRef, { color: colors.textSecondary }]}>Chapter {verse.chapter_no}, Verse {verse.verse_no}</Text>
+                                </View>
+                                {isCompleted && (
+                                    <View style={styles.completedBadge}>
+                                        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                                    </View>
+                                )}
+                            </View>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         );
     };
 
     const renderEpisodes = () => {
-        return (
-            <View style={styles.listContainer}>
-                {items.map((item) => (
-                    <TouchableOpacity
-                        key={item.episode_id}
-                        style={styles.episodeItem}
-                        onPress={() => handlePlayItem(item.episode_id, 'narrative')}
-                    >
-                        <View style={styles.episodeNumberBadge}>
-                            <Text style={styles.episodeNumberText}>{item.episode_no}</Text>
-                        </View>
-                        <View style={styles.episodeContent}>
-                            <Text style={styles.episodeTitle}>{item.title}</Text>
-                            {item.summary && (
-                                <Text style={styles.episodeSummary} numberOfLines={2}>
-                                    {item.summary}
-                                </Text>
-                            )}
-                        </View>
-                    </TouchableOpacity>
-                ))}
-            </View>
-        );
+        return null;
     };
 
     const renderCollectionList = () => (
         <View style={styles.collectionList}>
             {books.map((book) => {
-                const meta = COLLECTION_METADATA[book.slug] || { icon: 'book', color: theme.colors.primary };
+                const meta = COLLECTION_METADATA[book.slug] || { icon: 'book', color: colors.primary };
                 return (
                     <TouchableOpacity
                         key={book.book_id}
-                        style={styles.collectionCard}
+                        style={[
+                            styles.collectionCard,
+                            {
+                                backgroundColor: colors.surface,
+                                borderColor: colors.border,
+                                shadowColor: colors.cardShadow
+                            }
+                        ]}
                         onPress={() => setSelectedBook(book)}
                     >
                         <View style={[styles.collectionIconBox, { backgroundColor: meta.color + '15' }]}>
-                            <Ionicons name={meta.icon as any} size={32} color={meta.color} />
+                            {getScriptureIcon(book.slug, 32, meta.color)}
                         </View>
                         <View style={styles.collectionInfo}>
-                            <Text style={styles.collectionTitle}>{book.title}</Text>
-                            <Text style={styles.collectionDesc}>{book.description}</Text>
+                            <Text style={[styles.collectionTitle, { color: colors.text }]}>
+                                {book.title_en || book.title_hi || book.title || meta.title}
+                            </Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={24} color={theme.colors.border} />
+                        <Ionicons name="chevron-forward" size={24} color={colors.border} />
                     </TouchableOpacity>
                 );
             })}
@@ -150,29 +211,37 @@ export const LibraryScreen = () => {
     );
 
     const renderSelectedBook = () => {
-        const meta = COLLECTION_METADATA[selectedBook.slug] || { icon: 'book', color: theme.colors.primary };
+        const meta = COLLECTION_METADATA[selectedBook.slug] || { icon: 'book', color: colors.primary };
 
         return (
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.innerHeader}>
-                    <TouchableOpacity onPress={() => setSelectedBook(null)} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-                        <Text style={styles.backText}>Books</Text>
+            <ScrollView contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.background }]}>
+                <View style={[styles.innerHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (selectedChapter !== null) setSelectedChapter(null);
+                            else setSelectedBook(null);
+                        }}
+                        style={styles.backButton}
+                    >
+                        <Ionicons name="arrow-back" size={24} color={colors.text} />
+                        <Text style={[styles.backText, { color: colors.text }]}>{selectedChapter !== null ? 'Back' : 'Books'}</Text>
                     </TouchableOpacity>
                     <View style={styles.collectionHeaderTitleBox}>
                         <View style={[styles.smallIconBox, { backgroundColor: meta.color + '15' }]}>
-                            <Ionicons name={meta.icon as any} size={20} color={meta.color} />
+                            {getScriptureIcon(selectedBook.slug, 24, meta.color)}
                         </View>
-                        <Text style={styles.collectionHeaderTitle}>{selectedBook.title}</Text>
+                        <Text style={[styles.collectionHeaderTitle, { color: colors.text }]}>
+                            {selectedBook.title_en || selectedBook.title_hi || selectedBook.title || meta.title}
+                        </Text>
                     </View>
                 </View>
 
                 {itemsLoading ? (
                     <View style={styles.centerPadding}>
-                        <ActivityIndicator size="large" color={theme.colors.primary} />
+                        <ActivityIndicator size="large" color={colors.primary} />
                     </View>
                 ) : (
-                    selectedBook.content_type === 'verse' ? renderVerseChapters() : renderEpisodes()
+                    renderVerseChapters()
                 )}
 
             </ScrollView>
@@ -181,21 +250,23 @@ export const LibraryScreen = () => {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.center]}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+            <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
             {selectedBook === null ? (
-                <ScrollView contentContainerStyle={styles.scrollContent}>
-                    <View style={styles.header}>
-                        <Text style={styles.screenTitle}>Library</Text>
+                <View style={{ flex: 1 }}>
+                    <View style={[styles.header, { backgroundColor: colors.background }]}>
+                        <Text style={[styles.screenTitle, { color: colors.text }]}>Library</Text>
                     </View>
-                    {renderCollectionList()}
-                </ScrollView>
+                    <ScrollView contentContainerStyle={styles.scrollContent}>
+                        {renderCollectionList()}
+                    </ScrollView>
+                </View>
             ) : (
                 renderSelectedBook()
             )}
@@ -206,7 +277,6 @@ export const LibraryScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
     },
     center: {
         flex: 1,
@@ -214,37 +284,32 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     centerPadding: {
-        padding: theme.spacing.xl,
+        padding: 24, // spacing.xl
         alignItems: 'center',
     },
     scrollContent: {
-        paddingBottom: theme.spacing.xxl,
+        paddingBottom: 48, // spacing.xxl
     },
     header: {
-        padding: theme.spacing.l,
-        paddingTop: theme.spacing.xl * 2,
-        backgroundColor: theme.colors.background,
+        padding: 24, // spacing.l
+        paddingTop: 64, // spacing.xl * 2
     },
     screenTitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.xxl,
-        color: theme.colors.text,
+        fontSize: 32, // typography.sizes.xxl
+        fontWeight: 'bold',
     },
     collectionList: {
-        paddingHorizontal: theme.spacing.l,
+        paddingHorizontal: 24, // spacing.l
     },
     collectionCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
-        padding: theme.spacing.m,
-        borderRadius: theme.borderRadius.l,
-        marginBottom: theme.spacing.m,
+        padding: 16, // spacing.m
+        borderRadius: 16, // borderRadius.l
+        marginBottom: 16, // spacing.m
         borderWidth: 1,
-        borderColor: theme.colors.border,
-        shadowColor: theme.colors.cardShadow,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.5,
+        shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 2,
     },
@@ -254,30 +319,26 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: theme.spacing.m,
+        marginRight: 16, // spacing.m
+        overflow: 'hidden',
     },
     collectionInfo: {
         flex: 1,
     },
     collectionTitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
+        fontSize: 20, // typography.sizes.l
+        fontWeight: '600',
         marginBottom: 4,
     },
     collectionDesc: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.s,
-        color: theme.colors.textSecondary,
-        lineHeight: theme.typography.lineHeights.s,
+        fontSize: 14, // typography.sizes.s
+        lineHeight: 20, // typography.lineHeights.s
     },
 
     innerHeader: {
-        padding: theme.spacing.l,
-        paddingTop: theme.spacing.xl * 2,
-        backgroundColor: theme.colors.surface,
+        padding: 24, // spacing.l
+        paddingTop: 64, // spacing.xl * 2
         borderBottomWidth: 1,
-        borderBottomColor: theme.colors.border,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -287,10 +348,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     backText: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.text,
-        marginLeft: theme.spacing.xs,
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '500',
+        marginLeft: 4, // spacing.xs
     },
     collectionHeaderTitleBox: {
         flexDirection: 'row',
@@ -302,90 +362,147 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: theme.spacing.s,
+        marginRight: 8, // spacing.s
     },
     collectionHeaderTitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.text,
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '600',
     },
 
     listContainer: {
-        padding: theme.spacing.m,
+        padding: 16, // spacing.m
     },
 
     chapterBlock: {
-        marginBottom: theme.spacing.xl,
+        marginBottom: 32, // spacing.xl
     },
     chapterTitle: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.m,
-        marginLeft: theme.spacing.xs,
+        fontSize: 20, // typography.sizes.l
+        fontWeight: '500',
+        marginBottom: 16, // spacing.m
+        marginLeft: 4, // spacing.xs
     },
     verseItem: {
-        backgroundColor: theme.colors.surface,
-        padding: theme.spacing.m,
-        borderRadius: theme.borderRadius.m,
-        marginBottom: theme.spacing.s,
+        padding: 16, // spacing.m
+        borderRadius: 12, // borderRadius.m
+        marginBottom: 8, // spacing.s
         borderWidth: 1,
-        borderColor: theme.colors.border,
     },
     verseHeader: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     verseNumber: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.primary,
-        marginRight: theme.spacing.m,
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '600',
+        marginRight: 16, // spacing.m
         width: 36,
     },
     previewText: {
         flex: 1,
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
+        fontSize: 16, // typography.sizes.m
     },
     episodeItem: {
         flexDirection: 'row',
-        backgroundColor: theme.colors.surface,
-        padding: theme.spacing.m,
-        borderRadius: theme.borderRadius.m,
-        marginBottom: theme.spacing.m,
+        padding: 16, // spacing.m
+        borderRadius: 12, // borderRadius.m
+        marginBottom: 16, // spacing.m
         borderWidth: 1,
-        borderColor: theme.colors.border,
     },
     episodeNumberBadge: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: theme.colors.surfaceSecondary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: theme.spacing.m,
+        marginRight: 16, // spacing.m
     },
     episodeNumberText: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.primary,
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '600',
     },
     episodeContent: {
         flex: 1,
         justifyContent: 'center',
     },
     episodeTitle: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.xs,
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '500',
+        marginBottom: 4, // spacing.xs
     },
     episodeSummary: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.s,
-        color: theme.colors.textSecondary,
-        lineHeight: theme.typography.lineHeights.s,
+        fontSize: 14, // typography.sizes.s
+        lineHeight: 20, // typography.lineHeights.s
+    },
+    chapterGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        padding: 16, // spacing.m
+        justifyContent: 'space-between',
+    },
+    chapterTile: {
+        width: '31%',
+        aspectRatio: 1,
+        borderRadius: 16, // borderRadius.l
+        borderWidth: 1,
+        padding: 16, // spacing.m
+        marginBottom: 16, // spacing.m
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    chapterTileNumber: {
+        fontSize: 24, // typography.sizes.xl
+        fontWeight: '600',
+    },
+    chapterTileLabel: {
+        fontSize: 14, // typography.sizes.s
+        fontWeight: '500',
+        marginBottom: 8, // spacing.s
+    },
+    tileProgressContainer: {
+        width: '80%',
+        height: 4,
+        borderRadius: 2,
+        overflow: 'hidden',
+        marginBottom: 4,
+    },
+    tileProgressBar: {
+        height: '100%',
+    },
+    tileProgressText: {
+        fontSize: 10,
+    },
+    verseHeaderChapter: {
+        paddingVertical: 24, // spacing.l
+        paddingHorizontal: 16, // spacing.m
+    },
+    chapterHeaderTitle: {
+        fontSize: 24, // typography.sizes.xl
+        fontWeight: '600',
+    },
+    verseNumberBadge: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16, // spacing.m
+    },
+    verseNumberText: {
+        fontSize: 16, // typography.sizes.m
+        fontWeight: '600',
+    },
+    verseInfo: {
+        flex: 1,
+    },
+    verseChapterRef: {
+        fontSize: 14, // typography.sizes.s
+    },
+    completedBadge: {
+        marginLeft: 8, // spacing.s
     }
 });

@@ -2,13 +2,14 @@ import {
     Outfit_400Regular,
     Outfit_500Medium,
     Outfit_600SemiBold,
-    useFonts
+    useFonts,
 } from '@expo-google-fonts/outfit';
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import { setAudioModeAsync } from 'expo-audio';
+import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppNavigator } from './src/navigation';
+import { ThemeProvider } from './src/theme';
 
 export default function App() {
     const [fontsLoaded] = useFonts({
@@ -17,14 +18,24 @@ export default function App() {
         Outfit_600SemiBold,
     });
 
+    useEffect(() => {
+        setAudioModeAsync({
+            playsInSilentMode: true,
+            shouldPlayInBackground: true,
+            interruptionMode: 'doNotMix',
+            shouldRouteThroughEarpiece: false,
+        }).catch(console.error);
+    }, []);
+
     if (!fontsLoaded) {
-        return null; // Or a simple splash screen
+        return null;
     }
 
     return (
         <SafeAreaProvider>
-            <StatusBar style="auto" />
-            <AppNavigator />
+            <ThemeProvider>
+                <AppNavigator />
+            </ThemeProvider>
         </SafeAreaProvider>
     );
 }

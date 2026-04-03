@@ -4,15 +4,17 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { Card } from '../components/Card';
 import { fetchDailyUsage, fetchStreakData } from '../lib/queries';
 import { useAppStore } from '../store/useAppStore';
-import { theme } from '../theme';
+import { useTheme } from '../theme';
 
 export const StreaksScreen = () => {
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const { session } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [streakCount, setStreakCount] = useState(0);
     const [usageToday, setUsageToday] = useState(0);
     const [historyDates, setHistoryDates] = useState<string[]>([]);
 
+    // ... (loadStreakData remains same)
     const loadStreakData = useCallback(async () => {
         if (!session?.user) return;
         try {
@@ -22,11 +24,9 @@ export const StreaksScreen = () => {
                 fetchDailyUsage(session.user.id)
             ]);
 
-            // Simple streak count for MVP
             setStreakCount(streakData?.length || 0);
             setUsageToday(todayUsage?.sessions_used || 0);
 
-            // Map dates for the visual tracker
             const dates = streakData?.map((row: any) => row.usage_date) || [];
             setHistoryDates(dates);
         } catch (error) {
@@ -42,12 +42,9 @@ export const StreaksScreen = () => {
         }, [loadStreakData])
     );
 
-    // Visual tracker logic (7 days)
     const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const today = new Date();
 
-    // Get last 7 days starting from today backwards to Monday
-    // This is a simplified 7-day view
     const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(today.getDate() - (6 - i));
@@ -61,50 +58,51 @@ export const StreaksScreen = () => {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.center]}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+            <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
             </View>
         );
     }
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            <Text style={styles.screenTitle}>Your Journey</Text>
+        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.xl * 2, paddingBottom: spacing.xl }]}>
+            <Text style={[styles.screenTitle, { color: colors.text, marginBottom: spacing.l }]}>Your Journey</Text>
 
-            <Card style={styles.streakCard}>
-                <View style={styles.streakHeader}>
-                    <Text style={styles.streakNumber}>{streakCount}</Text>
-                    <Text style={styles.streakLabel}>Day Journey 🔥</Text>
+            <Card style={[styles.streakCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
+                <View style={[styles.streakHeader, { marginBottom: spacing.xl }]}>
+                    <Text style={[styles.streakNumber, { color: colors.primary }]}>{streakCount}</Text>
+                    <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>Day Journey 🔥</Text>
                 </View>
 
-                <View style={styles.trackerContainer}>
+                <View style={[styles.trackerContainer, { marginBottom: spacing.xl, paddingHorizontal: spacing.m }]}>
                     {last7Days.map((day, i) => (
                         <View key={i} style={styles.dayContainer}>
                             <View style={[
                                 styles.dayCircle,
-                                day.active ? styles.dayCircleActive : null,
-                                day.isToday && !day.active ? styles.dayCircleToday : null
+                                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, marginBottom: spacing.s },
+                                day.active ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
+                                day.isToday && !day.active ? { borderColor: colors.primary, borderStyle: 'dashed' } : null
                             ]}>
-                                {day.active && <Text style={styles.checkText}>✓</Text>}
+                                {day.active && <Text style={[styles.checkText, { color: colors.textInverse }]}>✓</Text>}
                             </View>
-                            <Text style={[styles.dayLetter, day.isToday && styles.dayLetterToday]}>{day.label}</Text>
+                            <Text style={[styles.dayLetter, { color: colors.textSecondary }, day.isToday && { color: colors.primary, fontWeight: 'bold' }]}>{day.label}</Text>
                         </View>
                     ))}
                 </View>
-                <Text style={styles.encouragementText}>
+                <Text style={[styles.encouragementText, { color: colors.textSecondary, paddingHorizontal: spacing.m }]}>
                     Consistency over intensity. Taking 10 minutes a day for reflection builds a resilient mind.
                 </Text>
             </Card>
 
-            <Text style={styles.sectionTitle}>Stats</Text>
-            <View style={styles.statsRow}>
-                <Card style={styles.statCard}>
-                    <Text style={styles.statValue}>{usageToday}</Text>
-                    <Text style={styles.statLabel}>Sessions Today</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: spacing.m }]}>Stats</Text>
+            <View style={[styles.statsRow, { gap: spacing.m }]}>
+                <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
+                    <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{usageToday}</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions Today</Text>
                 </Card>
-                <Card style={styles.statCard}>
-                    <Text style={styles.statValue}>~{streakCount * 10}m</Text>
-                    <Text style={styles.statLabel}>Total Time</Text>
+                <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
+                    <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>~{streakCount * 10}m</Text>
+                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Time</Text>
                 </Card>
             </View>
 
@@ -115,7 +113,6 @@ export const StreaksScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
     },
     center: {
         flex: 1,
@@ -123,42 +120,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     content: {
-        padding: theme.spacing.l,
-        paddingTop: theme.spacing.xl * 2,
-        paddingBottom: theme.spacing.xl,
     },
     screenTitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.xl,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.l,
+        fontWeight: 'bold',
+        fontSize: 32, // theme.typography.sizes.xl-ish
     },
     streakCard: {
         alignItems: 'center',
-        paddingVertical: theme.spacing.xxl,
-        marginBottom: theme.spacing.xl,
     },
     streakHeader: {
         alignItems: 'center',
-        marginBottom: theme.spacing.xl,
     },
     streakNumber: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
         fontSize: 72,
-        color: theme.colors.primary,
+        fontWeight: 'bold',
         marginBottom: -10,
     },
     streakLabel: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.textSecondary,
+        fontSize: 18,
     },
     trackerContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         width: '100%',
-        marginBottom: theme.spacing.xl,
-        paddingHorizontal: theme.spacing.m,
     },
     dayContainer: {
         alignItems: 'center',
@@ -167,68 +151,38 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: theme.colors.surfaceSecondary,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: theme.spacing.s,
         borderWidth: 1,
-        borderColor: theme.colors.border,
-    },
-    dayCircleActive: {
-        backgroundColor: theme.colors.primary,
-        borderColor: theme.colors.primary,
-    },
-    dayCircleToday: {
-        borderColor: theme.colors.primary,
-        borderStyle: 'dashed',
     },
     checkText: {
-        color: theme.colors.textInverse,
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.s,
+        fontWeight: 'bold',
+        fontSize: 12,
     },
     dayLetter: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.s,
-        color: theme.colors.textSecondary,
-    },
-    dayLetterToday: {
-        color: theme.colors.primary,
-        fontFamily: theme.typography.fontFamilies.semiBold,
+        fontSize: 12,
     },
     encouragementText: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
+        fontSize: 14,
         textAlign: 'center',
-        paddingHorizontal: theme.spacing.m,
-        lineHeight: theme.typography.lineHeights.m,
+        lineHeight: 20,
     },
     sectionTitle: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.m,
+        fontSize: 18,
     },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: theme.spacing.m,
     },
     statCard: {
         flex: 1,
         alignItems: 'center',
-        paddingVertical: theme.spacing.l,
     },
     statValue: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.xxl,
-        color: theme.colors.primary,
-        marginBottom: theme.spacing.xs,
+        fontWeight: 'bold',
+        fontSize: 28,
     },
     statLabel: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.s,
-        color: theme.colors.textSecondary,
+        fontSize: 12,
     }
 });

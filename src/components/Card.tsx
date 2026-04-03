@@ -1,14 +1,25 @@
 import React from 'react';
-import { StyleSheet, View, ViewProps } from 'react-native';
-import { theme } from '../theme';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { useTheme } from '../theme';
 
-interface CardProps extends ViewProps {
+interface CardProps {
     children: React.ReactNode;
+    style?: StyleProp<ViewStyle>;
 }
 
-export const Card = ({ children, style, ...rest }: CardProps) => {
+export const Card = ({ children, style }: CardProps) => {
+    const { colors } = useTheme();
+
     return (
-        <View style={[styles.card, style]} {...rest}>
+        <View style={[
+            styles.card,
+            {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                shadowColor: colors.cardShadow,
+            },
+            style
+        ]}>
             {children}
         </View>
     );
@@ -16,18 +27,14 @@ export const Card = ({ children, style, ...rest }: CardProps) => {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.borderRadius.l,
-        padding: theme.spacing.l,
-        shadowColor: theme.colors.cardShadow,
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 1,
-        shadowRadius: 12,
-        elevation: 4, // for android
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        // iOS Shadow
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 8,
+        // Android Shadow
+        elevation: 3,
     },
 });
+

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { theme } from '../theme';
+import { useTheme } from '../theme';
 
 interface CircularProgressProps {
     progress: number; // 0 to 1
@@ -16,6 +16,7 @@ export const CircularProgress = ({
     strokeWidth = 6,
     children,
 }: CircularProgressProps) => {
+    const { colors } = useTheme();
     const radius = (size - strokeWidth) / 2;
     const circumference = radius * 2 * Math.PI;
     const strokeDashoffset = circumference - progress * circumference;
@@ -25,7 +26,7 @@ export const CircularProgress = ({
             <Svg width={size} height={size}>
                 {/* Background Circle */}
                 <Circle
-                    stroke={theme.colors.border}
+                    stroke={colors.border}
                     fill="none"
                     cx={size / 2}
                     cy={size / 2}
@@ -34,7 +35,7 @@ export const CircularProgress = ({
                 />
                 {/* Progress Circle */}
                 <Circle
-                    stroke={theme.colors.primary}
+                    stroke={colors.primary}
                     fill="none"
                     cx={size / 2}
                     cy={size / 2}

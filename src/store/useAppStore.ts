@@ -20,6 +20,10 @@ interface AppState {
     // Streaks & Usage (Placeholders, will be fetched from Supabase)
     currentStreak: number;
 
+    // Progress Tracking (Local)
+    completedVerses: string[];
+    playbackRate: number;
+
     // Actions
     setSession: (session: Session | null) => void;
     setActivePath: (path: ContentPath) => void;
@@ -28,6 +32,8 @@ interface AppState {
     setAccountStatus: (status: AccountStatus) => void;
     setHasCompletedOnboarding: (status: boolean) => void;
     setUserName: (name: string) => void;
+    addCompletedVerse: (verseId: string) => void;
+    setPlaybackRate: (rate: number) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -43,6 +49,8 @@ export const useAppStore = create<AppState>()(
 
             currentStreak: 0,
             session: null,
+            completedVerses: [],
+            playbackRate: 1.0,
 
             setSession: (session) => set({ session }),
             setActivePath: (path) => set({ activePath: path }),
@@ -51,9 +59,16 @@ export const useAppStore = create<AppState>()(
             setAccountStatus: (status) => set({ accountStatus: status }),
             setHasCompletedOnboarding: (status) => set({ hasCompletedOnboarding: status }),
             setUserName: (name) => set({ userName: name }),
+            addCompletedVerse: (verseId: string) =>
+                set((state) => ({
+                    completedVerses: state.completedVerses.includes(verseId)
+                        ? state.completedVerses
+                        : [...state.completedVerses, verseId],
+                })),
+            setPlaybackRate: (rate: number) => set({ playbackRate: rate }),
         }),
         {
-            name: 'daily-shlokya-storage',
+            name: 'mangalam-storage',
             storage: createJSONStorage(() => AsyncStorage),
         }
     )

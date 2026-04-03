@@ -1,120 +1,165 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
+import { Card } from '../components/Card';
 import { supabase } from '../lib/supabase';
-import { theme } from '../theme';
+import { useTheme } from '../theme';
 
 export const AuthScreen = () => {
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isDevLogin, setIsDevLogin] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isSignUp, setIsSignUp] = useState(false);
+    const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-    const handleDevLogin = async () => {
+    const handleEmailAuth = async () => {
         if (!email || !password) {
-            Alert.alert('Dev Login', 'Please enter email and password for developer login.');
+            Alert.alert('Error', 'Please enter both email and password.');
             return;
         }
+        if (isSignUp && !agreedToTerms) {
+            Alert.alert('Terms & Conditions', 'Please agree to the Terms and Conditions to create an account.');
+            return;
+        }
+
         setLoading(true);
         try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
-            if (error) throw error;
+            if (isSignUp) {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+                Alert.alert('Verification Required', 'Please check your email to verify your account.');
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+            }
         } catch (error: any) {
-            Alert.alert('Login Error', error.message);
+            Alert.alert('Auth Error', error.message);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSocialLogin = (provider: 'google' | 'apple') => {
-        Alert.alert('Coming Soon', `${provider.charAt(0).toUpperCase() + provider.slice(1)} login will be enabled once OAuth is configured in Supabase console.`);
+    const handleForgotPassword = () => {
+        if (!email) {
+            Alert.alert('Forgot Password', 'Please enter your email address first.');
+            return;
+        }
+        Alert.alert('Coming Soon', 'Password reset functionality is being configured.');
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <View style={styles.logoContainer}>
-                        <Ionicons name="sunny" size={60} color={theme.colors.primary} />
-                    </View>
-                    <Text style={styles.title}>Daily Shlokya</Text>
-                    <TouchableOpacity
-                        onLongPress={() => setIsDevLogin(!isDevLogin)}
-                        delayLongPress={2000}
-                        activeOpacity={1}
-                    >
-                        <Text style={styles.subtitle}>Your 10-minute spiritual habit</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.authContainer}>
-                    <Text style={styles.instructionText}>Sign in to continue your journey</Text>
-
-                    <TouchableOpacity
-                        style={[styles.socialButton, { backgroundColor: '#FFFFFF', borderColor: '#DDD', borderWidth: 1 }]}
-                        onPress={() => handleSocialLogin('google')}
-                    >
-                        <Ionicons name="logo-google" size={20} color="#000" />
-                        <Text style={[styles.socialButtonText, { color: '#000' }]}>Sign in with Google</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.socialButton, { backgroundColor: '#000000' }]}
-                        onPress={() => handleSocialLogin('apple')}
-                    >
-                        <Ionicons name="logo-apple" size={20} color="#FFF" />
-                        <Text style={[styles.socialButtonText, { color: '#FFF' }]}>Sign in with Apple</Text>
-                    </TouchableOpacity>
-
-                    {isDevLogin && (
-                        <View style={{ alignItems: 'center', marginBottom: theme.spacing.m }}>
-                            <Text style={styles.devToggleText}>Developer Login Active</Text>
-                        </View>
-                    )}
-
-                    {isDevLogin && (
-                        <View style={styles.devForm}>
-                            <View style={styles.inputGroup}>
-                                <Ionicons name="mail-outline" size={20} color={theme.colors.textSecondary} style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Developer Email"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    autoCapitalize="none"
-                                    keyboardType="email-address"
-                                />
-                            </View>
-                            <View style={styles.inputGroup}>
-                                <Ionicons name="lock-closed-outline" size={20} color={theme.colors.textSecondary} style={styles.inputIcon} />
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Password"
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    secureTextEntry
-                                />
-                            </View>
-                            <Button
-                                title={loading ? "Logging in..." : "Dev Login"}
-                                onPress={handleDevLogin}
-                                disabled={loading}
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            <KeyboardAvoidingView 
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+            >
+                <ScrollView contentContainerStyle={[styles.scrollContent, { padding: spacing.xl }]}>
+                    {/* Top-Center Branding */}
+                    <View style={styles.brandingHeader}>
+                        <View style={[styles.imageContainer, { borderColor: colors.border, shadowColor: colors.primary }]}>
+                            <Image 
+                                source={require('../../assets/images/Mangalam-cover.jpeg')}
+                                style={styles.brandImage}
+                                resizeMode="cover"
                             />
                         </View>
-                    )}
-                </View>
+                        <Text style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</Text>
+                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</Text>
+                    </View>
 
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>
-                        By signing in, you agree to our Terms and Privacy Policy.
-                    </Text>
-                </View>
-            </ScrollView>
+                    {/* Auth Box */}
+                    <Card style={[styles.authCard, { backgroundColor: colors.surface, marginTop: spacing.xl }]}>
+                        <Text style={[styles.instructionText, { color: colors.text, marginBottom: spacing.l }]}>
+                            {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+                        </Text>
+
+                        <View style={[styles.inputGroup, { backgroundColor: colors.background, borderRadius: borderRadius.m, borderColor: colors.border }]}>
+                            <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                            <TextInput
+                                style={[styles.input, { color: colors.text }]}
+                                placeholder="Email Address"
+                                placeholderTextColor={colors.textSecondary}
+                                value={email}
+                                onChangeText={setEmail}
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                            />
+                        </View>
+                        
+                        <View style={[styles.inputGroup, { backgroundColor: colors.background, borderRadius: borderRadius.m, borderColor: colors.border, marginTop: spacing.m }]}>
+                            <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                            <TextInput
+                                style={[styles.input, { color: colors.text }]}
+                                placeholder="Password"
+                                placeholderTextColor={colors.textSecondary}
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry
+                            />
+                        </View>
+
+                        {!isSignUp && (
+                            <TouchableOpacity 
+                                style={[styles.forgotPassword, { marginTop: spacing.s }]} 
+                                onPress={handleForgotPassword}
+                            >
+                                <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
+                            </TouchableOpacity>
+                        )}
+
+                        {isSignUp && (
+                            <TouchableOpacity 
+                                style={[styles.termsRow, { marginTop: spacing.m }]}
+                                onPress={() => setAgreedToTerms(!agreedToTerms)}
+                            >
+                                <Ionicons 
+                                    name={agreedToTerms ? "checkbox" : "square-outline"} 
+                                    size={20} 
+                                    color={agreedToTerms ? colors.primary : colors.textSecondary} 
+                                />
+                                <Text style={[styles.termsText, { color: colors.textSecondary, marginLeft: spacing.s }]}>
+                                    I agree to the <Text style={{ color: colors.primary }}>Terms & Conditions</Text>
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+
+                        <Button
+                            title={loading ? "Please wait..." : (isSignUp ? "Create Account" : "Sign In")}
+                            onPress={handleEmailAuth}
+                            disabled={loading}
+                            style={{ marginTop: spacing.xl }}
+                        />
+                        <TouchableOpacity 
+                            style={[styles.switchMode, { marginTop: spacing.l }]} 
+                            onPress={() => setIsSignUp(!isSignUp)}
+                        >
+                            <Text style={[styles.switchModeText, { color: colors.textSecondary }]}>
+                                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                                <Text style={{ color: colors.primary }}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
+                            </Text>
+                        </TouchableOpacity>
+                        
+                        <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
+                            Mangalam is a quiet space for reflection. We do not collect any of your personal data.
+                        </Text>
+                    </Card>
+
+                    <View style={[styles.footer, { paddingVertical: spacing.xl }]}>
+                        <Text style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
+                            Guided reflection for your spiritual journey.
+                        </Text>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
@@ -122,113 +167,101 @@ export const AuthScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
     },
     scrollContent: {
         flexGrow: 1,
-        padding: theme.spacing.xl,
         justifyContent: 'center',
     },
-    header: {
+    brandingHeader: {
         alignItems: 'center',
-        marginBottom: theme.spacing.xxl,
     },
-    logoContainer: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: theme.colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: theme.spacing.l,
-        shadowColor: theme.colors.primary,
+    imageContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 20,
+        borderWidth: 2,
+        overflow: 'hidden',
+        elevation: 8,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.2,
         shadowRadius: 10,
-        elevation: 4,
+    },
+    brandImage: {
+        width: '100%',
+        height: '100%',
     },
     title: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
+        fontWeight: 'bold',
         fontSize: 32,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.xs,
+        letterSpacing: 0.5,
     },
     subtitle: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.textSecondary,
+        fontSize: 16,
+        textAlign: 'center',
+        opacity: 0.8,
     },
-    authContainer: {
-        width: '100%',
+    authCard: {
+        padding: 24,
+        elevation: 4,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
     },
     instructionText: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
+        fontWeight: '600',
+        fontSize: 20,
         textAlign: 'center',
-        marginBottom: theme.spacing.xl,
-    },
-    socialButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: theme.spacing.m,
-        borderRadius: theme.borderRadius.l,
-        marginBottom: theme.spacing.m,
-        height: 56,
-    },
-    socialButtonText: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        marginLeft: theme.spacing.s,
-    },
-    devToggle: {
-        paddingVertical: theme.spacing.m,
-        alignItems: 'center',
-    },
-    devToggleText: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.xs,
-        color: theme.colors.textSecondary,
-        opacity: 0.5,
-    },
-    devForm: {
-        marginTop: theme.spacing.m,
-        padding: theme.spacing.l,
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.borderRadius.l,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
     },
     inputGroup: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.background,
-        borderRadius: theme.borderRadius.m,
-        paddingHorizontal: theme.spacing.m,
-        marginBottom: theme.spacing.m,
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        paddingHorizontal: 16,
     },
     inputIcon: {
-        marginRight: theme.spacing.s,
+        marginRight: 10,
     },
     input: {
         flex: 1,
-        height: 50,
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.text,
+        height: 52,
+        fontSize: 16,
+    },
+    forgotPassword: {
+        alignSelf: 'flex-end',
+    },
+    forgotPasswordText: {
+        fontSize: 14,
+        fontWeight: '500',
+    },
+    termsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    termsText: {
+        fontSize: 14,
+    },
+    switchMode: {
+        alignItems: 'center',
+    },
+    switchModeText: {
+        fontSize: 14,
+    },
+    privacyNote: {
+        fontSize: 13,
+        textAlign: 'center',
+        lineHeight: 18,
+        fontStyle: 'italic',
+        opacity: 0.8,
+    },
+    footerLabel: {
+        fontFamily: 'Inter_400Regular', // Use Inter if available or default
     },
     footer: {
         marginTop: 'auto',
-        paddingTop: theme.spacing.xxl,
     },
     footerText: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.xs,
-        color: theme.colors.textSecondary,
+        fontSize: 12,
         textAlign: 'center',
-        opacity: 0.8,
+        opacity: 0.7,
     }
 });

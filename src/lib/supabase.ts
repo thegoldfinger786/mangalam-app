@@ -32,6 +32,7 @@ export const signOut = async () => {
     if (error) {
         console.error('Error signing out:', error.message);
     }
+    return { error };
 };
 
 export const onAuthStateChange = (callback: (event: string, session: any) => void) => {

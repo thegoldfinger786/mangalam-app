@@ -12,5 +12,9 @@ export type RootStackParamList = {
     Auth: undefined;
     Welcome: undefined;
     MainTabs: NavigatorScreenParams<BottomTabParamList>;
+    BookDashboard: { type: ContentPath };
     Play: { itemId: string; type: ContentPath };
+    CommunityWisdom: undefined;
+    About: undefined;
+    SupportMangalam: undefined;
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
-import { theme } from '../theme';
+import { useTheme } from '../theme';
 
 interface ButtonProps {
     title: string;
@@ -12,6 +12,7 @@ interface ButtonProps {
 }
 
 export const Button = ({ title, onPress, variant = 'primary', style, textStyle, disabled }: ButtonProps) => {
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const isPrimary = variant === 'primary';
     const isOutline = variant === 'outline';
 
@@ -19,9 +20,14 @@ export const Button = ({ title, onPress, variant = 'primary', style, textStyle, 
         <TouchableOpacity
             style={[
                 styles.button,
-                isPrimary && styles.primaryButton,
-                isOutline && styles.outlineButton,
-                !isPrimary && !isOutline && styles.secondaryButton,
+                {
+                    paddingVertical: spacing.m,
+                    paddingHorizontal: spacing.xl,
+                    borderRadius: borderRadius.round,
+                },
+                isPrimary && { backgroundColor: colors.primary },
+                isOutline && { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
+                !isPrimary && !isOutline && { backgroundColor: colors.surfaceSecondary },
                 disabled && styles.disabledButton,
                 style
             ]}
@@ -32,9 +38,13 @@ export const Button = ({ title, onPress, variant = 'primary', style, textStyle, 
             <Text
                 style={[
                     styles.text,
-                    isPrimary && styles.primaryText,
-                    isOutline && styles.outlineText,
-                    !isPrimary && !isOutline && styles.secondaryText,
+                    {
+                        fontFamily: typography.fontFamilies.medium,
+                        fontSize: typography.sizes.m,
+                    },
+                    isPrimary && { color: colors.textInverse },
+                    isOutline && { color: colors.textSecondary },
+                    !isPrimary && !isOutline && { color: colors.primary },
                     textStyle
                 ]}
             >
@@ -46,35 +56,11 @@ export const Button = ({ title, onPress, variant = 'primary', style, textStyle, 
 
 const styles = StyleSheet.create({
     button: {
-        paddingVertical: theme.spacing.m,
-        paddingHorizontal: theme.spacing.xl,
-        borderRadius: theme.borderRadius.round,
         alignItems: 'center',
         justifyContent: 'center',
     },
-    primaryButton: {
-        backgroundColor: theme.colors.primary,
-    },
-    secondaryButton: {
-        backgroundColor: theme.colors.surfaceSecondary,
-    },
-    outlineButton: {
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-    },
     text: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.m,
-    },
-    primaryText: {
-        color: theme.colors.textInverse,
-    },
-    secondaryText: {
-        color: theme.colors.primary,
-    },
-    outlineText: {
-        color: theme.colors.textSecondary,
+        // base text styles
     },
     disabledButton: {
         opacity: 0.5,

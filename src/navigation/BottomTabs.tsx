@@ -1,21 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { theme } from '../theme';
 
-// Screens
 import { HomeScreen } from '../screens/HomeScreen';
 import { LibraryScreen } from '../screens/LibraryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StreaksScreen } from '../screens/StreaksScreen';
 
+import { useTheme } from '../theme';
 import { BottomTabParamList } from './types';
+import { MiniPlayer } from '../components/MiniPlayer';
+import { View } from 'react-native';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 export const BottomTabs = () => {
+    const { colors, typography } = useTheme();
+
     return (
-        <Tab.Navigator
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+            <Tab.Navigator
             screenOptions={({ route }) => ({
                 headerShown: false,
                 tabBarIcon: ({ focused, color, size }) => {
@@ -33,17 +37,17 @@ export const BottomTabs = () => {
 
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: theme.colors.activeTab,
-                tabBarInactiveTintColor: theme.colors.inactiveTab,
+                tabBarActiveTintColor: colors.activeTab,
+                tabBarInactiveTintColor: colors.inactiveTab,
                 tabBarStyle: {
-                    backgroundColor: theme.colors.surface,
+                    backgroundColor: colors.surface,
                     borderTopWidth: 1,
-                    borderTopColor: theme.colors.border,
-                    elevation: 0, // removed shadow on android for cleaner look
-                    shadowOpacity: 0, // removed shadow on ios for cleaner look
+                    borderTopColor: colors.border,
+                    elevation: 0,
+                    shadowOpacity: 0,
                 },
                 tabBarLabelStyle: {
-                    fontFamily: theme.typography.fontFamilies.medium,
+                    fontFamily: typography.fontFamilies.medium,
                     fontSize: 12,
                 }
             })}
@@ -53,5 +57,7 @@ export const BottomTabs = () => {
             <Tab.Screen name="Streaks" component={StreaksScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
+        <MiniPlayer />
+    </View>
     );
 };

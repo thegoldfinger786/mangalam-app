@@ -1,33 +1,39 @@
 import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect, useMemo } from 'react';
 
 // Navigators & Screens
 import { supabase } from '../lib/supabase';
 import { AuthScreen } from '../screens/AuthScreen';
+import { BookDashboardScreen } from '../screens/BookDashboardScreen';
+import { CommunityWisdomScreen } from '../screens/CommunityWisdomScreen';
 import { PlayScreen } from '../screens/PlayScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { AboutScreen } from '../screens/AboutScreen';
+import { SupportMangalamScreen } from '../screens/SupportMangalamScreen';
 import { useAppStore } from '../store/useAppStore';
-import { theme } from '../theme';
+import { useTheme } from '../theme';
 import { BottomTabs } from './BottomTabs';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const AppTheme = {
-    ...DefaultTheme,
-    colors: {
-        ...DefaultTheme.colors,
-        background: theme.colors.background,
-        card: theme.colors.surface,
-        text: theme.colors.text,
-        border: theme.colors.border,
-        primary: theme.colors.primary,
-    },
-};
-
 export const AppNavigator = () => {
     const { session, setSession, hasCompletedOnboarding } = useAppStore();
+    const { colors, themeMode } = useTheme();
+
+    const currentTheme = useMemo(() => ({
+        ...DefaultTheme,
+        colors: {
+            ...DefaultTheme.colors,
+            background: colors.background,
+            card: colors.surface,
+            text: colors.text,
+            border: colors.border,
+            primary: colors.primary,
+        },
+    }), [colors]);
 
     useEffect(() => {
         // Check initial session
@@ -44,7 +50,8 @@ export const AppNavigator = () => {
     }, [setSession]);
 
     return (
-        <NavigationContainer theme={AppTheme}>
+        <NavigationContainer theme={currentTheme}>
+            <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
             <Stack.Navigator
                 screenOptions={{
                     headerShown: false,
@@ -58,11 +65,43 @@ export const AppNavigator = () => {
                     <Stack.Screen name="MainTabs" component={BottomTabs} />
                 )}
                 <Stack.Screen
+                    name="BookDashboard"
+                    component={BookDashboardScreen}
+                    options={{
+                        presentation: 'modal',
+                        animation: 'slide_from_bottom',
+                    }}
+                />
+                <Stack.Screen
                     name="Play"
                     component={PlayScreen}
                     options={{
                         presentation: 'modal',
                         animation: 'slide_from_bottom',
+                    }}
+                />
+                <Stack.Screen
+                    name="CommunityWisdom"
+                    component={CommunityWisdomScreen}
+                    options={{
+                        presentation: 'modal',
+                        animation: 'slide_from_bottom',
+                    }}
+                />
+                <Stack.Screen
+                    name="About"
+                    component={AboutScreen}
+                    options={{
+                        headerShown: false,
+                        animation: 'slide_from_right',
+                    }}
+                />
+                <Stack.Screen
+                    name="SupportMangalam"
+                    component={SupportMangalamScreen}
+                    options={{
+                        headerShown: false,
+                        animation: 'slide_from_right',
                     }}
                 />
             </Stack.Navigator>

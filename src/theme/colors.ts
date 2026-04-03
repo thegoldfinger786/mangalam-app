@@ -12,6 +12,7 @@ export const colors = {
     // Typography
     text: '#3D312A', // Deep brown/charcoal
     textSecondary: '#6B5A4E', // Lighter brown for secondary text
+    textTertiary: '#AFA49C', // Subtle text
     textInverse: '#FFFFFF',
 
     // States & Borders
@@ -21,6 +22,7 @@ export const colors = {
     // App specific
     activeTab: '#E88B4A',
     inactiveTab: '#AFA49C',
+    error: '#DC2626', // Red for errors
 };
 
 // For settings toggle (Light/Dark themes)
@@ -35,6 +37,7 @@ export const darkColors = {
 
     text: '#F0EBE6',
     textSecondary: '#B3AAA1',
+    textTertiary: '#6B6661',
     textInverse: '#1A1816',
 
     border: '#3D3833',
@@ -42,4 +45,6 @@ export const darkColors = {
 
     activeTab: '#D67D3E',
     inactiveTab: '#6B6661',
+    error: '#EF4444', // Brighter red for dark mode visibility
 };
+
