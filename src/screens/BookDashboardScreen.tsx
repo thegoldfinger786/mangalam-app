@@ -138,7 +138,7 @@ export const BookDashboardScreen = () => {
     const meta = COLLECTION_METADATA[BOOK_SLUG] || { title: 'Wisdom', icon: 'book', color: colors.primary };
 
     return (
-        <ScreenContainer style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={[styles.header, { backgroundColor: colors.background }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
                     <Ionicons name="chevron-down" size={28} color={colors.text} />

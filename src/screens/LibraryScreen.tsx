@@ -251,14 +251,14 @@ export const LibraryScreen = () => {
 
     if (loading) {
         return (
-            <ScreenContainer style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+            <ScreenContainer edges={['top']} style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
             </ScreenContainer>
         );
     }
 
     return (
-        <ScreenContainer style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
             {selectedBook === null ? (
                 <View style={{ flex: 1 }}>
                     <View style={[styles.header, { backgroundColor: colors.background }]}>
