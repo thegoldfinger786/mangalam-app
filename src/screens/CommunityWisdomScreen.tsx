@@ -3,7 +3,6 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -13,6 +12,7 @@ import {
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { fetchTopContent } from '../lib/queries';
 import { useTheme } from '../theme';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 
 export const CommunityWisdomScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
@@ -46,9 +46,9 @@ export const CommunityWisdomScreen = () => {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+            <ScreenContainer edges={['top']} style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            </ScreenContainer>
         );
     }
 
@@ -59,7 +59,7 @@ export const CommunityWisdomScreen = () => {
     ];
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={[styles.header, { paddingHorizontal: spacing.m, paddingTop: spacing.m }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
                     <Ionicons name="chevron-back" size={28} color={colors.text} />
@@ -141,7 +141,7 @@ export const CommunityWisdomScreen = () => {
                     </View>
                 ))}
             </ScrollView>
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingHorizontal: 24,
-        paddingBottom: 40,
+        paddingBottom: 80,
     },
     introSection: {
         marginTop: 16,

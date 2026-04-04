@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAppStore } from '../store/useAppStore';
 import { theme, useTheme } from '../theme';
 
@@ -18,7 +18,7 @@ export const WelcomeScreen = () => {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
@@ -57,7 +57,7 @@ export const WelcomeScreen = () => {
                     </View>
                 </TouchableWithoutFeedback>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 

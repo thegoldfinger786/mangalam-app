@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { supabase } from '../lib/supabase';
 import { useTheme } from '../theme';
 
@@ -57,7 +57,7 @@ export const AuthScreen = () => {
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
             <KeyboardAvoidingView 
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -160,7 +160,7 @@ export const AuthScreen = () => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 

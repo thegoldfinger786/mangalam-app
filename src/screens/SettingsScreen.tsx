@@ -4,6 +4,7 @@ import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { VoicePreference } from '../data/types';
 import { signOut } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
@@ -67,13 +68,14 @@ export const SettingsScreen = () => {
     );
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.xl * 2, paddingBottom: spacing.xl }]}>
-            <View style={styles.headerRow}>
-                <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
-                <TouchableOpacity onPress={handleSignOut} style={styles.signOutIcon}>
-                    <Ionicons name="log-out-outline" size={28} color={colors.error} />
-                </TouchableOpacity>
-            </View>
+        <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScrollView style={styles.container} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.m, paddingBottom: 80 }]}>
+                <View style={styles.headerRow}>
+                    <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
+                    <TouchableOpacity onPress={handleSignOut} style={styles.signOutIcon}>
+                        <Ionicons name="log-out-outline" size={28} color={colors.error} />
+                    </TouchableOpacity>
+                </View>
 
             {/* Account Section */}
             <Card style={styles.sectionCard}>
@@ -152,6 +154,7 @@ export const SettingsScreen = () => {
                 </TouchableOpacity>
             </Card>
         </ScrollView>
+        </ScreenContainer>
     );
 };
 
