@@ -14,6 +14,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { DynamicBackground } from '../components/DynamicBackground';
 import { Skeleton } from '../components/Skeleton';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useTheme } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
@@ -163,8 +164,9 @@ export const HomeScreen = () => {
     if (loading && !books.length) {
         return (
             <DynamicBackground style={styles.container}>
-                {/* Header Skeleton */}
-                <View style={[styles.header, { marginTop: 80 }]}>
+                <ScreenContainer edges={['top']} style={styles.container}>
+                    {/* Header Skeleton */}
+                    <View style={[styles.header, { marginTop: 16 }]}>
                     <Skeleton width={120} height={28} borderRadius={4} />
                     <Skeleton width={100} height={28} borderRadius={4} style={{ marginLeft: 8 }} />
                 </View>
@@ -184,13 +186,15 @@ export const HomeScreen = () => {
                 <View style={[styles.section, { paddingHorizontal: 24, marginTop: 16 }]}>
                     <Skeleton width="100%" height={120} borderRadius={20} />
                 </View>
+                </ScreenContainer>
             </DynamicBackground>
         );
     }
 
     return (
         <DynamicBackground style={styles.container}>
-            <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <ScreenContainer edges={['top']} style={styles.container}>
+                <ScrollView style={styles.container} contentContainerStyle={styles.content}>
                 <View style={styles.header}>
                     <Text style={[styles.greeting, { color: colors.textSecondary }]}>Namaste, </Text>
                     <Text style={[styles.userName, { color: colors.text }]}>{userName || 'Seeker'}</Text>
@@ -281,6 +285,7 @@ export const HomeScreen = () => {
                     </View>
                 </View>
             </ScrollView>
+            </ScreenContainer>
         </DynamicBackground>
     );
 };
@@ -294,7 +299,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     content: {
-        paddingTop: 80,
+        paddingTop: 16,
         paddingBottom: 32,
     },
     header: {

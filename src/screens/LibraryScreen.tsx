@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { ContentPath } from '../data/types';
@@ -250,14 +251,14 @@ export const LibraryScreen = () => {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+            <ScreenContainer style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            </ScreenContainer>
         );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer style={[styles.container, { backgroundColor: colors.background }]}>
             {selectedBook === null ? (
                 <View style={{ flex: 1 }}>
                     <View style={[styles.header, { backgroundColor: colors.background }]}>
@@ -270,7 +271,7 @@ export const LibraryScreen = () => {
             ) : (
                 renderSelectedBook()
             )}
-        </View>
+        </ScreenContainer>
     );
 };
 
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
     },
     header: {
         padding: 24, // spacing.l
-        paddingTop: 64, // spacing.xl * 2
+        paddingTop: 16, // ScreenContainer handles top inset; this is inner breathing room only
     },
     screenTitle: {
         fontSize: 32, // typography.sizes.xxl
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
 
     innerHeader: {
         padding: 24, // spacing.l
-        paddingTop: 64, // spacing.xl * 2
+        paddingTop: 16, // ScreenContainer handles top inset; this is inner breathing room only
         borderBottomWidth: 1,
         flexDirection: 'row',
         alignItems: 'center',

@@ -2,6 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { fetchDailyUsage, fetchStreakData } from '../lib/queries';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
@@ -58,14 +59,15 @@ export const StreaksScreen = () => {
 
     if (loading) {
         return (
-            <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+            <ScreenContainer edges={['top']} style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
                 <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            </ScreenContainer>
         );
     }
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.xl * 2, paddingBottom: spacing.xl }]}>
+        <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+            <ScrollView style={styles.container} contentContainerStyle={[styles.content, { padding: spacing.l, paddingBottom: spacing.xl }]}>
             <Text style={[styles.screenTitle, { color: colors.text, marginBottom: spacing.l }]}>Your Journey</Text>
 
             <Card style={[styles.streakCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
@@ -106,7 +108,8 @@ export const StreaksScreen = () => {
                 </Card>
             </View>
 
-        </ScrollView>
+            </ScrollView>
+        </ScreenContainer>
     );
 };
 

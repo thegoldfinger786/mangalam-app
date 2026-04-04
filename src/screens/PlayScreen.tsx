@@ -8,7 +8,6 @@ import {
     Alert,
     Dimensions,
     Image,
-    SafeAreaView,
     ScrollView,
     Share,
     StyleSheet,
@@ -29,6 +28,8 @@ import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
 import { supabase } from '../lib/supabase';
+import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAppStore } from '../store/useAppStore';
 import { useAudioStore } from '../store/useAudioStore';
 import { theme, useTheme } from '../theme';
@@ -414,7 +415,7 @@ export const PlayScreen = () => {
     const playerBarBg = colors.background + 'E8';
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
             {/* ── Fixed Top Header ── */}
             <Animated.View style={[styles.header, { paddingTop: spacing.m, paddingHorizontal: spacing.m }, animatedFocusHeaderStyle]}>
                 {!isFocusMode ? (
@@ -643,8 +644,8 @@ export const PlayScreen = () => {
             </ScrollView>
 
             {/* ── Floating Player Bar ── */}
-            <View
-                style={[styles.playerBar, { backgroundColor: playerBarBg, borderTopColor: colors.border, paddingHorizontal: spacing.m, paddingTop: spacing.xs, paddingBottom: spacing.l }]}
+            <BottomSafeAreaContainer
+                style={[styles.playerBar, { backgroundColor: playerBarBg, borderTopColor: colors.border, paddingHorizontal: spacing.m, paddingTop: spacing.xs }]}
                 onLayout={(e) => setPlayerBarHeight(e.nativeEvent.layout.height)}
             >
                 <Slider
@@ -710,8 +711,8 @@ export const PlayScreen = () => {
                         <Ionicons name="play-skip-forward" size={22} color={colors.text} />
                     </TouchableOpacity>
                 </View>
-            </View>
-        </SafeAreaView>
+            </BottomSafeAreaContainer>
+        </ScreenContainer>
     );
 };
 

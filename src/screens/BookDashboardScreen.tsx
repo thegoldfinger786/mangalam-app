@@ -5,7 +5,6 @@ import {
     Alert,
     Dimensions,
     Image,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
@@ -18,6 +17,7 @@ import { COLLECTION_METADATA } from '../data/mockGita';
 import { fetchActiveBooks, supabase } from '../lib/queries';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 
 const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
@@ -138,7 +138,7 @@ export const BookDashboardScreen = () => {
     const meta = COLLECTION_METADATA[BOOK_SLUG] || { title: 'Wisdom', icon: 'book', color: colors.primary };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenContainer style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={[styles.header, { backgroundColor: colors.background }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
                     <Ionicons name="chevron-down" size={28} color={colors.text} />
@@ -217,7 +217,7 @@ export const BookDashboardScreen = () => {
                 </View>
 
             </ScrollView>
-        </SafeAreaView>
+        </ScreenContainer>
     );
 };
 
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16, // spacing.m
-        paddingTop: 16, // spacing.m
+        paddingTop: 8,  // ScreenContainer handles top inset; small breathing room only
         marginBottom: 16, // spacing.m
     },
     iconButton: {
