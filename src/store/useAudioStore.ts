@@ -1,4 +1,5 @@
-import { createAudioPlayer } from 'expo-audio';
+import { createAudioPlayer, setIsAudioActiveAsync } from 'expo-audio';
+import * as FileSystem from 'expo-file-system/legacy';
 import { create } from 'zustand';
 import { getBackgroundMood, getBackgroundTrackUrl } from '../utils/backgroundAudioUtils';
 
@@ -179,12 +180,18 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     _fadeBgAudio: (toVolume: number, durationMs: number) => {
         get()._stopFade();
         const { bgSound } = get();
-        if (!bgSound) return;
+        if (!bgSound) {
+            console.log('[DEBUG-AMBIENT] _fadeBgAudio skipped: bgSound is null');
+            return;
+        }
 
         const steps = 20;
         const stepTime = Math.max(25, Math.floor(durationMs / steps));
         const startVolume = typeof bgSound.volume === 'number' ? bgSound.volume : 0;
         const volumeStep = (toVolume - startVolume) / steps;
+
+        console.log(`[DEBUG-AMBIENT] _fadeBgAudio started -> targeting volume: ${toVolume} over ${durationMs}ms`);
+        console.log(`[DEBUG-AMBIENT] fade starting from current native volume: ${startVolume}`);
 
         let currentVolume = startVolume;
         let stepCount = 0;
@@ -196,17 +203,23 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             if (currentVolume < 0) currentVolume = 0;
             if (currentVolume > 1) currentVolume = 1;
 
+            if (stepCount % 5 === 0) {
+                console.log(`[DEBUG-AMBIENT] fade step ${stepCount}/${steps} -> setting volume to: ${currentVolume}`);
+            }
+
             try {
                 bgSound.volume = currentVolume;
-            } catch {
-                // Ignore temporary failure if stream is still buffering.
-                // Do not stop the fade; keep retrying on next ticks.
+            } catch (e) {
+                console.log(`[DEBUG-AMBIENT] fade assignment failed at step ${stepCount}:`, e);
             }
 
             if (stepCount >= steps) {
                 try {
                     bgSound.volume = toVolume;
-                } catch { }
+                    console.log(`[DEBUG-AMBIENT] fade complete. Final volume set to: ${toVolume}`);
+                } catch (e) {
+                    console.log(`[DEBUG-AMBIENT] fade final assignment failed`, e);
+                }
                 get()._stopFade();
             }
         }, stepTime);
@@ -216,7 +229,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
     stopAllAudio: async (options?: { keepBg?: boolean }) => {
         const keepBg = options?.keepBg || false;
-        
+
         if (!keepBg) {
             get()._stopFade();
         }
@@ -279,10 +292,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             } catch { }
 
             if (autoPlay && !get().isPlaying) {
-                try {
-                    existingSound.setActiveForLockScreen(true, buildLockScreenMetadata(content));
-                } catch { }
-
+                // Do NOT call setActiveForLockScreen(true) here — the player is already registered
+                // from its initial creation. Re-registering stacks duplicate remote command handlers
+                // in native MediaController, which silently breaks lock-screen resume.
                 if (existingBgSound) {
                     try {
                         existingBgSound.play();
@@ -329,6 +341,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
             newSound.setPlaybackRate(playbackRate, 'medium');
 
+            let isInitialPlayback = true;
+
             const mainStatusSubNew = newSound.addListener('playbackStatusUpdate', (status: any) => {
                 const currentState = get();
                 if (currentState.sound !== newSound) return;
@@ -345,18 +359,32 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     isPlaying: isNowPlaying,
                 });
 
+                // Clear initial lock when first stable playing packet arrives
+                if (isInitialPlayback && isNowPlaying) {
+                    isInitialPlayback = false;
+                }
+
                 if (wasPlaying && !isNowPlaying) {
+                    console.log(`[DEBUG-AMBIENT] Sync logic: Narration PAUSED. Pausing ambient.`);
                     // Narration paused (e.g. by lock screen or OS interruption)
                     if (currentState.bgSound) {
-                        try { currentState.bgSound.pause(); } catch {}
+                        try { currentState.bgSound.pause(); } catch (e) {
+                            console.log(`[DEBUG-AMBIENT] Sync logic: ambient pause failed`, e);
+                        }
                     }
-                } else if (!wasPlaying && isNowPlaying) {
-                    // Narration resumed
+                } else if (!isInitialPlayback && !wasPlaying && isNowPlaying) {
+                    console.log(`[DEBUG-AMBIENT] Sync logic: Narration RESUMED. Playing ambient & fading in.`);
+                    // Narration resumed (e.g. by lock screen or OS command)
+                    // Fire activation to violently wake the AVAudioSession if dead
+                    setIsAudioActiveAsync(true).catch(() => { });
+
                     if (currentState.bgSound) {
-                        try { 
-                            currentState.bgSound.play(); 
+                        try {
+                            currentState.bgSound.play();
                             get()._fadeBgAudio(get().targetBgVolume, 1000);
-                        } catch {}
+                        } catch (e) {
+                            console.log(`[DEBUG-AMBIENT] Sync logic: ambient resume failed`, e);
+                        }
                     }
                 }
 
@@ -418,15 +446,40 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             let bgStatusSubNew = get().bgStatusSub;
 
             if (!keepBg || !newBgSound) {
-                newBgSound = createAudioPlayer(bgUrl, {
+                console.log(`[DEBUG-AMBIENT] Creating new ambient player for bgUrl: ${bgUrl}`);
+
+                let sourceUrl = bgUrl;
+                try {
+                    const localPath = FileSystem.cacheDirectory + encodeURIComponent(bgUrl);
+                    const fileInfo = await FileSystem.getInfoAsync(localPath);
+                    if (!fileInfo.exists) {
+                        console.log(`[DEBUG-AMBIENT] Downloading ambient to cache: ${localPath}`);
+                        await FileSystem.downloadAsync(bgUrl, localPath);
+                    } else {
+                        console.log(`[DEBUG-AMBIENT] Using cached ambient audio: ${localPath}`);
+                    }
+                    sourceUrl = localPath;
+                } catch (err) {
+                    console.log(`[DEBUG-AMBIENT] Cache failed, falling back to remote URL`, err);
+                }
+
+                newBgSound = createAudioPlayer(sourceUrl, {
                     updateInterval: 500,
+                    // downloadFirst: false — let the native HTTP streamer open the connection
+                    // independently. downloadFirst: true caused the player to silently ignore
+                    // .play() calls because the 7.6MB file hadn't fully downloaded yet.
                     downloadFirst: false,
                 });
+                console.log(`[DEBUG-AMBIENT] Ambient player created successfully`);
 
                 newBgSound.loop = true;
-                newBgSound.volume = 0;
+                // Initialize with 0.01 to force AVPlayer to eagerly allocate network buffers.
+                // Volume 0 makes iOS background resource allocation heuristics stall the stream.
+                newBgSound.volume = 0.01;
 
-                bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', () => { });
+                bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', (status: any) => {
+                    console.log(`[DEBUG-AMBIENT-STATUS] playing: ${status?.playing}, isLoaded: ${status?.isLoaded}, isBuffering: ${status?.isBuffering}, didJustFinish: ${status?.didJustFinish}, error: ${status?.error}`);
+                });
             }
 
             if (get().loadToken !== nextToken) {
@@ -448,28 +501,50 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             });
 
             if (autoPlay) {
+                // Register this player as the sole lock-screen owner exactly once —
+                // at first creation. Never re-register on the same instance to avoid
+                // stacking duplicate MPRemoteCommandCenter handlers in native code.
                 try {
                     newSound.setActiveForLockScreen(true, buildLockScreenMetadata(content));
                 } catch { }
 
-                try {
-                    newBgSound?.play();
-                } catch (e) {
-                    console.log('background bed play error', e);
-                }
-
+                // Start narration immediately.
                 newSound.play();
-                
-                if (!keepBg) {
-                    get()._fadeBgAudio(get().targetBgVolume, 1800);
-                } else {
+
+                // Delay ambient start by 500ms so the narration HTTP stream claims its
+                // native AVAudioSession slot first. In production/native builds, firing
+                // two new AVPlayer instances simultaneously causes the ambient buffer to
+                // be silently dropped by the OS media engine.
+                const capturedBg = newBgSound;
+                const capturedKeepBg = keepBg;
+
+                console.log(`[DEBUG-AMBIENT] Will attempt bg .play() in 500ms...`);
+                setTimeout(() => {
+                    if (get().sound !== newSound) {
+                        console.log(`[DEBUG-AMBIENT] setTimeout guard fired — sound changed during delay.`);
+                        return; // guard: verse changed during delay
+                    }
                     try {
-                        if (newBgSound) newBgSound.volume = get().targetBgVolume;
-                    } catch {}
-                }
+                        console.log(`[DEBUG-AMBIENT] Executing capturedBg?.play()...`);
+                        capturedBg?.play();
+                        console.log(`[DEBUG-AMBIENT] Executed capturedBg?.play() successfully.`);
+                    } catch (e) {
+                        console.log(`[DEBUG-AMBIENT] FAILED to execute capturedBg?.play()`, e);
+                    }
+                    if (!capturedKeepBg) {
+                        get()._fadeBgAudio(get().targetBgVolume, 1800);
+                    } else {
+                        try {
+                            if (capturedBg) {
+                                console.log(`[DEBUG-AMBIENT] capturedKeepBg is true, forcing volume to targetBgVolume: ${get().targetBgVolume}`);
+                                capturedBg.volume = get().targetBgVolume;
+                            }
+                        } catch { }
+                    }
+                }, 500);
             } else {
                 if (keepBg && newBgSound) {
-                    try { newBgSound.pause(); } catch {}
+                    try { newBgSound.pause(); } catch { }
                 }
             }
         } catch (error) {
@@ -494,9 +569,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             return;
         }
 
-        try {
-            sound.setActiveForLockScreen(true, buildLockScreenMetadata(currentContent || {}));
-        } catch { }
+        // Do NOT call setActiveForLockScreen(true) here — the player was already registered
+        // at creation time. Re-registering adds a new MPRemoteCommandCenter handler on
+        // every in-app resume, which stacks up and breaks lock-screen controls.
 
         if (position >= duration) {
             await sound.seekTo(0);
