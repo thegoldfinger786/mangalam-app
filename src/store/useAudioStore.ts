@@ -1,4 +1,4 @@
-import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { createAudioPlayer } from 'expo-audio';
 import { create } from 'zustand';
 import { getBackgroundMood, getBackgroundTrackUrl } from '../utils/backgroundAudioUtils';
 
@@ -22,6 +22,7 @@ interface CurrentContent {
 interface AudioState {
     sound: AudioPlayerLike | null;
     bgSound: AudioPlayerLike | null;
+    currentBgUrl: string | null;
     isPlaying: boolean;
     position: number;
     duration: number;
@@ -41,7 +42,7 @@ interface AudioState {
     togglePlayPause: () => Promise<void>;
     seek: (position: number) => Promise<void>;
     setPlaybackRate: (rate: number) => Promise<void>;
-    stopAllAudio: () => Promise<void>;
+    stopAllAudio: (options?: { keepBg?: boolean }) => Promise<void>;
     _stopFade: () => void;
     _fadeBgAudio: (toVolume: number, durationMs: number) => void;
 }
@@ -75,7 +76,7 @@ function getContentType(content: any): string {
 }
 
 function getBookDisplayName(content: any): string {
-    const slug = (content?.book_slug || content?.slug || '').toLowerCase();
+    const slug = (content?.book_slug || content?.slug || content?.type || '').toLowerCase();
     const explicit =
         content?.book_title ||
         content?.bookTitle ||
@@ -152,6 +153,7 @@ function mapCurrentContent(content: any): CurrentContent {
 export const useAudioStore = create<AudioState>((set, get) => ({
     sound: null,
     bgSound: null,
+    currentBgUrl: null,
     isPlaying: false,
     position: 0,
     duration: 1,
@@ -161,7 +163,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     onFinish: undefined,
 
     bgFadeInterval: null,
-    targetBgVolume: 0.3,
+    targetBgVolume: 0.4,
     mainStatusSub: null,
     bgStatusSub: null,
     loadToken: 0,
@@ -197,8 +199,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             try {
                 bgSound.volume = currentVolume;
             } catch {
-                get()._stopFade();
-                return;
+                // Ignore temporary failure if stream is still buffering.
+                // Do not stop the fade; keep retrying on next ticks.
             }
 
             if (stepCount >= steps) {
@@ -212,13 +214,19 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         set({ bgFadeInterval: interval });
     },
 
-    stopAllAudio: async () => {
-        get()._stopFade();
+    stopAllAudio: async (options?: { keepBg?: boolean }) => {
+        const keepBg = options?.keepBg || false;
+        
+        if (!keepBg) {
+            get()._stopFade();
+        }
 
         const { sound, bgSound, mainStatusSub, bgStatusSub } = get();
 
         mainStatusSub?.remove?.();
-        bgStatusSub?.remove?.();
+        if (!keepBg) {
+            bgStatusSub?.remove?.();
+        }
 
         if (sound) {
             try { sound.setActiveForLockScreen(false); } catch { }
@@ -226,14 +234,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             try { sound.remove(); } catch { }
         }
 
-        if (bgSound) {
+        if (bgSound && !keepBg) {
             try { bgSound.pause(); } catch { }
             try { bgSound.remove(); } catch { }
         }
 
-        set({
+        set((state) => ({
             sound: null,
-            bgSound: null,
+            bgSound: keepBg ? state.bgSound : null,
+            currentBgUrl: keepBg ? state.currentBgUrl : null,
             isPlaying: false,
             position: 0,
             duration: 1,
@@ -241,8 +250,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             currentContent: null,
             onFinish: undefined,
             mainStatusSub: null,
-            bgStatusSub: null,
-        });
+            bgStatusSub: keepBg ? state.bgStatusSub : null,
+            ...(keepBg ? {} : { bgFadeInterval: null }),
+        }));
     },
 
     loadAudio: async (url, content, autoPlay = false, onFinish) => {
@@ -286,16 +296,19 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             return;
         }
 
-        await get().stopAllAudio();
+        const expectedMood = getBackgroundMood(content?.type || content?.book_id || content?.book_slug);
+        const expectedBgUrl = getBackgroundTrackUrl(expectedMood, 60000);
+        const keepBg = existingBgSound !== null && get().currentBgUrl === expectedBgUrl;
+
+        await get().stopAllAudio({ keepBg });
 
         try {
             set({
                 onFinish,
                 audioUrl: url,
                 sound: null,
-                bgSound: null,
                 mainStatusSub: null,
-                bgStatusSub: null,
+                ...(keepBg ? {} : { bgSound: null, bgStatusSub: null, currentBgUrl: null }),
             });
 
             if (!url) {
@@ -307,14 +320,6 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 });
                 return;
             }
-
-            await setAudioModeAsync({
-                playsInSilentMode: true,
-                shouldPlayInBackground: true,
-                interruptionMode: 'doNotMix',
-                shouldRouteThroughEarpiece: false,
-            });
-
             if (get().loadToken !== nextToken) return;
 
             const newSound = createAudioPlayer(url, {
@@ -331,11 +336,29 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 const positionMs = Math.max(0, Math.floor((status.currentTime || 0) * 1000));
                 const durationMs = Math.max(1, Math.floor((status.duration || 0) * 1000));
 
+                const isNowPlaying = !!status.playing;
+                const wasPlaying = currentState.isPlaying;
+
                 set({
                     position: positionMs,
                     duration: durationMs,
-                    isPlaying: !!status.playing,
+                    isPlaying: isNowPlaying,
                 });
+
+                if (wasPlaying && !isNowPlaying) {
+                    // Narration paused (e.g. by lock screen or OS interruption)
+                    if (currentState.bgSound) {
+                        try { currentState.bgSound.pause(); } catch {}
+                    }
+                } else if (!wasPlaying && isNowPlaying) {
+                    // Narration resumed
+                    if (currentState.bgSound) {
+                        try { 
+                            currentState.bgSound.play(); 
+                            get()._fadeBgAudio(get().targetBgVolume, 1000);
+                        } catch {}
+                    }
+                }
 
                 const msRemaining = durationMs - positionMs;
                 const { bgSound, bgFadeInterval } = get();
@@ -391,25 +414,33 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 return;
             }
 
-            const newBgSound = createAudioPlayer(bgUrl, {
-                updateInterval: 500,
-                downloadFirst: false,
-            });
+            let newBgSound = get().bgSound;
+            let bgStatusSubNew = get().bgStatusSub;
 
-            newBgSound.loop = true;
-            newBgSound.volume = 0;
+            if (!keepBg || !newBgSound) {
+                newBgSound = createAudioPlayer(bgUrl, {
+                    updateInterval: 500,
+                    downloadFirst: false,
+                });
 
-            const bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', () => { });
+                newBgSound.loop = true;
+                newBgSound.volume = 0;
+
+                bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', () => { });
+            }
 
             if (get().loadToken !== nextToken) {
                 try { newSound.remove(); } catch { }
-                try { newBgSound.remove(); } catch { }
+                if (!keepBg) {
+                    try { newBgSound?.remove(); } catch { }
+                }
                 return;
             }
 
             set({
                 sound: newSound,
                 bgSound: newBgSound,
+                currentBgUrl: bgUrl,
                 audioUrl: url,
                 currentContent: mapCurrentContent(content),
                 mainStatusSub: mainStatusSubNew,
@@ -422,13 +453,24 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 } catch { }
 
                 try {
-                    newBgSound.play();
+                    newBgSound?.play();
                 } catch (e) {
                     console.log('background bed play error', e);
                 }
 
                 newSound.play();
-                get()._fadeBgAudio(get().targetBgVolume, 1800);
+                
+                if (!keepBg) {
+                    get()._fadeBgAudio(get().targetBgVolume, 1800);
+                } else {
+                    try {
+                        if (newBgSound) newBgSound.volume = get().targetBgVolume;
+                    } catch {}
+                }
+            } else {
+                if (keepBg && newBgSound) {
+                    try { newBgSound.pause(); } catch {}
+                }
             }
         } catch (error) {
             console.error('Error loading audio in store:', error);

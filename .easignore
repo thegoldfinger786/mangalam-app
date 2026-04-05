@@ -1,11 +1,47 @@
-node_modules
-dist
-.expo
-.vscode
-.DS_Store
+# dependencies
+node_modules/
 
-# env files
+# git
+.git/
+.github/
+
+# local env
 .env
-.env.local
 .env.*
 !.env.example
+
+# expo / build caches
+.expo/
+.expo-shared/
+dist/
+build/
+web-build/
+coverage/
+.cache/
+.tmp/
+tmp/
+
+# editor / os files
+.vscode/
+.idea/
+.DS_Store
+
+# local scripts and tooling not needed for app build
+scripts/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# tests
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# docs and misc
+*.md
+!README.md

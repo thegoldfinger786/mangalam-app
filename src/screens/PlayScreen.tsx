@@ -81,6 +81,15 @@ export const PlayScreen = () => {
     }, [isFocusMode]);
 
     const scrollRef = useRef<ScrollView>(null);
+    const isNavigatingToVerse = useRef(false);
+
+    useEffect(() => {
+        return () => {
+            if (!isNavigatingToVerse.current) {
+                useAudioStore.getState().stopAllAudio();
+            }
+        };
+    }, []);
     const [scrollContentHeight, setScrollContentHeight] = useState(0);
     const [scrollViewHeight, setScrollViewHeight] = useState(0);
     const [playerBarHeight, setPlayerBarHeight] = useState(220);
@@ -190,6 +199,11 @@ export const PlayScreen = () => {
                 }
 
 
+                let resolvedArtworkUrl: string | undefined;
+                if (isGita) resolvedArtworkUrl = Image.resolveAssetSource(GITA_COVER).uri;
+                else if (isRamayan) resolvedArtworkUrl = Image.resolveAssetSource(RAMAYAN_COVER).uri;
+                else if (isMahabharat) resolvedArtworkUrl = Image.resolveAssetSource(MAHABHARAT_COVER).uri;
+
                 if (cache?.storage_path) {
                     const bucket = (cache as any).storage_bucket || 'audio-content';
                     const { data: urlData } = supabase.storage
@@ -203,12 +217,12 @@ export const PlayScreen = () => {
                             }
                         };
                         const freshUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                        loadAudio(freshUrl, { ...data, type }, autoPlay, onFinish);
+                        loadAudio(freshUrl, { ...data, type, artworkUrl: resolvedArtworkUrl }, autoPlay, onFinish);
                     }
                 } else {
                     console.log(`[PlayScreen] No audio found for ${itemId} in ${lang}-${gender}`);
                     // Ensure state is updated so user can still see text and manually navigate
-                    loadAudio('', { ...data, type }, false, () => {
+                    loadAudio('', { ...data, type, artworkUrl: resolvedArtworkUrl }, false, () => {
                         if (nextId) navigateToVerse(nextId, true);
                     });
                 }
@@ -347,6 +361,7 @@ export const PlayScreen = () => {
 
     const navigateToVerse = async (targetVerseId: string, forceAutoPlay?: boolean) => {
         const wasPlaying = forceAutoPlay ?? isPlaying;
+        isNavigatingToVerse.current = true;
         navigation.replace('Play', { itemId: targetVerseId, type, autoPlay: wasPlaying });
         setHasLoggedListen(false); // Reset tracking for new verse
     };
