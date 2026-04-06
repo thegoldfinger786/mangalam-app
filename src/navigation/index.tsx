@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useMemo } from 'react';
 
 // Navigators & Screens
-import { supabase } from '../lib/supabase';
+import { getSession, onAuthStateChange } from '../lib/supabase';
 import { AuthScreen } from '../screens/AuthScreen';
 import { BookDashboardScreen } from '../screens/BookDashboardScreen';
 import { CommunityWisdomScreen } from '../screens/CommunityWisdomScreen';
@@ -36,17 +36,27 @@ export const AppNavigator = () => {
     }), [colors]);
 
     useEffect(() => {
-        // Check initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
+        let isMounted = true;
+
+        const loadSession = async () => {
+            const session = await getSession();
+            if (isMounted) {
+                setSession(session);
+            }
+        };
+
+        void loadSession();
+
+        const subscription = onAuthStateChange((_event, session) => {
+            if (isMounted) {
+                setSession(session);
+            }
         });
 
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
-
-        return () => subscription.unsubscribe();
+        return () => {
+            isMounted = false;
+            subscription.unsubscribe();
+        };
     }, [setSession]);
 
     return (

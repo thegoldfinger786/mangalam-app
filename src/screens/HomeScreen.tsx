@@ -10,6 +10,7 @@ import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
 import { fetchActiveBooks, fetchBookBySlug, fetchDailyUsage, fetchFirstVerseForBook, fetchStreakData, fetchUserProgress } from '../lib/queries';
+import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { DynamicBackground } from '../components/DynamicBackground';
@@ -29,7 +30,7 @@ const EXPLORE_PATHS = [
 
 export const HomeScreen = () => {
     const navigation = useNavigation<NavigationProp>();
-    const { session, activePath, setActivePath, userName } = useAppStore();
+    const { session, activePath, setActivePath, userName, setUserName } = useAppStore();
     const { colors, spacing, typography } = useTheme();
 
     const [loading, setLoading] = useState(true);
@@ -46,6 +47,19 @@ export const HomeScreen = () => {
                 fetchDailyUsage(session.user.id),
                 fetchStreakData(session.user.id)
             ]);
+
+            if (!userName) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('display_name')
+                    .eq('id', session.user.id)
+                    .maybeSingle();
+
+                if (profile?.display_name) {
+                    setUserName(profile.display_name);
+                }
+            }
+
             setBooks(activeBooks);
             setUsage(dailyUsage);
 
@@ -57,7 +71,7 @@ export const HomeScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [session]);
+    }, [session, setUserName, userName]);
 
     useFocusEffect(
         useCallback(() => {

@@ -162,37 +162,112 @@ export const fetchVerseAudio = async (
     language: 'en' | 'hi',
     voicePreference: string
 ) => {
-    const voiceMap: Record<string, string[]> = {
-        'english-female': ['en-IN-Neural2-A', 'en-IN-Wavenet-A'],
-        'english-male': ['en-IN-Neural2-B', 'en-IN-Wavenet-B'],
-        'hindi-female': ['hi-IN-Neural2-A', 'hi-IN-Wavenet-A'],
-        'hindi-male': ['hi-IN-Neural2-B', 'hi-IN-Wavenet-C'],
-    };
+    try {
+        const DEBUG_AUDIO = false;
+        const SUPPORTED_AUDIO_TYPES = ['spoken_episode', 'compiled_full_episode'];
 
-    const preferredVoices = voiceMap[voicePreference] || [];
+        if (!bookId || !verseId) return null;
 
-    const { data, error } = await supabase
-        .from('verse_audio')
-        .select('storage_path, storage_bucket, asset_type, is_canonical, status, voice_id')
-        .eq('book_id', bookId)
-        .eq('verse_id', verseId)
-        .eq('language', language)
-        .eq('is_primary_playback', true)
-        .eq('status', 'ready')
-        .in('voice_id', preferredVoices)
-        .limit(1)
-        .maybeSingle();
+        const normalizedLanguage: 'en' | 'hi' = language === 'hi' ? 'hi' : 'en';
+        const normalizedVoicePref = voicePreference?.toLowerCase().trim();
+        const voiceMap: Record<string, string[]> = {
+            'english-female': ['en-IN-Neural2-A', 'en-IN-Wavenet-A'],
+            'english-male': ['en-IN-Neural2-B', 'en-IN-Wavenet-B'],
+            'hindi-female': ['hi-IN-Neural2-A', 'hi-IN-Wavenet-A'],
+            'hindi-male': ['hi-IN-Neural2-B', 'hi-IN-Wavenet-C'],
+        };
 
-    if (error) {
-        console.error('Error fetching primary verse audio:', error);
+        if (!normalizedVoicePref || !voiceMap[normalizedVoicePref]) {
+            console.warn('Unknown voicePreference:', voicePreference);
+        }
+
+        const preferredVoices = voiceMap[normalizedVoicePref] || [];
+
+        const baseQuery = () =>
+            supabase
+                .from('verse_audio')
+                .select('storage_path, storage_bucket, asset_type, is_canonical, status, voice_id')
+                .eq('book_id', bookId)
+                .eq('verse_id', verseId)
+                .eq('language', normalizedLanguage)
+                .eq('is_active', true)
+                .eq('status', 'ready')
+                .in('asset_type', SUPPORTED_AUDIO_TYPES);
+
+        const finalizeQuery = async (query: ReturnType<typeof baseQuery>) => {
+            const { data, error } = await query
+                .order('is_canonical', { ascending: false })
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            return { data: data?.[0] ?? null, error };
+        };
+
+        if (preferredVoices.length > 0) {
+            const { data: voiceMatchedData, error: voiceMatchedError } = await finalizeQuery(
+                baseQuery().in('voice_id', preferredVoices)
+            );
+
+            if (voiceMatchedError) {
+                console.error('Error fetching voice-matched verse audio:', voiceMatchedError);
+            } else if (voiceMatchedData) {
+                if (DEBUG_AUDIO) {
+                    console.log('AUDIO FETCH RESULT:', {
+                        stage: 'voice-match',
+                        bookId,
+                        verseId,
+                        language: normalizedLanguage,
+                        voicePreference: normalizedVoicePref,
+                        result: voiceMatchedData
+                    });
+                }
+                return voiceMatchedData;
+            }
+        }
+
+        const { data: primaryData, error: primaryError } = await finalizeQuery(
+            baseQuery().eq('is_primary_playback', true)
+        );
+
+        if (primaryError) {
+            console.error('Error fetching primary verse audio:', primaryError);
+        } else if (primaryData) {
+            if (DEBUG_AUDIO) {
+                console.log('AUDIO FETCH RESULT:', {
+                    stage: 'primary',
+                    bookId,
+                    verseId,
+                    language: normalizedLanguage,
+                    voicePreference: normalizedVoicePref,
+                    result: primaryData
+                });
+            }
+            return primaryData;
+        }
+
+        const { data: fallbackData, error: fallbackError } = await finalizeQuery(baseQuery());
+
+        if (fallbackError) {
+            console.error('Error fetching fallback verse audio:', fallbackError);
+            return null;
+        }
+
+        if (DEBUG_AUDIO) {
+            console.log('AUDIO FETCH RESULT:', {
+                stage: 'fallback',
+                bookId,
+                verseId,
+                language: normalizedLanguage,
+                voicePreference: normalizedVoicePref,
+                result: fallbackData
+            });
+        }
+
+        return fallbackData ?? null;
+    } catch (error) {
+        console.error('Error fetching verse audio:', error);
+        return null;
     }
-    console.log('AUDIO FETCH RESULT:', {
-        verseId,
-        language,
-        voicePreference,
-        result: data
-    });
-    return data;
 };
 
 // --- Audio Cache (Legacy) ---

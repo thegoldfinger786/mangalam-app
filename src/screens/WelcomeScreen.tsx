@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { Button } from '../components/Button';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { theme, useTheme } from '../theme';
 
@@ -10,11 +11,29 @@ export const WelcomeScreen = () => {
     const { setUserName, setHasCompletedOnboarding } = useAppStore();
     const [name, setName] = useState('');
 
-    const handleStart = () => {
-        if (name.trim()) {
-            setUserName(name.trim());
-            setHasCompletedOnboarding(true);
+    const handleStart = async () => {
+        const displayName = name.trim();
+        if (!displayName) return;
+
+        const userId = useAppStore.getState().session?.user?.id;
+        if (!userId) {
+            Alert.alert('Error', 'Unable to save your name right now.');
+            return;
         }
+
+        const { error } = await supabase.from('profiles').upsert({
+            id: userId,
+            display_name: displayName,
+            updated_at: new Date().toISOString(),
+        });
+
+        if (error) {
+            Alert.alert('Error', error.message);
+            return;
+        }
+
+        setUserName(displayName);
+        setHasCompletedOnboarding(true);
     };
 
     return (

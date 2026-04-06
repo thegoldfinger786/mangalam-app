@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAudioPlayer, setIsAudioActiveAsync } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
 import { create } from 'zustand';
@@ -33,11 +34,19 @@ interface AudioState {
     onFinish?: () => void;
 
     bgFadeInterval: ReturnType<typeof setInterval> | null;
+    narrationVolume: number;
     targetBgVolume: number;
+    lastBgVolume: number;
+    bgEnabled: boolean;
+    audioSettingsLoaded: boolean;
     mainStatusSub: SubscriptionLike;
     bgStatusSub: SubscriptionLike;
     loadToken: number;
 
+    hydrateAudioSettings: () => Promise<void>;
+    setNarrationVolume: (volume: number, persist?: boolean) => Promise<void>;
+    setBgVolume: (volume: number, persist?: boolean) => Promise<void>;
+    setBgEnabled: (enabled: boolean, persist?: boolean) => Promise<void>;
     loadAudio: (url: string, content: any, autoPlay?: boolean, onFinish?: () => void) => Promise<void>;
     unloadAudio: () => Promise<void>;
     togglePlayPause: () => Promise<void>;
@@ -151,6 +160,13 @@ function mapCurrentContent(content: any): CurrentContent {
     };
 }
 
+const AUDIO_SETTINGS_KEY = 'audio_settings';
+const DEFAULT_NARRATION_VOLUME = 0.9;
+const DEFAULT_BG_VOLUME = 0.6;
+const MIN_BG_VOLUME = 0.01;
+const clampNarrationVolume = (volume: number) => Math.min(1, Math.max(0.7, volume));
+const clampBgVolume = (volume: number) => Math.min(0.8, Math.max(0, volume));
+
 export const useAudioStore = create<AudioState>((set, get) => ({
     sound: null,
     bgSound: null,
@@ -164,10 +180,168 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     onFinish: undefined,
 
     bgFadeInterval: null,
-    targetBgVolume: 0.4,
+    narrationVolume: DEFAULT_NARRATION_VOLUME,
+    targetBgVolume: DEFAULT_BG_VOLUME,
+    lastBgVolume: DEFAULT_BG_VOLUME,
+    bgEnabled: true,
+    audioSettingsLoaded: false,
     mainStatusSub: null,
     bgStatusSub: null,
     loadToken: 0,
+
+    hydrateAudioSettings: async () => {
+        if (get().audioSettingsLoaded) return;
+
+        try {
+            const raw = await AsyncStorage.getItem(AUDIO_SETTINGS_KEY);
+            if (raw) {
+                let parsed = null;
+                try {
+                    parsed = JSON.parse(raw);
+                } catch {
+                    parsed = null;
+                }
+                const narrationVolume =
+                    typeof parsed?.narrationVolume === 'number'
+                        ? clampNarrationVolume(parsed.narrationVolume)
+                        : DEFAULT_NARRATION_VOLUME;
+                const bgVolume =
+                    typeof parsed?.bgVolume === 'number'
+                        ? clampBgVolume(parsed.bgVolume)
+                        : DEFAULT_BG_VOLUME;
+                const lastBgVolume =
+                    typeof parsed?.lastBgVolume === 'number'
+                        ? Math.max(clampBgVolume(parsed.lastBgVolume), MIN_BG_VOLUME)
+                        : Math.max(bgVolume, MIN_BG_VOLUME);
+                const bgEnabled = typeof parsed?.bgEnabled === 'boolean' ? parsed.bgEnabled : true;
+
+                set({
+                    narrationVolume,
+                    targetBgVolume: bgEnabled ? Math.max(bgVolume, MIN_BG_VOLUME) : MIN_BG_VOLUME,
+                    lastBgVolume,
+                    bgEnabled,
+                    audioSettingsLoaded: true,
+                });
+                return;
+            }
+        } catch (error) {
+            console.error('Error loading audio settings:', error);
+        }
+
+        set({ audioSettingsLoaded: true });
+    },
+
+    setNarrationVolume: async (volume, persist = true) => {
+        const { sound, bgEnabled, lastBgVolume } = get();
+        const nextVolume = clampNarrationVolume(volume);
+
+        set({ narrationVolume: nextVolume });
+
+        if (sound) {
+            try {
+                sound.volume = nextVolume;
+            } catch { }
+        }
+
+        if (persist) {
+            try {
+                await AsyncStorage.setItem(
+                    AUDIO_SETTINGS_KEY,
+                    JSON.stringify({
+                        narrationVolume: nextVolume,
+                        bgVolume: lastBgVolume,
+                        lastBgVolume,
+                        bgEnabled,
+                    })
+                );
+            } catch (error) {
+                console.error('Error saving narration volume:', error);
+            }
+        }
+    },
+
+    setBgVolume: async (volume, persist = true) => {
+        const { narrationVolume, bgSound, bgEnabled, lastBgVolume } = get();
+        const nextVolume = clampBgVolume(volume);
+        const nextEnabled = nextVolume > MIN_BG_VOLUME;
+        const nextLastBgVolume = nextVolume > MIN_BG_VOLUME ? nextVolume : lastBgVolume;
+        const effectiveBgVolume = nextEnabled ? Math.max(nextVolume, MIN_BG_VOLUME) : MIN_BG_VOLUME;
+
+        set({
+            targetBgVolume: effectiveBgVolume,
+            lastBgVolume: nextLastBgVolume,
+            bgEnabled: nextEnabled,
+        });
+
+        if (bgSound) {
+            try {
+                bgSound.volume = Math.max(effectiveBgVolume, MIN_BG_VOLUME);
+            } catch { }
+        }
+
+        if (persist) {
+            try {
+                await AsyncStorage.setItem(
+                    AUDIO_SETTINGS_KEY,
+                    JSON.stringify({
+                        narrationVolume,
+                        bgVolume: nextLastBgVolume,
+                        lastBgVolume: nextLastBgVolume,
+                        bgEnabled: nextEnabled,
+                    })
+                );
+            } catch (error) {
+                console.error('Error saving background volume:', error);
+            }
+        }
+    },
+
+    setBgEnabled: async (enabled, persist = true) => {
+        const { narrationVolume, lastBgVolume, bgSound } = get();
+        const restoredBgVolume = Math.max(lastBgVolume, MIN_BG_VOLUME);
+        const nextBgVolume = enabled ? restoredBgVolume : MIN_BG_VOLUME;
+
+        set({
+            bgEnabled: enabled,
+            targetBgVolume: nextBgVolume,
+        });
+
+        if (bgSound) {
+            try {
+                if (!enabled) {
+                    get()._fadeBgAudio(MIN_BG_VOLUME, 500);
+                    const capturedBg = bgSound;
+                    setTimeout(() => {
+                        try {
+                            if (get().bgSound === capturedBg) {
+                                capturedBg.pause();
+                            }
+                        } catch { }
+                    }, 500);
+                } else {
+                    bgSound.play();
+                    bgSound.volume = MIN_BG_VOLUME;
+                    get()._fadeBgAudio(nextBgVolume, 800);
+                }
+            } catch { }
+        }
+
+        if (persist) {
+            try {
+                await AsyncStorage.setItem(
+                    AUDIO_SETTINGS_KEY,
+                    JSON.stringify({
+                        narrationVolume,
+                        bgVolume: restoredBgVolume,
+                        lastBgVolume: restoredBgVolume,
+                        bgEnabled: enabled,
+                    })
+                );
+            } catch (error) {
+                console.error('Error saving background toggle:', error);
+            }
+        }
+    },
 
     _stopFade: () => {
         const { bgFadeInterval } = get();
@@ -187,7 +361,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
         const steps = 20;
         const stepTime = Math.max(25, Math.floor(durationMs / steps));
-        const startVolume = typeof bgSound.volume === 'number' ? bgSound.volume : 0;
+        const startVolume = typeof bgSound.volume === 'number' ? Math.max(bgSound.volume, MIN_BG_VOLUME) : MIN_BG_VOLUME;
         const volumeStep = (toVolume - startVolume) / steps;
 
         console.log(`[DEBUG-AMBIENT] _fadeBgAudio started -> targeting volume: ${toVolume} over ${durationMs}ms`);
@@ -200,7 +374,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             stepCount += 1;
             currentVolume += volumeStep;
 
-            if (currentVolume < 0) currentVolume = 0;
+            if (currentVolume < MIN_BG_VOLUME) currentVolume = MIN_BG_VOLUME;
             if (currentVolume > 1) currentVolume = 1;
 
             if (stepCount % 5 === 0) {
@@ -248,6 +422,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         }
 
         if (bgSound && !keepBg) {
+            console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by stopAllAudio (keepBg=false)`);
             try { bgSound.pause(); } catch { }
             try { bgSound.remove(); } catch { }
         }
@@ -269,6 +444,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     },
 
     loadAudio: async (url, content, autoPlay = false, onFinish) => {
+        await get().hydrateAudioSettings();
+
         const nextToken = get().loadToken + 1;
         set({ loadToken: nextToken });
 
@@ -277,6 +454,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             bgSound: existingBgSound,
             audioUrl,
             playbackRate,
+            narrationVolume,
         } = get();
 
         get()._stopFade();
@@ -298,7 +476,11 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 if (existingBgSound) {
                     try {
                         existingBgSound.play();
-                        get()._fadeBgAudio(get().targetBgVolume, 1200);
+                        if (get().bgEnabled) {
+                            get()._fadeBgAudio(get().targetBgVolume, 1200);
+                        } else {
+                            existingBgSound.pause();
+                        }
                     } catch { }
                 }
 
@@ -338,7 +520,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 updateInterval: 100,
                 downloadFirst: false,
             });
-
+            newSound.volume = narrationVolume;
             newSound.setPlaybackRate(playbackRate, 'medium');
 
             let isInitialPlayback = true;
@@ -365,11 +547,12 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 }
 
                 if (wasPlaying && !isNowPlaying) {
-                    console.log(`[DEBUG-AMBIENT] Sync logic: Narration PAUSED. Pausing ambient.`);
+                    console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by narration sync (wasPlaying->!isNowPlaying)`);
+                    console.log(`[DIAG-AMBIENT-PAUSE] bgSound exists: ${!!currentState.bgSound}, bgSound.volume: ${currentState.bgSound?.volume}`);
                     // Narration paused (e.g. by lock screen or OS interruption)
                     if (currentState.bgSound) {
                         try { currentState.bgSound.pause(); } catch (e) {
-                            console.log(`[DEBUG-AMBIENT] Sync logic: ambient pause failed`, e);
+                            console.log(`[DIAG-AMBIENT-PAUSE] Sync pause failed`, e);
                         }
                     }
                 } else if (!isInitialPlayback && !wasPlaying && isNowPlaying) {
@@ -380,8 +563,12 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
                     if (currentState.bgSound) {
                         try {
-                            currentState.bgSound.play();
-                            get()._fadeBgAudio(get().targetBgVolume, 1000);
+                            if (get().bgEnabled) {
+                                currentState.bgSound.play();
+                                get()._fadeBgAudio(get().targetBgVolume, 1000);
+                            } else {
+                                currentState.bgSound.pause();
+                            }
                         } catch (e) {
                             console.log(`[DEBUG-AMBIENT] Sync logic: ambient resume failed`, e);
                         }
@@ -392,7 +579,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 const { bgSound, bgFadeInterval } = get();
 
                 if (msRemaining < 4500 && msRemaining > 0 && bgSound && !bgFadeInterval) {
-                    get()._fadeBgAudio(0, 3500);
+                    console.log(`[DIAG-AMBIENT-PAUSE] Fade-to-zero triggered by end-of-narration (msRemaining: ${msRemaining})`);
+                    get()._fadeBgAudio(MIN_BG_VOLUME, 3500);
                 }
 
                 if (status.didJustFinish) {
@@ -403,10 +591,11 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
                     const bg = get().bgSound;
                     if (bg) {
+                        console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by didJustFinish`);
                         try {
                             bg.pause();
                             bg.seekTo(0);
-                            bg.volume = 0;
+                            bg.volume = MIN_BG_VOLUME;
                         } catch { }
                     }
 
@@ -463,6 +652,18 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     console.log(`[DEBUG-AMBIENT] Cache failed, falling back to remote URL`, err);
                 }
 
+                // ===== DIAGNOSTIC: Final sourceUrl analysis =====
+                const isLocalFile = !sourceUrl.startsWith('http://') && !sourceUrl.startsWith('https://');
+                const startsWithFileProtocol = sourceUrl.startsWith('file://');
+                console.log(`[DIAG-AMBIENT-SOURCE] ====================================`);
+                console.log(`[DIAG-AMBIENT-SOURCE] Final sourceUrl: ${sourceUrl}`);
+                console.log(`[DIAG-AMBIENT-SOURCE] Is LOCAL file path: ${isLocalFile}`);
+                console.log(`[DIAG-AMBIENT-SOURCE] Starts with file://: ${startsWithFileProtocol}`);
+                console.log(`[DIAG-AMBIENT-SOURCE] Is REMOTE URL: ${!isLocalFile}`);
+                console.log(`[DIAG-AMBIENT-SOURCE] Original remote bgUrl: ${bgUrl}`);
+                console.log(`[DIAG-AMBIENT-SOURCE] ====================================`);
+
+                console.log(`[DIAG-AMBIENT] About to call createAudioPlayer(sourceUrl) ...`);
                 newBgSound = createAudioPlayer(sourceUrl, {
                     updateInterval: 500,
                     // downloadFirst: false — let the native HTTP streamer open the connection
@@ -470,15 +671,27 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     // .play() calls because the 7.6MB file hadn't fully downloaded yet.
                     downloadFirst: false,
                 });
-                console.log(`[DEBUG-AMBIENT] Ambient player created successfully`);
+                console.log(`[DIAG-AMBIENT] createAudioPlayer returned. Player object exists: ${!!newBgSound}`);
 
                 newBgSound.loop = true;
                 // Initialize with 0.01 to force AVPlayer to eagerly allocate network buffers.
                 // Volume 0 makes iOS background resource allocation heuristics stall the stream.
                 newBgSound.volume = 0.01;
+                console.log(`[DIAG-AMBIENT] Set loop=true, initial volume=0.01`);
 
+                let ambientStatusUpdateCount = 0;
                 bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', (status: any) => {
-                    console.log(`[DEBUG-AMBIENT-STATUS] playing: ${status?.playing}, isLoaded: ${status?.isLoaded}, isBuffering: ${status?.isBuffering}, didJustFinish: ${status?.didJustFinish}, error: ${status?.error}`);
+                    ambientStatusUpdateCount++;
+                    const bgRef = get().bgSound;
+                    console.log(`[DIAG-AMBIENT-STATUS] #${ambientStatusUpdateCount} | playing: ${status?.playing}, isLoaded: ${status?.isLoaded}, isBuffering: ${status?.isBuffering}, didJustFinish: ${status?.didJustFinish}, error: ${status?.error}`);
+                    console.log(`[DIAG-AMBIENT-STATUS] #${ambientStatusUpdateCount} | durationMillis: ${status?.duration != null ? Math.floor(status.duration * 1000) : 'N/A'}, positionMillis: ${status?.currentTime != null ? Math.floor(status.currentTime * 1000) : 'N/A'}`);
+                    console.log(`[DIAG-AMBIENT-STATUS] #${ambientStatusUpdateCount} | bgSound.volume at status update: ${bgRef?.volume}`);
+                    if (status?.playing === true) {
+                        console.log(`[DIAG-AMBIENT-STATUS] ★★★ AMBIENT REACHED playing === true ★★★ (update #${ambientStatusUpdateCount})`);
+                    }
+                    if (status?.error) {
+                        console.log(`[DIAG-AMBIENT-STATUS] ✖✖✖ AMBIENT ERROR: ${JSON.stringify(status.error)} ✖✖✖`);
+                    }
                 });
             }
 
@@ -518,32 +731,47 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 const capturedBg = newBgSound;
                 const capturedKeepBg = keepBg;
 
-                console.log(`[DEBUG-AMBIENT] Will attempt bg .play() in 500ms...`);
+                console.log(`[DIAG-AMBIENT-PLAY] Will attempt bg .play() in 500ms...`);
+                console.log(`[DIAG-AMBIENT-PLAY] capturedBg exists: ${!!capturedBg}, capturedKeepBg: ${capturedKeepBg}`);
                 setTimeout(() => {
                     if (get().sound !== newSound) {
-                        console.log(`[DEBUG-AMBIENT] setTimeout guard fired — sound changed during delay.`);
+                        console.log(`[DIAG-AMBIENT-PLAY] setTimeout guard ABORTED — sound changed during 500ms delay.`);
                         return; // guard: verse changed during delay
                     }
+                    const bgBeforePlay = get().bgSound;
+                    console.log(`[DIAG-AMBIENT-PLAY] Inside setTimeout. bgSound from store: ${!!bgBeforePlay}, capturedBg: ${!!capturedBg}`);
+                    console.log(`[DIAG-AMBIENT-PLAY] capturedBg.volume BEFORE .play(): ${capturedBg?.volume}`);
                     try {
-                        console.log(`[DEBUG-AMBIENT] Executing capturedBg?.play()...`);
+                        console.log(`[DIAG-AMBIENT-PLAY] >>> Calling capturedBg?.play() NOW <<<`);
                         capturedBg?.play();
-                        console.log(`[DEBUG-AMBIENT] Executed capturedBg?.play() successfully.`);
+                        console.log(`[DIAG-AMBIENT-PLAY] >>> capturedBg?.play() returned successfully <<<`);
+                        console.log(`[DIAG-AMBIENT-PLAY] capturedBg.volume AFTER .play(): ${capturedBg?.volume}`);
                     } catch (e) {
-                        console.log(`[DEBUG-AMBIENT] FAILED to execute capturedBg?.play()`, e);
+                        console.log(`[DIAG-AMBIENT-PLAY] ✖✖✖ FAILED capturedBg?.play() ✖✖✖`, e);
                     }
                     if (!capturedKeepBg) {
-                        get()._fadeBgAudio(get().targetBgVolume, 1800);
+                        console.log(`[DIAG-AMBIENT-PLAY] Starting fade to targetBgVolume: ${get().targetBgVolume} over 1200ms`);
+                        if (get().bgEnabled) {
+                            get()._fadeBgAudio(get().targetBgVolume, 1200);
+                        } else {
+                            capturedBg?.pause();
+                        }
                     } else {
                         try {
                             if (capturedBg) {
-                                console.log(`[DEBUG-AMBIENT] capturedKeepBg is true, forcing volume to targetBgVolume: ${get().targetBgVolume}`);
-                                capturedBg.volume = get().targetBgVolume;
+                                if (get().bgEnabled) {
+                                    console.log(`[DIAG-AMBIENT-PLAY] capturedKeepBg=true, forcing volume to targetBgVolume: ${get().targetBgVolume}`);
+                                    capturedBg.volume = get().targetBgVolume;
+                                } else {
+                                    capturedBg.pause();
+                                }
                             }
                         } catch { }
                     }
                 }, 500);
             } else {
                 if (keepBg && newBgSound) {
+                    console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by autoPlay=false with keepBg=true`);
                     try { newBgSound.pause(); } catch { }
                 }
             }
@@ -557,14 +785,22 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     },
 
     togglePlayPause: async () => {
-        const { sound, bgSound, isPlaying, position, duration, targetBgVolume, currentContent } = get();
+        const { sound, bgSound, isPlaying, position, duration, targetBgVolume, currentContent, bgEnabled } = get();
         if (!sound) return;
 
         if (isPlaying) {
             if (bgSound) {
-                get()._fadeBgAudio(0, 500);
+                console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by togglePlayPause (user paused)`);
+                get()._fadeBgAudio(MIN_BG_VOLUME, 500);
+                const capturedBg = bgSound;
+                setTimeout(() => {
+                    try {
+                        if (get().bgSound === capturedBg) {
+                            capturedBg.pause();
+                        }
+                    } catch { }
+                }, 500);
             }
-            try { bgSound?.pause(); } catch { }
             sound.pause();
             return;
         }
@@ -580,10 +816,12 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             }
         }
 
-        try { bgSound?.play(); } catch { }
+        if (bgEnabled) {
+            try { bgSound?.play(); } catch { }
+        }
         sound.play();
 
-        if (bgSound) {
+        if (bgSound && bgEnabled) {
             get()._fadeBgAudio(targetBgVolume, 1000);
         }
     },

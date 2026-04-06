@@ -4,7 +4,7 @@ import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
-import { supabase } from '../lib/supabase';
+import { signInWithPassword, signOut, signUp } from '../lib/supabase';
 import { useTheme } from '../theme';
 
 export const AuthScreen = () => {
@@ -28,20 +28,23 @@ export const AuthScreen = () => {
         setLoading(true);
         try {
             if (isSignUp) {
-                const { error } = await supabase.auth.signUp({
+                const { error } = await signUp({
                     email,
                     password,
                 });
                 if (error) throw error;
                 Alert.alert('Verification Required', 'Please check your email to verify your account.');
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
+                const { error } = await signInWithPassword({
                     email,
                     password,
                 });
                 if (error) throw error;
             }
         } catch (error: any) {
+            if (error?.code === 'refresh_token_not_found') {
+                await signOut();
+            }
             Alert.alert('Auth Error', error.message);
         } finally {
             setLoading(false);

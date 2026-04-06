@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
+    useDerivedValue,
     useAnimatedStyle,
     useSharedValue,
-    withDelay,
     withSpring,
-    withSequence
+    withSequence,
+    withDelay
 } from 'react-native-reanimated';
 import { useTheme } from '../theme';
 import { RollingNumber } from './RollingNumber';
@@ -20,7 +21,7 @@ const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boo
     const scale = useSharedValue(0);
     const opacity = useSharedValue(0);
 
-    useEffect(() => {
+    useDerivedValue(() => {
         scale.value = withDelay(
             delay,
             withSpring(1, { damping: 10, stiffness: 100 })
@@ -29,7 +30,7 @@ const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boo
             delay,
             withSpring(1)
         );
-    }, [isCompleted, isToday]);
+    }, [delay, isCompleted, isToday]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
@@ -81,8 +82,8 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
     });
 
     const streakTitleScale = useSharedValue(1);
-    
-    useEffect(() => {
+
+    useDerivedValue(() => {
         if (sessionsToday > 0) {
             streakTitleScale.value = withSequence(
                 withSpring(1.2),
@@ -91,16 +92,20 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
         }
     }, [sessionsToday]);
 
+    const streakTitleAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: streakTitleScale.value }]
+    }));
+
     return (
         <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.xl, padding: spacing.l }]}>
             <View style={styles.headerRow}>
                 <Animated.Text style={[
                     styles.title, 
+                    streakTitleAnimatedStyle,
                     { 
                         color: colors.text, 
                         fontFamily: typography.fontFamilies.semiBold, 
-                        fontSize: typography.sizes.l,
-                        transform: [{ scale: streakTitleScale.value }]
+                        fontSize: typography.sizes.l
                     }
                 ]}>
                     This Week
