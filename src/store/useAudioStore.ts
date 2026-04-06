@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAudioPlayer, setIsAudioActiveAsync } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Image } from 'react-native';
 import { create } from 'zustand';
 import { getBackgroundMood, getBackgroundTrackUrl } from '../utils/backgroundAudioUtils';
 
@@ -32,6 +33,7 @@ interface AudioState {
     audioUrl: string | null;
     currentContent: CurrentContent | null;
     onFinish?: () => void;
+    lockScreenActivated: boolean;
 
     bgFadeInterval: ReturnType<typeof setInterval> | null;
     narrationVolume: number;
@@ -51,6 +53,8 @@ interface AudioState {
     unloadAudio: () => Promise<void>;
     togglePlayPause: () => Promise<void>;
     seek: (position: number) => Promise<void>;
+    seekForward: () => Promise<void>;
+    seekBackward: () => Promise<void>;
     setPlaybackRate: (rate: number) => Promise<void>;
     stopAllAudio: (options?: { keepBg?: boolean }) => Promise<void>;
     _stopFade: () => void;
@@ -143,7 +147,7 @@ function buildLockScreenMetadata(content: any) {
         title: getDisplayTitle(content),
         artist: getArtistLine(content),
         albumTitle: 'Mangalam',
-        artworkUrl: getArtworkUrl(content),
+        artworkUrl: getArtworkUrl(content) || DEFAULT_ARTWORK_URL,
     };
 }
 
@@ -164,6 +168,7 @@ const AUDIO_SETTINGS_KEY = 'audio_settings';
 const DEFAULT_NARRATION_VOLUME = 0.9;
 const DEFAULT_BG_VOLUME = 0.6;
 const MIN_BG_VOLUME = 0.01;
+const DEFAULT_ARTWORK_URL = Image.resolveAssetSource(require('../../assets/images/Mangalam-cover.jpeg')).uri;
 const clampNarrationVolume = (volume: number) => Math.min(1, Math.max(0.7, volume));
 const clampBgVolume = (volume: number) => Math.min(0.8, Math.max(0, volume));
 
@@ -178,6 +183,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     audioUrl: null,
     currentContent: null,
     onFinish: undefined,
+    lockScreenActivated: false,
 
     bgFadeInterval: null,
     narrationVolume: DEFAULT_NARRATION_VOLUME,
@@ -437,6 +443,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             audioUrl: null,
             currentContent: null,
             onFinish: undefined,
+            lockScreenActivated: false,
             mainStatusSub: null,
             bgStatusSub: keepBg ? state.bgStatusSub : null,
             ...(keepBg ? {} : { bgFadeInterval: null }),
@@ -466,7 +473,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             });
 
             try {
-                existingSound.updateLockScreenMetadata(buildLockScreenMetadata(content));
+                existingSound.updateLockScreenMetadata(
+                    buildLockScreenMetadata(content)
+                );
             } catch { }
 
             if (autoPlay && !get().isPlaying) {
@@ -502,6 +511,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 audioUrl: url,
                 sound: null,
                 mainStatusSub: null,
+                lockScreenActivated: false,
                 ...(keepBg ? {} : { bgSound: null, bgStatusSub: null, currentBgUrl: null }),
             });
 
@@ -511,6 +521,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     duration: 1,
                     isPlaying: false,
                     currentContent: mapCurrentContent(content),
+                    lockScreenActivated: false,
                 });
                 return;
             }
@@ -528,6 +539,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             const mainStatusSubNew = newSound.addListener('playbackStatusUpdate', (status: any) => {
                 const currentState = get();
                 if (currentState.sound !== newSound) return;
+                if (!status?.isLoaded) return;
 
                 const positionMs = Math.max(0, Math.floor((status.currentTime || 0) * 1000));
                 const durationMs = Math.max(1, Math.floor((status.duration || 0) * 1000));
@@ -536,10 +548,26 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 const wasPlaying = currentState.isPlaying;
 
                 set({
-                    position: positionMs,
-                    duration: durationMs,
+                    position: (status.positionMillis ?? positionMs),
+                    duration: (status.durationMillis ?? durationMs),
                     isPlaying: isNowPlaying,
                 });
+
+                if (
+                    !currentState.lockScreenActivated &&
+                    isNowPlaying &&
+                    (status.durationMillis ?? durationMs) > 0
+                ) {
+                    try {
+                        newSound.setActiveForLockScreen(
+                            true,
+                            buildLockScreenMetadata(content),
+                            { showSeekForward: true, showSeekBackward: true }
+                        );
+                    } catch { }
+
+                    set({ lockScreenActivated: true });
+                }
 
                 // Clear initial lock when first stable playing packet arrives
                 if (isInitialPlayback && isNowPlaying) {
@@ -709,19 +737,12 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 currentBgUrl: bgUrl,
                 audioUrl: url,
                 currentContent: mapCurrentContent(content),
+                lockScreenActivated: false,
                 mainStatusSub: mainStatusSubNew,
                 bgStatusSub: bgStatusSubNew,
             });
 
             if (autoPlay) {
-                // Register this player as the sole lock-screen owner exactly once —
-                // at first creation. Never re-register on the same instance to avoid
-                // stacking duplicate MPRemoteCommandCenter handlers in native code.
-                try {
-                    newSound.setActiveForLockScreen(true, buildLockScreenMetadata(content));
-                } catch { }
-
-                // Start narration immediately.
                 newSound.play();
 
                 // Delay ambient start by 500ms so the narration HTTP stream claims its
@@ -835,6 +856,24 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
         await sound.seekTo(clamped / 1000);
         set({ position: clamped });
+    },
+
+    seekForward: async () => {
+        const { sound, position, duration } = get();
+        if (!sound) return;
+
+        const target = Math.min(position + 15000, duration > 0 ? duration : position + 15000);
+        await sound.seekTo(target / 1000);
+        set({ position: target });
+    },
+
+    seekBackward: async () => {
+        const { sound, position } = get();
+        if (!sound) return;
+
+        const target = Math.max(position - 15000, 0);
+        await sound.seekTo(target / 1000);
+        set({ position: target });
     },
 
     setPlaybackRate: async (rate) => {

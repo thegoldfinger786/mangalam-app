@@ -85,9 +85,7 @@ export const PlayScreen = () => {
 
     useEffect(() => {
         return () => {
-            if (!isNavigatingToVerse.current) {
-                useAudioStore.getState().stopAllAudio();
-            }
+            // Do not stop audio on screen unmount
         };
     }, []);
     const [scrollContentHeight, setScrollContentHeight] = useState(0);
@@ -957,4 +955,3 @@ const styles = StyleSheet.create({
         marginBottom: theme.spacing.xl,
     }
 });
-

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import {
+    Alert,
     Dimensions,
     Platform,
     Pressable,
@@ -11,6 +12,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { fetchAdjacentVerse } from '../lib/queries';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
 import { getScriptureIcon } from './ScriptureIcons';
@@ -20,12 +22,21 @@ const { width } = Dimensions.get('window');
 export const MiniPlayer = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation<any>();
-    const { currentContent, isPlaying, togglePlayPause, unloadAudio, position, duration } = useAudioStore();
+    const {
+        currentContent,
+        isPlaying,
+        togglePlayPause,
+        unloadAudio,
+        position,
+        duration,
+        seekBackward,
+        seekForward
+    } = useAudioStore();
     const insets = useSafeAreaInsets();
 
     if (!currentContent) return null;
 
-    const progress = position / duration;
+    const progress = duration > 0 ? position / duration : 0;
 
     const handlePress = () => {
         navigation.navigate('Play', {
@@ -33,6 +44,31 @@ export const MiniPlayer = () => {
             type: currentContent.type,
             autoPlay: false, // Don't trigger a new load/play if already playing
         });
+    };
+
+    const navigateAdjacent = async (direction: 'prev' | 'next') => {
+        if (!currentContent.bookId || currentContent.chapterNo == null || currentContent.verseNo == null) {
+            return;
+        }
+
+        try {
+            const adjacent = await fetchAdjacentVerse(
+                currentContent.bookId,
+                currentContent.chapterNo,
+                currentContent.verseNo,
+                direction
+            );
+
+            if (!adjacent?.verse_id) return;
+
+            navigation.navigate('Play', {
+                itemId: adjacent.verse_id,
+                type: currentContent.type,
+                autoPlay: true,
+            });
+        } catch (error: any) {
+            Alert.alert('Playback Error', error?.message || 'Unable to change verse.');
+        }
     };
 
     const tabBarHeight = Platform.OS === 'ios' ? (64 + insets.bottom) : 74;
@@ -67,6 +103,14 @@ export const MiniPlayer = () => {
 
                     {/* Controls */}
                     <View style={styles.controlsRow}>
+                        <TouchableOpacity onPress={() => navigateAdjacent('prev')} style={styles.transportButton}>
+                            <Ionicons name="play-skip-back" size={22} color={colors.textSecondary} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => seekBackward()} style={styles.transportButton}>
+                            <Ionicons name="play-back" size={22} color={colors.textSecondary} />
+                        </TouchableOpacity>
+
                         <TouchableOpacity onPress={() => togglePlayPause()} style={styles.playButton}>
                             <Ionicons 
                                 name={isPlaying ? 'pause' : 'play'} 
@@ -74,6 +118,14 @@ export const MiniPlayer = () => {
                                 color={colors.primary} 
                                 style={{ marginLeft: isPlaying ? 0 : 2 }}
                             />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => seekForward()} style={styles.transportButton}>
+                            <Ionicons name="play-forward" size={22} color={colors.textSecondary} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => navigateAdjacent('next')} style={styles.transportButton}>
+                            <Ionicons name="play-skip-forward" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity onPress={() => unloadAudio()} style={styles.closeButton}>
@@ -134,6 +186,12 @@ const styles = StyleSheet.create({
     },
     playButton: {
         width: 40,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    transportButton: {
+        width: 34,
         height: 44,
         justifyContent: 'center',
         alignItems: 'center',
