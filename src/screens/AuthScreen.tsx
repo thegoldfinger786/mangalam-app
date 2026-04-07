@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -9,6 +9,7 @@ import { useTheme } from '../theme';
 
 export const AuthScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -173,7 +174,7 @@ export const AuthScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -210,7 +211,7 @@ const styles = StyleSheet.create({
         opacity: 0.8,
     },
     authCard: {
-        padding: 24,
+        padding: spacing.l,
         elevation: 4,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -225,10 +226,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        paddingHorizontal: 16,
+        paddingHorizontal: spacing.m,
     },
     inputIcon: {
-        marginRight: 10,
+        marginRight: spacing.s,
     },
     input: {
         flex: 1,

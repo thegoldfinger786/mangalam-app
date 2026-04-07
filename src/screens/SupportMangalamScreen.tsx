@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { useNavigation } from '@react-navigation/native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
@@ -11,6 +11,7 @@ import { useTheme } from '../theme';
 export const SupportMangalamScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     // The Stripe payment link provided by the user
     const STRIPE_PAYMENT_URL = "https://buy.stripe.com/3cI3cv7xj1IS6bobI00Ba00";
@@ -122,7 +123,7 @@ export const SupportMangalamScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
+        paddingHorizontal: spacing.xl,
         borderBottomWidth: 1,
     },
     backButton: {
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     },
     heroSection: {
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: spacing.xl,
     },
     logoContainer: {
         width: 100,
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         overflow: 'hidden',
-        marginBottom: 16,
+        marginBottom: spacing.m,
     },
     logoImage: {
         width: '100%',
@@ -172,12 +173,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textTransform: 'uppercase',
         letterSpacing: 2,
-        marginTop: 4,
+        marginTop: spacing.xs,
         textAlign: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: spacing.xl,
     },
     sectionCard: {
-        padding: 24,
+        padding: spacing.l,
         borderRadius: 24,
     },
     sectionTitle: {
@@ -191,7 +192,7 @@ const styles = StyleSheet.create({
         lineHeight: 24,
     },
     buttonGrid: {
-        gap: 12,
+        gap: spacing.m,
     },
     gridButton: {
         width: '100%',
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     bulletRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: spacing.m,
     },
     bulletPoint: {
         width: 24,
@@ -212,7 +213,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: spacing.m,
     },
     paymentNote: {
         fontSize: 13,
@@ -221,15 +222,15 @@ const styles = StyleSheet.create({
     },
     closingSection: {
         alignItems: 'center',
-        paddingVertical: 48,
-        paddingBottom: 80,
+        paddingVertical: spacing.xxl,
+        paddingBottom: spacing.xxxl,
     },
     closingText: {
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
         fontStyle: 'italic',
-        paddingHorizontal: 32,
+        paddingHorizontal: spacing.xl,
     },
     brandBottom: {
         fontSize: 24,

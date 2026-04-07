@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
+import React, { useMemo } from 'react';
+import { Alert, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -11,9 +11,31 @@ import { Button } from '../components/Button';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const LEGAL_LINKS = [
+    { label: 'Terms', url: 'https://www.mangalamapp.com/terms' },
+    { label: 'Privacy Policy', url: 'https://www.mangalamapp.com/privacy' },
+    { label: 'Disclaimer', url: 'https://www.mangalamapp.com/disclaimer' },
+    { label: 'Support', url: 'https://www.mangalamapp.com/support' },
+    { label: 'Contact', url: 'mailto:support@mangalamapp.com' },
+];
+
 export const AboutScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation<NavigationProp>();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
+    console.log('AboutScreen rendered');
+
+    const openLink = async (url: string) => {
+        try {
+            if (url.startsWith('mailto:')) {
+                await Linking.openURL(url);
+                return;
+            }
+            navigation.navigate('WebView', { url });
+        } catch {
+            Alert.alert('Error', 'Unable to open link.');
+        }
+    };
 
     const SectionCard = ({ title, content, bulletPoints, quote }: { title?: string, content?: string, bulletPoints?: string[], quote?: string }) => (
         <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
@@ -63,10 +85,29 @@ export const AboutScreen = () => {
                     <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Ancient Wisdom • Modern Life</Text>
                 </View>
 
-                {/* Introduction Section (Now in Card) */}
+                {/* Introduction Section */}
                 <SectionCard 
                     title="ABOUT MANGALAM"
                     content="Mangalam is a quiet space to reconnect with the timeless wisdom of India’s sacred traditions. For thousands of years, texts such as the Bhagavad Gita, Ramayan, and Mahabharat have guided people through questions of purpose, duty, resilience, and inner peace. Mangalam brings this wisdom into a simple daily practice; one reflection at a time."
+                />
+
+                <SectionCard
+                    title="What is Mangalam?"
+                    content="Mangalam is a spiritual storytelling and learning platform designed to bring ancient wisdom into modern life. It blends scripture, reflection, and narration into a format that feels calm, accessible, and meaningful in the middle of everyday routines."
+                />
+
+                <SectionCard
+                    title="Our Mission"
+                    content="To make timeless knowledge accessible, engaging, and relevant for everyday life. Mangalam exists to help people build a steady relationship with sacred stories and wisdom without requiring formal study, prior background, or long uninterrupted time."
+                />
+
+                <SectionCard
+                    title="Why Mangalam?"
+                    bulletPoints={[
+                        "Daily spiritual growth through small, steady practice",
+                        "Story-based learning rooted in dharmic tradition",
+                        "Practical life application through reflection and listening",
+                    ]}
                 />
 
                 {/* Detailed Sections */}
@@ -157,12 +198,32 @@ export const AboutScreen = () => {
                     </Text>
                     <Text style={[styles.brandBottom, { color: colors.text, marginTop: spacing.l }]}>Mangalam</Text>
                 </View>
+
+                <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
+                    <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: spacing.m }]}>Legal &amp; Support</Text>
+                    <View style={[styles.linkGroup, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.l }]}>
+                        {LEGAL_LINKS.map((item, index) => (
+                            <View key={item.label}>
+                                <TouchableOpacity
+                                    style={[styles.linkRow, { paddingVertical: spacing.m, paddingHorizontal: spacing.m }]}
+                                    onPress={() => openLink(item.url)}
+                                >
+                                    <Text style={[styles.linkText, { color: colors.text }]}>{item.label}</Text>
+                                    <Ionicons name={item.url.startsWith('mailto:') ? 'mail-outline' : 'chevron-forward'} size={18} color={colors.textSecondary} />
+                                </TouchableOpacity>
+                                {index < LEGAL_LINKS.length - 1 && (
+                                    <View style={[styles.linkDivider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                </Card>
             </ScrollView>
         </SafeAreaView>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -171,7 +232,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
+        paddingHorizontal: spacing.xl,
         borderBottomWidth: 1,
     },
     backButton: {
@@ -188,7 +249,7 @@ const styles = StyleSheet.create({
     },
     heroSection: {
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: spacing.xl,
     },
     logoContainer: {
         width: 100,
@@ -196,7 +257,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 1,
         overflow: 'hidden',
-        marginBottom: 16,
+        marginBottom: spacing.m,
     },
     logoImage: {
         width: '100%',
@@ -211,10 +272,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         textTransform: 'uppercase',
         letterSpacing: 2,
-        marginTop: 4,
+        marginTop: spacing.xs,
     },
     sectionCard: {
-        padding: 24,
+        padding: spacing.l,
         borderRadius: 24,
     },
     sectionTitle: {
@@ -230,7 +291,7 @@ const styles = StyleSheet.create({
     bulletRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: spacing.m,
     },
     bulletPoint: {
         width: 24,
@@ -238,10 +299,10 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: spacing.m,
     },
     quoteContainer: {
-        paddingLeft: 16,
+        paddingLeft: spacing.m,
         borderLeftWidth: 3,
     },
     quoteText: {
@@ -249,17 +310,33 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         lineHeight: 22,
     },
+    linkGroup: {
+        borderWidth: 1,
+        overflow: 'hidden',
+    },
+    linkRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    linkText: {
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    linkDivider: {
+        height: 1,
+    },
     closingSection: {
         alignItems: 'center',
-        paddingVertical: 48,
-        paddingBottom: 80,
+        paddingVertical: spacing.xxl,
+        paddingBottom: spacing.xxxl,
     },
     closingText: {
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
         fontStyle: 'italic',
-        paddingHorizontal: 32,
+        paddingHorizontal: spacing.xl,
     },
     brandBottom: {
         fontSize: 24,

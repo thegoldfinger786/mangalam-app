@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Dimensions,
@@ -30,6 +30,7 @@ type BookDashboardRouteProp = RouteProp<RootStackParamList, 'BookDashboard'>;
 
 export const BookDashboardScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<BookDashboardRouteProp>();
     console.log('Route params:', route?.params);
@@ -233,7 +234,7 @@ export const BookDashboardScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -241,12 +242,12 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16, // spacing.m
-        paddingTop: 8,  // ScreenContainer handles top inset; small breathing room only
-        marginBottom: 16, // spacing.m
+        paddingHorizontal: spacing.m,
+        paddingTop: spacing.s,
+        marginBottom: spacing.m,
     },
     iconButton: {
-        padding: 4, // spacing.xs
+        padding: spacing.xs,
     },
     headerTitle: {
         fontSize: 18, // typography.sizes.l
@@ -256,8 +257,8 @@ const styles = StyleSheet.create({
     },
     heroSection: {
         alignItems: 'center',
-        paddingHorizontal: 32, // spacing.xl
-        marginTop: 24, // spacing.l
+        paddingHorizontal: spacing.xl,
+        marginTop: spacing.l,
         position: 'relative',
     },
     heroGlow: {
@@ -293,8 +294,8 @@ const styles = StyleSheet.create({
         width: '100%',
         marginTop: -60, // Overlap the image
         paddingTop: 80, // Pad for the overlap
-        paddingBottom: 32, // spacing.xl
-        paddingHorizontal: 24, // spacing.l
+        paddingBottom: spacing.xl,
+        paddingHorizontal: spacing.l,
         borderWidth: 1,
         alignItems: 'center',
         zIndex: 1,
@@ -306,12 +307,12 @@ const styles = StyleSheet.create({
     },
     bookTitle: {
         fontSize: 28,
-        marginBottom: 4, // spacing.xs
+        marginBottom: spacing.xs,
         textAlign: 'center',
     },
     bookSubtitle: {
         fontSize: 16, // typography.sizes.m
-        marginBottom: 32, // spacing.xl
+        marginBottom: spacing.xl,
         textAlign: 'center',
         letterSpacing: 0.5,
     },

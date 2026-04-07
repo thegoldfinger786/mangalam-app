@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -21,6 +21,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export const CommunityWisdomScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation<NavigationProp>();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [loading, setLoading] = useState(true);
     const [topStats, setTopStats] = useState<{
         listened: any[],
@@ -114,7 +115,7 @@ export const CommunityWisdomScreen = () => {
                                                     name={rank === 1 ? 'trophy' : 'medal'}
                                                     size={12}
                                                     color={medalColor}
-                                                    style={{ marginBottom: 1 }}
+                                                    style={{ marginBottom: spacing.micro }}
                                                 />
                                             )}
                                             <Text style={[
@@ -149,7 +150,7 @@ export const CommunityWisdomScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -168,44 +169,44 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     iconButton: {
-        padding: 4,
+        padding: spacing.xs,
     },
     scrollContent: {
-        paddingHorizontal: 24,
-        paddingBottom: 80,
+        paddingHorizontal: spacing.l,
+        paddingBottom: spacing.xxxl,
     },
     introSection: {
-        marginTop: 16,
-        marginBottom: 32,
+        marginTop: spacing.m,
+        marginBottom: spacing.xl,
     },
     title: {
         fontSize: 24,
         fontWeight: '800',
-        marginBottom: 8,
+        marginBottom: spacing.s,
     },
     subtitle: {
         fontSize: 16,
         lineHeight: 24,
     },
     statSection: {
-        marginBottom: 32,
+        marginBottom: spacing.xl,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: spacing.m,
     },
     sectionLabel: {
         fontSize: 16,
         fontWeight: '700',
-        marginLeft: 10,
+        marginLeft: spacing.s,
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
     wisdomCard: {
-        padding: 16,
+        padding: spacing.m,
         borderRadius: 20,
-        marginBottom: 12,
+        marginBottom: spacing.m,
         borderWidth: 1,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -220,12 +221,12 @@ const styles = StyleSheet.create({
     },
     cardInfo: {
         flex: 1,
-        marginRight: 12,
+        marginRight: spacing.m,
     },
     bookTag: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 4,
+        marginBottom: spacing.xs,
     },
     miniIconBox: {
         width: 20,
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 6,
+        marginRight: spacing.s,
     },
     bookName: {
         fontSize: 11,
@@ -246,8 +247,8 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     badge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingHorizontal: spacing.s,
+        paddingVertical: spacing.xs,
         borderRadius: 10,
     },
     badgeText: {
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: spacing.m,
     },
     rankText: {
         fontSize: 12,

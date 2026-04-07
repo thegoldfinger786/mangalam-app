@@ -12,6 +12,7 @@ import { PlayScreen } from '../screens/PlayScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { AboutScreen } from '../screens/AboutScreen';
 import { SupportMangalamScreen } from '../screens/SupportMangalamScreen';
+import { WebViewScreen } from '../screens/WebViewScreen';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { BottomTabs } from './BottomTabs';
@@ -109,6 +110,14 @@ export const AppNavigator = () => {
                 <Stack.Screen
                     name="SupportMangalam"
                     component={SupportMangalamScreen}
+                    options={{
+                        headerShown: false,
+                        animation: 'slide_from_right',
+                    }}
+                />
+                <Stack.Screen
+                    name="WebView"
+                    component={WebViewScreen}
                     options={{
                         headerShown: false,
                         animation: 'slide_from_right',

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
     useDerivedValue,
@@ -52,6 +52,7 @@ const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boo
 
 export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps) => {
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     let todayIndex = new Date().getDay() - 1;
@@ -111,7 +112,7 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
                     This Week
                 </Animated.Text>
                 <View style={styles.scoreBadge}>
-                    <Ionicons name="flame" size={20} color={colors.primary} style={{ marginRight: 4 }} />
+                    <Ionicons name="flame" size={20} color={colors.primary} style={{ marginRight: spacing.xs }} />
                     <RollingNumber value={weekCompleted} fontSize={typography.sizes.l} color={colors.primary} />
                     <Text style={[styles.scoreText, { color: colors.textSecondary, fontFamily: typography.fontFamilies.semiBold, fontSize: typography.sizes.m }]}>/7</Text>
                 </View>
@@ -156,15 +157,15 @@ export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
-        marginBottom: 32, // theme.spacing.xl
+        marginBottom: spacing.xl,
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24, // theme.spacing.l
+        marginBottom: spacing.l,
     },
     title: {
     },
@@ -180,10 +181,10 @@ const styles = StyleSheet.create({
     },
     dayColumn: {
         alignItems: 'center',
-        paddingHorizontal: 4,
+        paddingHorizontal: spacing.xs,
     },
     iconContainer: {
-        marginBottom: 4, // theme.spacing.xs
+        marginBottom: spacing.xs,
     },
     dayText: {
         fontSize: 12,

@@ -19,4 +19,5 @@ export type RootStackParamList = {
     CommunityWisdom: undefined;
     About: undefined;
     SupportMangalam: undefined;
+    WebView: { url: string };
 };

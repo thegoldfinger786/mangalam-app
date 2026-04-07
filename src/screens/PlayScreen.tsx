@@ -673,7 +673,7 @@ export const PlayScreen = () => {
                                             <HighlightedText
                                                 text={bullet}
                                                 progress={getLocalProgress(bullet)}
-                                                style={[styles.contentText, { color: colors.textSecondary, marginBottom: 0, flex: 1, fontSize: isFocusMode ? 20 : 17 }]}
+                                                style={[styles.contentText, { color: colors.textSecondary, flex: 1, fontSize: isFocusMode ? 20 : 17 }]}
                                                 activeColor={colors.text}
                                                 inactiveColor={colors.textSecondary}
                                             />
@@ -693,7 +693,7 @@ export const PlayScreen = () => {
                                             <HighlightedText
                                                 text={ex}
                                                 progress={getLocalProgress(ex)}
-                                                style={[styles.contentText, { color: colors.textSecondary, marginBottom: 0, flex: 1, fontSize: isFocusMode ? 20 : 17, textAlign: (isRamayan || isMahabharat) ? 'center' : 'left' }]}
+                                                style={[styles.contentText, { color: colors.textSecondary, flex: 1, fontSize: isFocusMode ? 20 : 17, textAlign: (isRamayan || isMahabharat) ? 'center' : 'left' }]}
                                                 activeColor={colors.text}
                                                 inactiveColor={colors.textSecondary}
                                             />
@@ -863,7 +863,7 @@ const createStyles = (
         color: colors.text,
         textAlign: 'center',
         marginTop: spacing.xs,
-        marginBottom: 2,
+        marginBottom: spacing.micro,
     },
     trackSubtitle: {
         fontFamily: typography.fontFamilies.medium,

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     Alert,
     Dimensions,
@@ -24,6 +24,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const MiniPlayer = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const navigation = useNavigation<NavigationProp>();
     const {
         currentContent,
@@ -142,7 +143,7 @@ export const MiniPlayer = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     outerContainer: {
         position: 'absolute',
         width: width,
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 12,
         fontFamily: 'Inter-Regular',
-        marginTop: 1,
+        marginTop: spacing.micro,
     },
     playButton: {
         width: 40,

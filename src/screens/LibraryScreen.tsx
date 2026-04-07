@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
@@ -16,6 +16,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 export const LibraryScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const navigation = useNavigation<NavigationProp>();
     const [selectedBook, setSelectedBook] = useState<any | null>(null);
     const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
@@ -111,7 +112,7 @@ export const LibraryScreen = () => {
                                 </View>
                                 <Text style={[styles.tileProgressText, { color: colors.textSecondary }]}>{completedInChapter}/{totalInChapter}</Text>
                                 <TouchableOpacity 
-                                    style={{ marginTop: 8 }} 
+                                    style={{ marginTop: spacing.s }} 
                                     onPress={() => {
                                         const firstVerse = chapterVerses.sort((a, b) => a.verse_no - b.verse_no)[0];
                                         if (firstVerse) handlePlayItem(firstVerse.verse_id, 'verse');
@@ -275,7 +276,7 @@ export const LibraryScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -285,29 +286,29 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     centerPadding: {
-        padding: 24, // spacing.xl
+        padding: spacing.l,
         alignItems: 'center',
     },
     scrollContent: {
-        paddingBottom: 48, // spacing.xxl
+        paddingBottom: spacing.xxl,
     },
     header: {
-        padding: 24, // spacing.l
-        paddingTop: 16, // ScreenContainer handles top inset; this is inner breathing room only
+        padding: spacing.l,
+        paddingTop: spacing.m,
     },
     screenTitle: {
         fontSize: 32, // typography.sizes.xxl
         fontWeight: 'bold',
     },
     collectionList: {
-        paddingHorizontal: 24, // spacing.l
+        paddingHorizontal: spacing.l,
     },
     collectionCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16, // spacing.m
+        padding: spacing.m,
         borderRadius: 16, // borderRadius.l
-        marginBottom: 16, // spacing.m
+        marginBottom: spacing.m,
         borderWidth: 1,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16, // spacing.m
+        marginRight: spacing.m,
         overflow: 'hidden',
     },
     collectionInfo: {
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
     collectionTitle: {
         fontSize: 20, // typography.sizes.l
         fontWeight: '600',
-        marginBottom: 4,
+        marginBottom: spacing.xs,
     },
     collectionDesc: {
         fontSize: 14, // typography.sizes.s
@@ -337,8 +338,8 @@ const styles = StyleSheet.create({
     },
 
     innerHeader: {
-        padding: 24, // spacing.l
-        paddingTop: 16, // ScreenContainer handles top inset; this is inner breathing room only
+        padding: spacing.l,
+        paddingTop: spacing.m,
         borderBottomWidth: 1,
         flexDirection: 'row',
         alignItems: 'center',
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     backText: {
         fontSize: 16, // typography.sizes.m
         fontWeight: '500',
-        marginLeft: 4, // spacing.xs
+        marginLeft: spacing.xs,
     },
     collectionHeaderTitleBox: {
         flexDirection: 'row',
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 8, // spacing.s
+        marginRight: spacing.s,
     },
     collectionHeaderTitle: {
         fontSize: 16, // typography.sizes.m
@@ -371,22 +372,22 @@ const styles = StyleSheet.create({
     },
 
     listContainer: {
-        padding: 16, // spacing.m
+        padding: spacing.m,
     },
 
     chapterBlock: {
-        marginBottom: 32, // spacing.xl
+        marginBottom: spacing.xl,
     },
     chapterTitle: {
         fontSize: 20, // typography.sizes.l
         fontWeight: '500',
-        marginBottom: 16, // spacing.m
-        marginLeft: 4, // spacing.xs
+        marginBottom: spacing.m,
+        marginLeft: spacing.xs,
     },
     verseItem: {
-        padding: 16, // spacing.m
+        padding: spacing.m,
         borderRadius: 12, // borderRadius.m
-        marginBottom: 8, // spacing.s
+        marginBottom: spacing.s,
         borderWidth: 1,
     },
     verseHeader: {
@@ -396,7 +397,7 @@ const styles = StyleSheet.create({
     verseNumber: {
         fontSize: 16, // typography.sizes.m
         fontWeight: '600',
-        marginRight: 16, // spacing.m
+        marginRight: spacing.m,
         width: 36,
     },
     previewText: {
@@ -405,9 +406,9 @@ const styles = StyleSheet.create({
     },
     episodeItem: {
         flexDirection: 'row',
-        padding: 16, // spacing.m
+        padding: spacing.m,
         borderRadius: 12, // borderRadius.m
-        marginBottom: 16, // spacing.m
+        marginBottom: spacing.m,
         borderWidth: 1,
     },
     episodeNumberBadge: {
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16, // spacing.m
+        marginRight: spacing.m,
     },
     episodeNumberText: {
         fontSize: 16, // typography.sizes.m
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
     episodeTitle: {
         fontSize: 16, // typography.sizes.m
         fontWeight: '500',
-        marginBottom: 4, // spacing.xs
+        marginBottom: spacing.xs,
     },
     episodeSummary: {
         fontSize: 14, // typography.sizes.s
@@ -438,7 +439,7 @@ const styles = StyleSheet.create({
     chapterGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        padding: 16, // spacing.m
+        padding: spacing.m,
         justifyContent: 'space-between',
     },
     chapterTile: {
@@ -446,8 +447,8 @@ const styles = StyleSheet.create({
         aspectRatio: 1,
         borderRadius: 16, // borderRadius.l
         borderWidth: 1,
-        padding: 16, // spacing.m
-        marginBottom: 16, // spacing.m
+        padding: spacing.m,
+        marginBottom: spacing.m,
         alignItems: 'center',
         justifyContent: 'center',
         shadowOffset: { width: 0, height: 2 },
@@ -462,14 +463,14 @@ const styles = StyleSheet.create({
     chapterTileLabel: {
         fontSize: 14, // typography.sizes.s
         fontWeight: '500',
-        marginBottom: 8, // spacing.s
+        marginBottom: spacing.s,
     },
     tileProgressContainer: {
         width: '80%',
         height: 4,
         borderRadius: 2,
         overflow: 'hidden',
-        marginBottom: 4,
+        marginBottom: spacing.xs,
     },
     tileProgressBar: {
         height: '100%',
@@ -478,8 +479,8 @@ const styles = StyleSheet.create({
         fontSize: 10,
     },
     verseHeaderChapter: {
-        paddingVertical: 24, // spacing.l
-        paddingHorizontal: 16, // spacing.m
+        paddingVertical: spacing.l,
+        paddingHorizontal: spacing.m,
     },
     chapterHeaderTitle: {
         fontSize: 24, // typography.sizes.xl
@@ -491,7 +492,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16, // spacing.m
+        marginRight: spacing.m,
     },
     verseNumberText: {
         fontSize: 16, // typography.sizes.m
@@ -504,6 +505,6 @@ const styles = StyleSheet.create({
         fontSize: 14, // typography.sizes.s
     },
     completedBadge: {
-        marginLeft: 8, // spacing.s
+        marginLeft: spacing.s,
     }
 });

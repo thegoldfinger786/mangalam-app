@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Constants from 'expo-constants';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
@@ -14,14 +15,6 @@ import { useAudioStore } from '../store/useAudioStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 
-const ABOUT_LINKS = [
-    { label: 'Privacy Policy', url: 'https://www.mangalamapp.com/privacy' },
-    { label: 'Terms of Service', url: 'https://www.mangalamapp.com/terms' },
-    { label: 'Support', url: 'https://www.mangalamapp.com/support' },
-    { label: 'Contact', url: 'mailto:support@mangalamapp.com' },
-    { label: 'Disclaimer', url: 'https://www.mangalamapp.com/disclaimer' },
-];
-
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const SettingsScreen = () => {
@@ -29,6 +22,7 @@ export const SettingsScreen = () => {
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const appVersion = Constants.expoConfig?.version ?? '1.0.0';
     const { narrationVolume, targetBgVolume, bgEnabled, hydrateAudioSettings, setNarrationVolume, setBgVolume, setBgEnabled } = useAudioStore();
     const [displayName, setDisplayName] = useState(userName);
     const [isEditing, setIsEditing] = useState(false);
@@ -99,15 +93,6 @@ export const SettingsScreen = () => {
         setDisplayName(trimmedName);
         setUserName(trimmedName);
         setIsEditing(false);
-    };
-
-    const handleOpenExternalLink = async (url: string) => {
-        try {
-            await Linking.openURL(url);
-        } catch {
-            console.log('Alert triggered');
-            Alert.alert('Error', 'Unable to open link.');
-        }
     };
 
     const handleSignOut = async () => {
@@ -309,23 +294,20 @@ export const SettingsScreen = () => {
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>About Us</Text>
                 </View>
-                <View style={[styles.optionsContainer, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}>
-                    {ABOUT_LINKS.map((item, index) => (
-                        <View key={item.label}>
-                            <TouchableOpacity
-                                style={styles.optionRow}
-                                onPress={() => handleOpenExternalLink(item.url)}
-                            >
-                                <Text style={[styles.optionText, { color: colors.text }]}>{item.label}</Text>
-                                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                            {index < ABOUT_LINKS.length - 1 && (
-                                <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
-                            )}
-                        </View>
-                    ))}
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('About')}
+                    style={[styles.optionRow, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}
+                >
+                    <Text style={[styles.optionText, { color: colors.text }]}>About</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                </TouchableOpacity>
+                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.s, marginHorizontal: spacing.m }} />
+                <View style={{ marginTop: spacing.s, paddingHorizontal: spacing.m }}>
+                    <Text style={{ color: colors.textSecondary }}>
+                        Version {appVersion}
+                    </Text>
                 </View>
             </Card>
         </ScrollView>
@@ -404,7 +386,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         fontSize: 16,
         fontWeight: '600',
         textAlign: 'right',
-        paddingVertical: 0,
     },
     inlineCheckButton: {
         paddingHorizontal: spacing.m,

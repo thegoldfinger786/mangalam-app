@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -33,6 +33,7 @@ export const HomeScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const { session, activePath, setActivePath, userName, setUserName } = useAppStore();
     const { colors, spacing, typography } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     console.log('HomeScreen loaded');
 
     const [loading, setLoading] = useState(true);
@@ -161,24 +162,24 @@ export const HomeScreen = () => {
             <DynamicBackground style={styles.container}>
                 <ScreenContainer edges={['top']} style={styles.container}>
                     {/* Header Skeleton */}
-                    <View style={[styles.header, { marginTop: 16 }]}>
+                    <View style={[styles.header, { marginTop: spacing.m }]}>
                     <Skeleton width={120} height={28} borderRadius={4} />
-                    <Skeleton width={100} height={28} borderRadius={4} style={{ marginLeft: 8 }} />
+                    <Skeleton width={100} height={28} borderRadius={4} style={{ marginLeft: spacing.s }} />
                 </View>
 
                 {/* Discovery Bar Skeleton */}
-                <View style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+                <View style={{ paddingHorizontal: spacing.l, marginBottom: spacing.l }}>
                     <Skeleton width="100%" height={56} borderRadius={16} />
                 </View>
 
                 {/* Primary Card Skeleton */}
-                <View style={[styles.section, { paddingHorizontal: 24 }]}>
-                    <Skeleton width={150} height={22} borderRadius={4} style={{ marginBottom: 16 }} />
+                <View style={[styles.section, { paddingHorizontal: spacing.l }]}>
+                    <Skeleton width={150} height={22} borderRadius={4} style={{ marginBottom: spacing.m }} />
                     <Skeleton width="100%" height={160} borderRadius={20} />
                 </View>
 
                 {/* Weekly Streak Skeleton */}
-                <View style={[styles.section, { paddingHorizontal: 24, marginTop: 16 }]}>
+                <View style={[styles.section, { paddingHorizontal: spacing.l, marginTop: spacing.m }]}>
                     <Skeleton width="100%" height={120} borderRadius={20} />
                 </View>
                 </ScreenContainer>
@@ -285,7 +286,7 @@ export const HomeScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -294,12 +295,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     content: {
-        paddingTop: 16,
-        paddingBottom: 32,
+        paddingTop: spacing.m,
+        paddingBottom: spacing.xl,
     },
     header: {
-        paddingHorizontal: 24,
-        marginBottom: 8,
+        paddingHorizontal: spacing.l,
+        marginBottom: spacing.s,
         flexDirection: 'row',
         alignItems: 'baseline',
     },
@@ -311,20 +312,20 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     section: {
-        marginBottom: 8,
+        marginBottom: spacing.s,
     },
     sectionTitle: {
         fontSize: 18,
-        marginBottom: 16,
-        paddingHorizontal: 24,
+        marginBottom: spacing.m,
+        paddingHorizontal: spacing.l,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     discoveryBar: {
-        marginHorizontal: 24,
-        marginBottom: 24,
-        padding: 12,
+        marginHorizontal: spacing.l,
+        marginBottom: spacing.l,
+        padding: spacing.m,
         borderRadius: 16,
         flexDirection: 'row',
         alignItems: 'center',
@@ -335,7 +336,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: spacing.m,
     },
     discoveryText: {
         flex: 1,
@@ -343,19 +344,19 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     primaryCard: {
-        marginHorizontal: 24,
-        marginBottom: 32,
-        padding: 20,
+        marginHorizontal: spacing.l,
+        marginBottom: spacing.xl,
+        padding: spacing.xl,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 20,
+        marginBottom: spacing.xl,
     },
     cardInfo: {
         flex: 1,
-        marginRight: 16,
+        marginRight: spacing.m,
     },
     cardIconBox: {
         width: 56,
@@ -367,7 +368,7 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: spacing.xs,
     },
     cardDesc: {
         fontSize: 15,
@@ -379,13 +380,13 @@ const styles = StyleSheet.create({
     exploreGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        paddingHorizontal: 24,
+        paddingHorizontal: spacing.l,
         justifyContent: 'space-between',
     },
     exploreItem: {
         width: '48%',
-        marginBottom: 16,
-        padding: 20, // Increased from 16 for better breathing room
+        marginBottom: spacing.m,
+        padding: spacing.xl,
         borderRadius: 16,
         borderWidth: 1,
         alignItems: 'center',
@@ -396,11 +397,11 @@ const styles = StyleSheet.create({
         borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 12, // Increased from 8
+        marginBottom: spacing.m,
     },
     sectionSubtitle: {
         fontSize: 14,
-        marginTop: 4,
+        marginTop: spacing.xs,
     },
     exploreItemTitle: {
         fontSize: 14,
@@ -408,25 +409,25 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     statGroup: {
-        marginBottom: 28,
+        marginBottom: spacing.l,
     },
     statHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 16,
+        marginBottom: spacing.m,
     },
     statLabel: {
         fontSize: 13,
         fontWeight: '700',
-        marginLeft: 8,
+        marginLeft: spacing.s,
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
     statCard: {
         width: 220,
-        padding: 16,
+        padding: spacing.m,
         borderRadius: 20,
-        marginRight: 16,
+        marginRight: spacing.m,
         borderWidth: 1,
         // Premium shadow
         shadowColor: '#000',
@@ -439,7 +440,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: spacing.m,
     },
     miniIconBox: {
         width: 32,
@@ -449,8 +450,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     actionBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        paddingHorizontal: spacing.s,
+        paddingVertical: spacing.xs,
         borderRadius: 8,
     },
     actionBadgeText: {
@@ -462,7 +463,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '600',
         lineHeight: 20,
-        marginBottom: 4,
+        marginBottom: spacing.xs,
         height: 40, // Ensure fixed height for 2 lines
     },
     statCardSubtitle: {
@@ -473,8 +474,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 8,
         right: 8,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
+        paddingHorizontal: spacing.s,
+        paddingVertical: spacing.micro,
         borderRadius: 6,
     },
     miniBadgeText: {
