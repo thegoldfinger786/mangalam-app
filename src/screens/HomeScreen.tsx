@@ -3,13 +3,13 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
-import { fetchActiveBooks, fetchBookBySlug, fetchDailyUsage, fetchFirstVerseForBook, fetchStreakData, fetchUserProgress } from '../lib/queries';
+import { fetchActiveBooks, fetchDailyUsage, fetchStreakData } from '../lib/queries';
 import { supabase } from '../lib/supabase';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
@@ -79,60 +79,17 @@ export const HomeScreen = () => {
         }, [loadData])
     );
 
-    const handleContinue = async (overridePath?: string) => {
-        const { activePath: storePath, session: storeSession } = useAppStore.getState();
+    const handleOpenPath = (overridePath?: string) => {
+        const { activePath: storePath } = useAppStore.getState();
         const path = (overridePath as ContentPath) || storePath;
-        console.log('[HomeScreen] handleContinue called, path:', path);
-        try {
-            // Known book IDs — use these directly to avoid slug lookup failures
-            const KNOWN_BOOKS: Record<string, string> = {
-                'gita': '80ead5fd-bc3d-4726-ba8d-7cf00b6b75a9',
-                'ramayan': '5e9592af-6654-4680-ad14-027e2f279b9e',
-                'mahabharat': '181ce2df-ca9f-4d98-af57-e98f31354717',
-            };
 
-            let bookId = KNOWN_BOOKS[path];
-            
-            if (!bookId) {
-                // Fallback to DB lookup for any other paths
-                const book = await fetchBookBySlug(path);
-                if (!book) {
-                    Alert.alert('Coming Soon', 'No content is available for this path yet. Please check the Library for available content.');
-                    return;
-                }
-                bookId = book.book_id;
-            }
-
-            // Check for saved progress
-            let targetId = null;
-            if (storeSession) {
-                const progress = await fetchUserProgress(storeSession.user.id, bookId);
-                if (progress?.last_content_id) {
-                    targetId = progress.last_content_id;
-                }
-            }
-
-            // Fallback to first verse if no progress
-            if (!targetId) {
-                const firstVerse = await fetchFirstVerseForBook(bookId);
-                if (!firstVerse) {
-                    Alert.alert('Coming Soon', `No verses have been added for this path yet. Please check back soon.`);
-                    return;
-                }
-                targetId = firstVerse.verse_id;
-            }
-
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            navigation.navigate('Play', { itemId: targetId, type: path });
-        } catch (e) {
-            console.error('handleContinue error:', e);
-            Alert.alert('Error', 'Unable to load content. Please try again.');
-        }
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        navigation.navigate('BookDashboard', { type: path });
     };
 
     const handlePathPress = (pathId: string, pathTitle: string) => {
         if (pathId === activePath) {
-            handleContinue();
+            handleOpenPath();
         } else {
             Alert.alert(
                 'Change Path?',
@@ -144,12 +101,7 @@ export const HomeScreen = () => {
                         onPress: () => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             setActivePath(pathId as any);
-                            // If it's Gita or Mahabharat, we can take them to the dashboard, otherwise it's still coming soon
-                            if (pathId === 'gita' || pathId === 'mahabharat') {
-                                navigation.navigate('BookDashboard', { type: pathId });
-                            } else {
-                                handleContinue(pathId);
-                            }
+                            navigation.navigate('BookDashboard', { type: pathId });
                         }
                     }
                 ]

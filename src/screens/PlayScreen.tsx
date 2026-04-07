@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -32,7 +32,7 @@ import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaCont
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAppStore } from '../store/useAppStore';
 import { useAudioStore } from '../store/useAudioStore';
-import { theme, useTheme } from '../theme';
+import { useTheme } from '../theme';
 
 const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
@@ -41,6 +41,10 @@ const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
 
 export const PlayScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(
+        () => createStyles(colors, spacing, typography, borderRadius),
+        [colors, spacing, typography, borderRadius]
+    );
     const navigation = useNavigation<any>();
     const route = useRoute<any>();
     const { itemId, type, autoPlay } = route.params;
@@ -214,6 +218,18 @@ export const PlayScreen = () => {
                                 navigateToVerse(nextId, true);
                             }
                         };
+                        const { audioUrl } = useAudioStore.getState();
+
+                        const normalize = (url?: string | null) =>
+                            url ? url.split('?')[0] : null;
+
+                        const currentAudioUrl = normalize(audioUrl);
+                        const nextAudioUrl = normalize(urlData.publicUrl);
+
+                        if (currentAudioUrl && currentAudioUrl === nextAudioUrl) {
+                            return;
+                        }
+
                         const freshUrl = `${urlData.publicUrl}?t=${Date.now()}`;
                         loadAudio(freshUrl, { ...data, type, artworkUrl: resolvedArtworkUrl }, autoPlay, onFinish);
                     }
@@ -479,7 +495,7 @@ export const PlayScreen = () => {
             <ScrollView
                 ref={scrollRef}
                 style={styles.transcriptScroll}
-                contentContainerStyle={[styles.transcriptContent, { paddingHorizontal: spacing.xl, paddingTop: isFocusMode ? 100 : spacing.m, paddingBottom: 200 }]}
+                contentContainerStyle={[styles.transcriptContent, { paddingHorizontal: spacing.xl, paddingTop: isFocusMode ? spacing.xxxl : spacing.m, paddingBottom: playerBarHeight + spacing.l }]}
                 showsVerticalScrollIndicator={false}
                 onContentSizeChange={(_, h) => setScrollContentHeight(h)}
                 onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
@@ -619,7 +635,7 @@ export const PlayScreen = () => {
                                     <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>Daily Life Application</Text>
                                     {appBullets.map((bullet: string, idx: number) => (
                                         <View key={`app-${idx}`} style={{ flexDirection: 'row', marginBottom: isNumberedList ? spacing.m : spacing.l }}>
-                                            {isNumberedList && <Text style={{ color: colors.text, marginRight: 8, marginTop: 2 }}>•</Text>}
+                                            {isNumberedList && <Text style={{ color: colors.text, marginRight: spacing.s, marginTop: spacing.xs }}>•</Text>}
                                             <HighlightedText
                                                 text={bullet}
                                                 progress={getLocalProgress(bullet)}
@@ -639,7 +655,7 @@ export const PlayScreen = () => {
                                     )}
                                     {pe.map((ex: string, idx: number) => (
                                         <View key={idx} style={{ flexDirection: 'row', marginBottom: spacing.m }}>
-                                            {(!isRamayan && !isMahabharat) && <Text style={{ color: colors.text, marginRight: 8 }}>•</Text>}
+                                            {(!isRamayan && !isMahabharat) && <Text style={{ color: colors.text, marginRight: spacing.s }}>•</Text>}
                                             <HighlightedText
                                                 text={ex}
                                                 progress={getLocalProgress(ex)}
@@ -729,10 +745,15 @@ export const PlayScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (
+    colors: ReturnType<typeof useTheme>['colors'],
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography'],
+    borderRadius: ReturnType<typeof useTheme>['borderRadius']
+) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     center: {
         justifyContent: 'center',
@@ -742,16 +763,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: theme.spacing.m,
-        paddingTop: theme.spacing.m,
+        paddingHorizontal: spacing.m,
+        paddingTop: spacing.m,
     },
     iconButton: {
-        padding: theme.spacing.xs,
+        padding: spacing.xs,
     },
     headerTitle: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.s,
-        color: theme.colors.textSecondary,
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.s,
+        color: colors.textSecondary,
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
@@ -760,109 +781,109 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     scrollContent: {
-        paddingBottom: theme.spacing.xxxl,
+        paddingBottom: spacing.xxxl,
     },
     topSection: {
         alignItems: 'center',
-        paddingTop: theme.spacing.s,
-        paddingBottom: theme.spacing.s,
-        paddingHorizontal: theme.spacing.xl,
+        paddingTop: spacing.s,
+        paddingBottom: spacing.s,
+        paddingHorizontal: spacing.xl,
     },
     coverWrapper: {
         alignItems: 'center',
-        marginTop: theme.spacing.xl,
-        marginBottom: theme.spacing.xl,
+        marginTop: spacing.xl,
+        marginBottom: spacing.xl,
     },
     coverArt: {
         width: 160,
         height: 160,
-        borderRadius: theme.borderRadius.xl,
+        borderRadius: borderRadius.xl,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: theme.colors.cardShadow,
+        shadowColor: colors.cardShadow,
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.6,
         shadowRadius: 12,
         elevation: 6,
-        marginBottom: theme.spacing.s,
+        marginBottom: spacing.s,
     },
     coverImage: {
         width: 160,
         height: 160,
-        borderRadius: theme.borderRadius.xl,
+        borderRadius: borderRadius.xl,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: 0.4,
         shadowRadius: 12,
         elevation: 6,
-        marginBottom: theme.spacing.s,
+        marginBottom: spacing.s,
     },
     titleInfo: {
-        paddingHorizontal: theme.spacing.xl,
-        marginBottom: theme.spacing.l,
+        paddingHorizontal: spacing.xl,
+        marginBottom: spacing.l,
         alignItems: 'center',
     },
     trackTitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
+        fontFamily: typography.fontFamilies.semiBold,
+        fontSize: typography.sizes.l,
+        color: colors.text,
         textAlign: 'center',
-        marginTop: theme.spacing.xs,
+        marginTop: spacing.xs,
         marginBottom: 2,
     },
     trackSubtitle: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.m,
+        color: colors.textSecondary,
         textAlign: 'center',
-        marginBottom: theme.spacing.s,
+        marginBottom: spacing.s,
     },
     // ── Transcript area ──
     transcriptScroll: {
         flex: 1,
     },
     transcriptContent: {
-        paddingHorizontal: theme.spacing.xl,
-        paddingTop: theme.spacing.m,
+        paddingHorizontal: spacing.xl,
+        paddingTop: spacing.m,
     },
     // ── Player bar (in normal flex flow, not floating) ──
     playerBar: {
-        paddingHorizontal: theme.spacing.m,
-        paddingTop: theme.spacing.xs,
-        paddingBottom: theme.spacing.l,
+        paddingHorizontal: spacing.m,
+        paddingTop: spacing.xs,
+        paddingBottom: spacing.l,
         borderTopWidth: 1,
-        borderTopColor: theme.colors.border,
+        borderTopColor: colors.border,
     },
     slider: {
         width: '100%',
         height: 32,
-        marginHorizontal: -4,
+        marginHorizontal: -spacing.xs,
     },
     timeAndSpeedRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: theme.spacing.s,
-        marginTop: -6,
-        marginBottom: 4,
+        paddingHorizontal: spacing.s,
+        marginTop: -spacing.s,
+        marginBottom: spacing.xs,
     },
     timeRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: theme.spacing.s,
-        marginTop: -8,
+        paddingHorizontal: spacing.s,
+        marginTop: -spacing.s,
     },
     timeText: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.xs,
-        color: theme.colors.textSecondary,
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.xs,
+        color: colors.textSecondary,
     },
     controlsRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: theme.spacing.m,
-        marginBottom: theme.spacing.s,
+        marginTop: spacing.m,
+        marginBottom: spacing.s,
     },
     edgeBtn: {
         width: 40,
@@ -876,11 +897,11 @@ const styles = StyleSheet.create({
     playBtnLarge: {
         width: 68,
         height: 68,
-        borderRadius: 34,
-        backgroundColor: theme.colors.primary,
+        borderRadius: borderRadius.round,
+        backgroundColor: colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: theme.colors.primary,
+        shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
         shadowRadius: 8,
@@ -896,62 +917,62 @@ const styles = StyleSheet.create({
     skipLabel: {
         position: 'absolute',
         bottom: -2,
-        right: -4,
+        right: -spacing.micro,
         fontSize: 9,
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        color: theme.colors.textSecondary,
+        fontFamily: typography.fontFamilies.semiBold,
+        color: colors.textSecondary,
     },
     speedPill: {
         alignSelf: 'center',
-        marginTop: theme.spacing.s,
-        backgroundColor: theme.colors.surfaceSecondary,
-        borderRadius: 20,
-        paddingHorizontal: theme.spacing.m,
-        paddingVertical: 5,
+        marginTop: spacing.s,
+        backgroundColor: colors.surfaceSecondary,
+        borderRadius: borderRadius.round,
+        paddingHorizontal: spacing.m,
+        paddingVertical: spacing.xs,
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        borderColor: colors.border,
     },
     speedPillText: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.s,
-        color: theme.colors.primary,
+        fontFamily: typography.fontFamilies.semiBold,
+        fontSize: typography.sizes.s,
+        color: colors.primary,
         letterSpacing: 0.5,
     },
     divider: {
         height: 1,
-        backgroundColor: theme.colors.border,
-        marginVertical: theme.spacing.l,
-        marginHorizontal: theme.spacing.xl,
+        backgroundColor: colors.border,
+        marginVertical: spacing.l,
+        marginHorizontal: spacing.xl,
     },
     transcriptHeader: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
-        paddingHorizontal: theme.spacing.xl,
-        marginBottom: theme.spacing.l,
+        fontFamily: typography.fontFamilies.semiBold,
+        fontSize: typography.sizes.l,
+        color: colors.text,
+        paddingHorizontal: spacing.xl,
+        marginBottom: spacing.l,
     },
     transcriptBox: {
-        paddingHorizontal: theme.spacing.xl,
+        paddingHorizontal: spacing.xl,
     },
     contentSanskrit: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.xl,
-        color: theme.colors.text,
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.xl,
+        color: colors.text,
         textAlign: 'center',
-        lineHeight: theme.typography.lineHeights.xl,
-        marginBottom: theme.spacing.xl,
+        lineHeight: typography.lineHeights.xl,
+        marginBottom: spacing.xl,
     },
     contentSubtitle: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.s,
+        fontFamily: typography.fontFamilies.semiBold,
+        fontSize: typography.sizes.m,
+        color: colors.textSecondary,
+        marginBottom: spacing.s,
     },
     contentText: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
-        lineHeight: theme.typography.lineHeights.l,
-        marginBottom: theme.spacing.xl,
+        fontFamily: typography.fontFamilies.regular,
+        fontSize: typography.sizes.l,
+        color: colors.text,
+        lineHeight: typography.lineHeights.l,
+        marginBottom: spacing.xl,
     }
 });

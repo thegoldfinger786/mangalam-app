@@ -171,6 +171,8 @@ const MIN_BG_VOLUME = 0.01;
 const DEFAULT_ARTWORK_URL = Image.resolveAssetSource(require('../../assets/images/Mangalam-cover.jpeg')).uri;
 const clampNarrationVolume = (volume: number) => Math.min(1, Math.max(0.7, volume));
 const clampBgVolume = (volume: number) => Math.min(0.8, Math.max(0, volume));
+const normalize = (url?: string | null) =>
+    url ? url.split('?')[0] : null;
 
 export const useAudioStore = create<AudioState>((set, get) => ({
     sound: null,
@@ -553,6 +555,18 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     isPlaying: isNowPlaying,
                 });
 
+                if (audioUrl && isNowPlaying && (status.positionMillis ?? positionMs) > 0) {
+                    const pos = status.positionMillis ?? positionMs;
+
+                    // Save every ~5 seconds
+                    if (pos % 5000 < 200) {
+                        try {
+                            const key = `progress_${normalize(audioUrl)}`;
+                            AsyncStorage.setItem(key, String(pos));
+                        } catch { }
+                    }
+                }
+
                 if (
                     !currentState.lockScreenActivated &&
                     isNowPlaying &&
@@ -616,6 +630,13 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                         isPlaying: false,
                         position: durationMs,
                     });
+
+                    try {
+                        if (audioUrl) {
+                            const key = `progress_${normalize(audioUrl)}`;
+                            AsyncStorage.removeItem(key);
+                        }
+                    } catch { }
 
                     const bg = get().bgSound;
                     if (bg) {
@@ -743,6 +764,14 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             });
 
             if (autoPlay) {
+                try {
+                    const key = `progress_${normalize(url)}`;
+                    const saved = await AsyncStorage.getItem(key);
+                    if (saved) {
+                        await newSound.seekTo(Number(saved) / 1000);
+                    }
+                } catch { }
+
                 newSound.play();
 
                 // Delay ambient start by 500ms so the narration HTTP stream claims its

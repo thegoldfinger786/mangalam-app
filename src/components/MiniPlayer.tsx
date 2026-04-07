@@ -87,7 +87,7 @@ export const MiniPlayer = () => {
             <Pressable onPress={handlePress} style={styles.innerContainer}>
                 <View style={[styles.contentRow, { paddingHorizontal: spacing.m, paddingVertical: spacing.s }]}>
                     {/* Icon */}
-                    <View style={[styles.iconWrapper, { backgroundColor: colors.primary + '15', borderRadius: borderRadius.s }]}>
+                    <View style={[styles.iconWrapper, { backgroundColor: colors.primary + '15', borderRadius: borderRadius.s, marginRight: spacing.m }]}>
                         {getScriptureIcon(currentContent.type, 24, colors.primary)}
                     </View>
 
@@ -128,7 +128,7 @@ export const MiniPlayer = () => {
                             <Ionicons name="play-skip-forward" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => unloadAudio()} style={styles.closeButton}>
+                        <TouchableOpacity onPress={() => unloadAudio()} style={[styles.closeButton, { marginLeft: spacing.xs }]}>
                             <Ionicons name="close" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>
@@ -169,7 +169,6 @@ const styles = StyleSheet.create({
         height: 40,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
     },
     textContainer: {
         flex: 1,
@@ -201,7 +200,6 @@ const styles = StyleSheet.create({
         height: 44,
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 4,
     },
     controlsRow: {
         flexDirection: 'row',

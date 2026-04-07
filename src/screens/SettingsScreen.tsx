@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -12,11 +12,19 @@ import { useAudioStore } from '../store/useAudioStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 
+const ABOUT_LINKS = [
+    { label: 'Privacy Policy', url: 'https://www.mangalamapp.com/privacy' },
+    { label: 'Terms of Service', url: 'https://www.mangalamapp.com/terms' },
+    { label: 'Support', url: 'https://www.mangalamapp.com/support' },
+    { label: 'Contact', url: 'mailto:support@mangalamapp.com' },
+    { label: 'Disclaimer', url: 'https://www.mangalamapp.com/disclaimer' },
+];
 
 export const SettingsScreen = () => {
     const navigation = useNavigation<any>();
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const { narrationVolume, targetBgVolume, bgEnabled, hydrateAudioSettings, setNarrationVolume, setBgVolume, setBgEnabled } = useAudioStore();
     const [displayName, setDisplayName] = useState(userName);
     const [isEditing, setIsEditing] = useState(false);
@@ -86,7 +94,14 @@ export const SettingsScreen = () => {
         setDisplayName(trimmedName);
         setUserName(trimmedName);
         setIsEditing(false);
-        Alert.alert('Success', 'Display name updated.');
+    };
+
+    const handleOpenExternalLink = async (url: string) => {
+        try {
+            await Linking.openURL(url);
+        } catch {
+            Alert.alert('Error', 'Unable to open link.');
+        }
     };
 
     const handleSignOut = async () => {
@@ -128,7 +143,7 @@ export const SettingsScreen = () => {
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView style={styles.container} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.m, paddingBottom: 80 }]}>
+            <ScrollView style={styles.container} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.m, paddingBottom: spacing.xxxl }]}>
                 <View style={styles.headerRow}>
                     <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
                     <TouchableOpacity onPress={handleSignOut} style={styles.signOutIcon}>
@@ -148,26 +163,12 @@ export const SettingsScreen = () => {
                     <Text style={[styles.accountValue, { color: colors.text }]}>{session?.user?.email || 'Not signed in'}</Text>
                 </View>
 
-                <TouchableOpacity
-                    style={styles.accountStatus}
-                    activeOpacity={isEditing ? 1 : 0.7}
-                    onPress={() => {
-                        if (!isEditing) setIsEditing(true);
-                    }}
-                >
+                <View style={styles.accountStatus}>
                     <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Display Name:</Text>
                     {isEditing ? (
-                        <View style={[styles.accountStatus, { flex: 1, marginBottom: 0, marginLeft: spacing.m }]}>
+                        <View style={[styles.inlineEditRow, { marginLeft: spacing.m, borderColor: colors.border, backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}>
                             <TextInput
-                                style={[
-                                    styles.accountValue,
-                                    {
-                                        flex: 1,
-                                        color: colors.text,
-                                        textAlign: 'right',
-                                        paddingVertical: 0,
-                                    }
-                                ]}
+                                style={[styles.inlineInput, { color: colors.text }]}
                                 placeholder="Enter your name"
                                 placeholderTextColor={colors.textSecondary}
                                 value={displayName}
@@ -176,21 +177,24 @@ export const SettingsScreen = () => {
                                 returnKeyType="done"
                                 autoFocus
                                 onSubmitEditing={handleSaveDisplayName}
-                                onBlur={() => setIsEditing(false)}
+                                onBlur={handleSaveDisplayName}
                             />
-                            <TouchableOpacity onPress={handleSaveDisplayName}>
+                            <TouchableOpacity onPress={handleSaveDisplayName} style={styles.inlineCheckButton}>
                                 <Ionicons name="checkmark" size={20} color={colors.primary} />
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        <View style={[styles.accountStatus, { flex: 1, marginBottom: 0, marginLeft: spacing.m }]}>
+                        <TouchableOpacity
+                            style={[styles.inlineDisplayName, { marginLeft: spacing.m }]}
+                            activeOpacity={0.7}
+                            onPress={() => setIsEditing(true)}
+                        >
                             <Text style={[styles.accountValue, { color: colors.text, flex: 1, textAlign: 'right' }]}>
                                 {displayName || 'Add name'}
                             </Text>
-                            <Ionicons name="pencil" size={16} color={colors.textSecondary} />
-                        </View>
+                        </TouchableOpacity>
                     )}
-                </TouchableOpacity>
+                </View>
 
                 <View style={styles.accountStatus}>
                     <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Plan:</Text>
@@ -234,14 +238,13 @@ export const SettingsScreen = () => {
                 <View style={styles.sliderRow}>
                     <View style={styles.toggleRow}>
                         <Text style={[styles.optionText, { color: colors.text }]}>Background Music</Text>
-                        <Text style={[styles.accountValue, { color: colors.text }]}>{bgEnabled ? 'ON' : 'OFF'}</Text>
+                        <Switch
+                            trackColor={{ false: colors.border, true: colors.primaryLight }}
+                            thumbColor={bgEnabled ? colors.primary : colors.surfaceSecondary}
+                            onValueChange={setBgEnabled}
+                            value={bgEnabled}
+                        />
                     </View>
-                    <Switch
-                        trackColor={{ false: colors.border, true: colors.primaryLight }}
-                        thumbColor={bgEnabled ? colors.primary : colors.surfaceSecondary}
-                        onValueChange={setBgEnabled}
-                        value={bgEnabled}
-                    />
                 </View>
 
                 <View style={styles.sliderRow}>
@@ -298,20 +301,29 @@ export const SettingsScreen = () => {
                     <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
                 </View>
-                <TouchableOpacity 
-                    style={[styles.optionRow, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}
-                    onPress={() => navigation.navigate('About')}
-                >
-                    <Text style={[styles.optionText, { color: colors.text }]}>About Mangalam</Text>
-                    <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
+                <View style={[styles.optionsContainer, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}>
+                    {ABOUT_LINKS.map((item, index) => (
+                        <View key={item.label}>
+                            <TouchableOpacity
+                                style={styles.optionRow}
+                                onPress={() => handleOpenExternalLink(item.url)}
+                            >
+                                <Text style={[styles.optionText, { color: colors.text }]}>{item.label}</Text>
+                                <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                            {index < ABOUT_LINKS.length - 1 && (
+                                <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
+                            )}
+                        </View>
+                    ))}
+                </View>
             </Card>
         </ScrollView>
         </ScreenContainer>
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -325,29 +337,29 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24, // spacing.l
+        marginBottom: spacing.l,
     },
     signOutIcon: {
-        padding: 4,
+        padding: spacing.xs,
     },
     sectionCard: {
-        marginBottom: 24, // spacing.l
-        padding: 24, // spacing.l
+        marginBottom: spacing.l,
+        padding: spacing.l,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 24, // spacing.l
+        marginBottom: spacing.l,
     },
     sectionTitle: {
         fontSize: 20, // typography.sizes.l
-        marginLeft: 8, // spacing.s
+        marginLeft: spacing.s,
     },
     accountStatus: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24, // spacing.l
+        marginBottom: spacing.l,
     },
     accountLabel: {
         fontSize: 16, // typography.sizes.m
@@ -357,14 +369,39 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     accountButton: {
-        marginBottom: 16, // spacing.m
+        marginBottom: spacing.m,
     },
     displayNameInput: {
         borderWidth: 1,
         fontSize: 16,
     },
+    inlineDisplayName: {
+        flex: 1,
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        minHeight: 28,
+    },
+    inlineEditRow: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingLeft: spacing.m,
+        minHeight: 40,
+        borderWidth: 1,
+    },
+    inlineInput: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: '600',
+        textAlign: 'right',
+        paddingVertical: 0,
+    },
+    inlineCheckButton: {
+        paddingHorizontal: spacing.m,
+        paddingVertical: spacing.s,
+    },
     sliderRow: {
-        marginBottom: 16,
+        marginBottom: spacing.m,
     },
     optionsContainer: {
     },
@@ -372,7 +409,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16, // spacing.m
+        padding: spacing.m,
     },
     optionText: {
         fontSize: 16, // typography.sizes.m
