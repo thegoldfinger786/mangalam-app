@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
@@ -15,6 +16,7 @@ import { Button } from '../components/Button';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { fetchActiveBooks, supabase } from '../lib/queries';
+import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -23,17 +25,25 @@ const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type BookDashboardRouteProp = RouteProp<RootStackParamList, 'BookDashboard'>;
+
 export const BookDashboardScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const navigation = useNavigation<any>();
-    const route = useRoute<any>();
-    const { type } = route.params;
+    const navigation = useNavigation<NavigationProp>();
+    const route = useRoute<BookDashboardRouteProp>();
+    console.log('Route params:', route?.params);
+    const type = route?.params?.type ?? 'ramayan';
 
     const { completedVerses } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [verses, setVerses] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalChapters: 0, totalVerses: 0 });
     const [nextVerse, setNextVerse] = useState<any>(null);
+
+    if (!type) {
+        return null;
+    }
 
 
 
@@ -44,6 +54,7 @@ export const BookDashboardScreen = () => {
             const book = activeBooks.find(b => b.slug === type);
 
             if (!book) {
+                console.log('Alert triggered');
                 Alert.alert('Error', 'Book not found.');
                 navigation.goBack();
                 return;
@@ -73,6 +84,7 @@ export const BookDashboardScreen = () => {
 
         } catch (e) {
             console.error('Error loading book dashboard:', e);
+            console.log('Alert triggered');
             Alert.alert('Error', 'Unable to load dashboard data.');
         } finally {
             setLoading(false);

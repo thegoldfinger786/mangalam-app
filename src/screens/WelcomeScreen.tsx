@@ -17,6 +17,7 @@ export const WelcomeScreen = () => {
 
         const userId = useAppStore.getState().session?.user?.id;
         if (!userId) {
+            console.log('Alert triggered');
             Alert.alert('Error', 'Unable to save your name right now.');
             return;
         }
@@ -28,6 +29,7 @@ export const WelcomeScreen = () => {
         });
 
         if (error) {
+            console.log('Alert triggered');
             Alert.alert('Error', error.message);
             return;
         }

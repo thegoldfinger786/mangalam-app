@@ -300,15 +300,35 @@ export const checkAudioCache = async (params: {
 };
 // --- Progress Persistence ---
 
-export const fetchUserProgress = async (userId: string, bookId: string) => {
-    const { data, error } = await supabase
+export const fetchUserProgress = async (userId: string, bookId?: string) => {
+    let query = supabase
         .from('user_progress')
         .select('*')
-        .eq('user_id', userId)
-        .eq('book_id', bookId)
-        .maybeSingle();
+        .eq('user_id', userId);
+
+    if (bookId) {
+        query = query.eq('book_id', bookId);
+    } else {
+        query = query.order('updated_at', { ascending: false }).limit(1);
+    }
+
+    const { data, error } = bookId
+        ? await query.maybeSingle()
+        : await query.maybeSingle();
 
     if (error) throw error;
+
+    if (!data) return null;
+
+    if (!bookId) {
+        return {
+            ...data,
+            bookId: data.book_id,
+            verseId: data.last_content_id,
+            position: data.last_position_seconds ?? 0,
+        };
+    }
+
     return data;
 };
 

@@ -17,10 +17,12 @@ export const AuthScreen = () => {
 
     const handleEmailAuth = async () => {
         if (!email || !password) {
+            console.log('Alert triggered');
             Alert.alert('Error', 'Please enter both email and password.');
             return;
         }
         if (isSignUp && !agreedToTerms) {
+            console.log('Alert triggered');
             Alert.alert('Terms & Conditions', 'Please agree to the Terms and Conditions to create an account.');
             return;
         }
@@ -33,6 +35,7 @@ export const AuthScreen = () => {
                     password,
                 });
                 if (error) throw error;
+                console.log('Alert triggered');
                 Alert.alert('Verification Required', 'Please check your email to verify your account.');
             } else {
                 const { error } = await signInWithPassword({
@@ -45,6 +48,7 @@ export const AuthScreen = () => {
             if (error?.code === 'refresh_token_not_found') {
                 await signOut();
             }
+            console.log('Alert triggered');
             Alert.alert('Auth Error', error.message);
         } finally {
             setLoading(false);
@@ -53,9 +57,11 @@ export const AuthScreen = () => {
 
     const handleForgotPassword = () => {
         if (!email) {
+            console.log('Alert triggered');
             Alert.alert('Forgot Password', 'Please enter your email address first.');
             return;
         }
+        console.log('Alert triggered');
         Alert.alert('Coming Soon', 'Password reset functionality is being configured.');
     };
 

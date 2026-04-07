@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -27,6 +28,7 @@ import { HighlightedText } from '../components/HighlightedText';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
+import { RootStackParamList } from '../navigation/types';
 import { supabase } from '../lib/supabase';
 import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -39,15 +41,21 @@ const GITA_COVER = require('../../assets/images/gita-cover.jpg');
 const RAMAYAN_COVER = require('../../assets/images/ramayan-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export const PlayScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(
         () => createStyles(colors, spacing, typography, borderRadius),
         [colors, spacing, typography, borderRadius]
     );
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<NavigationProp>();
     const route = useRoute<any>();
-    const { itemId, type, autoPlay } = route.params;
+    const params = route.params ?? {};
+    const itemId = params.itemId ?? params.verseId;
+    const type = params.type ?? useAppStore.getState().activePath;
+    const autoPlay = params.autoPlay ?? false;
+    const resumePosition = params.position ?? 0;
 
     const { voicePreference, session, playbackRate, setPlaybackRate } = useAppStore();
     const {
@@ -86,15 +94,23 @@ export const PlayScreen = () => {
 
     const scrollRef = useRef<ScrollView>(null);
     const isNavigatingToVerse = useRef(false);
+    const isMountedRef = useRef(true);
+    const hasRestoredRoutePositionRef = useRef(false);
 
     useEffect(() => {
+        isMountedRef.current = true;
         return () => {
+            isMountedRef.current = false;
             // Do not stop audio on screen unmount
         };
     }, []);
     const [scrollContentHeight, setScrollContentHeight] = useState(0);
     const [scrollViewHeight, setScrollViewHeight] = useState(0);
     const [playerBarHeight, setPlayerBarHeight] = useState(220);
+
+    if (!itemId || !type) {
+        return null;
+    }
 
     const meta = COLLECTION_METADATA[type as string] || { title: 'Unknown', icon: 'book', color: colors.primary };
     const isVerse = true; // Hardcoded to true as all content utilizes the unified Verses DB structure now
@@ -108,6 +124,7 @@ export const PlayScreen = () => {
         if (!session) return;
 
         try {
+            if (!isMountedRef.current) return;
             setLoading(true);
 
             // 1. Content Fetching
@@ -130,20 +147,24 @@ export const PlayScreen = () => {
             // Track progress
             useAppStore.getState().addCompletedVerse(itemId);
 
+            if (!isMountedRef.current) return;
             setContent(data);
             setIsAllowed(true);
 
             let nextId: string | null = null;
             if (data?.book_id) {
+                if (!isMountedRef.current) return;
                 setBookId(data.book_id);
                 const [prev, next] = await Promise.all([
                     fetchAdjacentVerse(data.book_id, data.chapter_no, data.verse_no, 'prev'),
                     fetchAdjacentVerse(data.book_id, data.chapter_no, data.verse_no, 'next'),
                 ]);
+                if (!isMountedRef.current) return;
                 setPrevVerseId(prev?.verse_id ?? null);
                 setNextVerseId(next?.verse_id ?? null);
                 nextId = next?.verse_id ?? null;
             } else {
+                if (!isMountedRef.current) return;
                 setPrevVerseId(null);
                 setNextVerseId(null);
             }
@@ -151,6 +172,7 @@ export const PlayScreen = () => {
             // Check bookmark status
             if (session) {
                 const bookmarked = await fetchIsBookmarked(session.user.id, itemId);
+                if (!isMountedRef.current) return;
                 setIsBookmarked(bookmarked);
             }
 
@@ -269,9 +291,10 @@ export const PlayScreen = () => {
 
         } catch (error: any) {
             console.error('PlayScreen init error:', error);
+            console.log('Alert triggered');
             Alert.alert('Error', 'Failed to load content. Please check your connection.');
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) setLoading(false);
         }
     }, [session, itemId, type, voicePreference]);
 
@@ -285,6 +308,17 @@ export const PlayScreen = () => {
             logActivity(session.user.id, itemId, 'verse', 'listen');
         }
     }, [isPlaying]);
+
+    useEffect(() => {
+        if (
+            resumePosition >= 0 &&
+            duration > 1 &&
+            !hasRestoredRoutePositionRef.current
+        ) {
+            hasRestoredRoutePositionRef.current = true;
+            seek(resumePosition * 1000);
+        }
+    }, [duration, resumePosition, seek]);
 
     // Auto-scroll transcript proportionally to audio position
     useEffect(() => {

@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { RootStackParamList } from '../navigation/types';
 import { VoicePreference } from '../data/types';
 import { signOut, supabase } from '../lib/supabase';
 import { useAudioStore } from '../store/useAudioStore';
@@ -20,8 +22,10 @@ const ABOUT_LINKS = [
     { label: 'Disclaimer', url: 'https://www.mangalamapp.com/disclaimer' },
 ];
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export const SettingsScreen = () => {
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<NavigationProp>();
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
@@ -79,7 +83,7 @@ export const SettingsScreen = () => {
     const handleSaveDisplayName = async () => {
         if (!session?.user?.id) return;
 
-        const trimmedName = displayName.trim();
+        const trimmedName = (displayName || '').trim();
         const { error } = await supabase.from('profiles').upsert({
             id: session.user.id,
             display_name: trimmedName,
@@ -87,6 +91,7 @@ export const SettingsScreen = () => {
         });
 
         if (error) {
+            console.log('Alert triggered');
             Alert.alert('Error', error.message);
             return;
         }
@@ -100,11 +105,13 @@ export const SettingsScreen = () => {
         try {
             await Linking.openURL(url);
         } catch {
+            console.log('Alert triggered');
             Alert.alert('Error', 'Unable to open link.');
         }
     };
 
     const handleSignOut = async () => {
+        console.log('Alert triggered');
         Alert.alert(
             'Sign Out',
             'Are you sure you want to sign out?',
@@ -114,7 +121,10 @@ export const SettingsScreen = () => {
                     text: 'Sign Out',
                     onPress: async () => {
                         const { error } = await signOut();
-                        if (error) Alert.alert('Error', error.message);
+                        if (error) {
+                            console.log('Alert triggered');
+                            Alert.alert('Error', error.message);
+                        }
                     },
                     style: 'destructive'
                 }

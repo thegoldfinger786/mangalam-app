@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -11,12 +12,15 @@ import {
 } from 'react-native';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { fetchTopContent } from '../lib/queries';
+import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export const CommunityWisdomScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<NavigationProp>();
     const [loading, setLoading] = useState(true);
     const [topStats, setTopStats] = useState<{
         listened: any[],

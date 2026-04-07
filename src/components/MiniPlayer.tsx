@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import {
     Alert,
@@ -13,15 +14,17 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchAdjacentVerse } from '../lib/queries';
+import { RootStackParamList } from '../navigation/types';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
 import { getScriptureIcon } from './ScriptureIcons';
 
 const { width } = Dimensions.get('window');
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const MiniPlayer = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<NavigationProp>();
     const {
         currentContent,
         isPlaying,
@@ -67,6 +70,7 @@ export const MiniPlayer = () => {
                 autoPlay: true,
             });
         } catch (error: any) {
+            console.log('Alert triggered');
             Alert.alert('Playback Error', error?.message || 'Unable to change verse.');
         }
     };
@@ -107,11 +111,11 @@ export const MiniPlayer = () => {
                             <Ionicons name="play-skip-back" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => seekBackward()} style={styles.transportButton}>
+                        <TouchableOpacity onPress={() => seekBackward?.()} style={styles.transportButton}>
                             <Ionicons name="play-back" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => togglePlayPause()} style={styles.playButton}>
+                        <TouchableOpacity onPress={() => togglePlayPause?.()} style={styles.playButton}>
                             <Ionicons 
                                 name={isPlaying ? 'pause' : 'play'} 
                                 size={28} 
@@ -120,7 +124,7 @@ export const MiniPlayer = () => {
                             />
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => seekForward()} style={styles.transportButton}>
+                        <TouchableOpacity onPress={() => seekForward?.()} style={styles.transportButton}>
                             <Ionicons name="play-forward" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
 
@@ -128,7 +132,7 @@ export const MiniPlayer = () => {
                             <Ionicons name="play-skip-forward" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => unloadAudio()} style={[styles.closeButton, { marginLeft: spacing.xs }]}>
+                        <TouchableOpacity onPress={() => unloadAudio?.()} style={[styles.closeButton, { marginLeft: spacing.xs }]}>
                             <Ionicons name="close" size={22} color={colors.textSecondary} />
                         </TouchableOpacity>
                     </View>

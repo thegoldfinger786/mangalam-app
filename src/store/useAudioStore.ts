@@ -508,6 +508,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         await get().stopAllAudio({ keepBg });
 
         try {
+            if (get().loadToken !== nextToken) return;
+
             set({
                 onFinish,
                 audioUrl: url,
@@ -527,7 +529,6 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 });
                 return;
             }
-            if (get().loadToken !== nextToken) return;
 
             const newSound = createAudioPlayer(url, {
                 updateInterval: 100,
@@ -555,13 +556,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     isPlaying: isNowPlaying,
                 });
 
-                if (audioUrl && isNowPlaying && (status.positionMillis ?? positionMs) > 0) {
+                const currentAudioUrl = get().audioUrl;
+
+                if (currentAudioUrl && isNowPlaying && (status.positionMillis ?? positionMs) > 0) {
                     const pos = status.positionMillis ?? positionMs;
 
                     // Save every ~5 seconds
                     if (pos % 5000 < 200) {
                         try {
-                            const key = `progress_${normalize(audioUrl)}`;
+                            const key = `progress_${normalize(currentAudioUrl)}`;
                             AsyncStorage.setItem(key, String(pos));
                         } catch { }
                     }
@@ -632,8 +635,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     });
 
                     try {
-                        if (audioUrl) {
-                            const key = `progress_${normalize(audioUrl)}`;
+                        if (currentAudioUrl) {
+                            const key = `progress_${normalize(currentAudioUrl)}`;
                             AsyncStorage.removeItem(key);
                         }
                     } catch { }

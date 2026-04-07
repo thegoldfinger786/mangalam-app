@@ -3,14 +3,15 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
-import { fetchActiveBooks, fetchDailyUsage, fetchStreakData } from '../lib/queries';
+import { fetchActiveBooks, fetchDailyUsage, fetchStreakData, fetchUserProgress } from '../lib/queries';
 import { supabase } from '../lib/supabase';
+import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { DynamicBackground } from '../components/DynamicBackground';
@@ -32,6 +33,7 @@ export const HomeScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const { session, activePath, setActivePath, userName, setUserName } = useAppStore();
     const { colors, spacing, typography } = useTheme();
+    console.log('HomeScreen loaded');
 
     const [loading, setLoading] = useState(true);
     const [books, setBooks] = useState<any[]>([]);
@@ -79,18 +81,44 @@ export const HomeScreen = () => {
         }, [loadData])
     );
 
-    const handleOpenPath = (overridePath?: string) => {
-        const { activePath: storePath } = useAppStore.getState();
-        const path = (overridePath as ContentPath) || storePath;
+    const handleOpenPath = async () => {
+        console.log('handleOpenPath START');
 
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-        navigation.navigate('BookDashboard', { type: path });
+        try {
+            const progress = session?.user?.id
+                ? await fetchUserProgress(session.user.id)
+                : null;
+
+            console.log('User progress:', progress);
+
+            if (progress?.bookId && progress?.verseId) {
+                console.log('Navigating to PLAY:', progress);
+                navigation.navigate(ROUTES.PLAY, {
+                    bookId: progress.bookId,
+                    verseId: progress.verseId,
+                    position: progress.position,
+                });
+                return;
+            }
+
+            const { activePath } = useAppStore.getState();
+
+            navigation.navigate(ROUTES.BOOK_DASHBOARD, {
+                type: activePath ?? 'ramayan',
+            });
+        } catch (e) {
+            console.log('Continue error:', e);
+            navigation.navigate(ROUTES.BOOK_DASHBOARD, {
+                type: 'ramayan',
+            });
+        }
     };
 
     const handlePathPress = (pathId: string, pathTitle: string) => {
         if (pathId === activePath) {
             handleOpenPath();
         } else {
+            console.log('Alert triggered');
             Alert.alert(
                 'Change Path?',
                 `You are currently focused on the ${PrimaryTitle} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?`,
@@ -101,7 +129,7 @@ export const HomeScreen = () => {
                         onPress: () => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             setActivePath(pathId as any);
-                            navigation.navigate('BookDashboard', { type: pathId });
+                            navigation.navigate(ROUTES.BOOK_DASHBOARD, { type: pathId });
                         }
                     }
                 ]
@@ -126,6 +154,7 @@ export const HomeScreen = () => {
         : 'Explore the grand epic of the Mahabharat.';
 
     const PrimaryTitle = EXPLORE_PATHS.find(p => p.id === activePath)?.title || 'Selected Path';
+    console.log('handleOpenPath exists:', typeof handleOpenPath);
 
     if (loading && !books.length) {
         return (
@@ -184,7 +213,7 @@ export const HomeScreen = () => {
                 {/* Current Path Section */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>My Current Path</Text>
-                    <TouchableOpacity activeOpacity={0.85} onPress={() => handleContinue()}>
+                    <TouchableOpacity activeOpacity={0.85} onPress={() => handleOpenPath?.()}>
                         <Card style={[
                             styles.primaryCard,
                             {
@@ -206,7 +235,7 @@ export const HomeScreen = () => {
                             </View>
                             <Button
                                 title="Continue"
-                                onPress={() => handleContinue()}
+                                onPress={() => handleOpenPath?.()}
                                 style={styles.continueButton}
                             />
                         </Card>

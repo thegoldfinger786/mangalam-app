@@ -1,15 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export const AboutScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<NavigationProp>();
 
     const SectionCard = ({ title, content, bulletPoints, quote }: { title?: string, content?: string, bulletPoints?: string[], quote?: string }) => (
         <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
