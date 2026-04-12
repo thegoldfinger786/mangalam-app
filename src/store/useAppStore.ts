@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Session } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { AccountStatus, ContentPath, VoicePreference } from '../data/types';
@@ -12,6 +12,7 @@ interface AppState {
 
     // Supabase Session
     session: Session | null;
+    user: User | null;
 
     // User Info & Onboarding
     hasCompletedOnboarding: boolean;
@@ -25,7 +26,7 @@ interface AppState {
     playbackRate: number;
 
     // Actions
-    setSession: (session: Session | null) => void;
+    setAuthState: (session: Session | null) => void;
     setActivePath: (path: ContentPath) => void;
     setVoicePreference: (voice: VoicePreference) => void;
     setThemeMode: (mode: 'light' | 'dark') => void;
@@ -49,10 +50,11 @@ export const useAppStore = create<AppState>()(
 
             currentStreak: 0,
             session: null,
+            user: null,
             completedVerses: [],
             playbackRate: 1.0,
 
-            setSession: (session) => set({ session }),
+            setAuthState: (session) => set({ session, user: session?.user ?? null }),
             setActivePath: (path) => set({ activePath: path }),
             setVoicePreference: (voice) => set({ voicePreference: voice }),
             setThemeMode: (mode) => set({ themeMode: mode }),
@@ -70,6 +72,17 @@ export const useAppStore = create<AppState>()(
         {
             name: 'mangalam-storage',
             storage: createJSONStorage(() => AsyncStorage),
+            partialize: (state) => ({
+                activePath: state.activePath,
+                voicePreference: state.voicePreference,
+                themeMode: state.themeMode,
+                accountStatus: state.accountStatus,
+                hasCompletedOnboarding: state.hasCompletedOnboarding,
+                userName: state.userName,
+                currentStreak: state.currentStreak,
+                completedVerses: state.completedVerses,
+                playbackRate: state.playbackRate,
+            }),
         }
     )
 );

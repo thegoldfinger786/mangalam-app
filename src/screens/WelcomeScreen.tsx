@@ -8,8 +8,8 @@ import { theme, useTheme } from '../theme';
 
 export const WelcomeScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const { setUserName, setHasCompletedOnboarding } = useAppStore();
-    const [name, setName] = useState('');
+    const { setUserName, setHasCompletedOnboarding, session } = useAppStore();
+    const [name, setName] = useState(session?.user?.user_metadata?.full_name || '');
 
     const handleStart = async () => {
         const displayName = name.trim();
@@ -52,12 +52,12 @@ export const WelcomeScreen = () => {
                         <View style={styles.brandingContainer}>
                             <View style={[styles.sunCircle, { backgroundColor: colors.primaryLight, marginBottom: spacing.l }]} />
                             <Text style={[styles.appName, { color: colors.text, marginBottom: spacing.s }]}>Mangalam</Text>
-                            <Text style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>Ancient Wisdom for Modern Life</Text>
+                            <Text style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>  </Text>
                         </View>
 
                         {/* Input Area */}
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>What should we call you?</Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>    </Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.m, padding: spacing.l, color: colors.text, marginBottom: spacing.xl }]}
                                 placeholder="Enter your name"

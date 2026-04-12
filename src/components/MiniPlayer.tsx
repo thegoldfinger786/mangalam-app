@@ -13,6 +13,7 @@ import {
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ContentPath } from '../data/types';
 import { fetchAdjacentVerse } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAudioStore } from '../store/useAudioStore';
@@ -43,9 +44,15 @@ export const MiniPlayer = () => {
     const progress = duration > 0 ? position / duration : 0;
 
     const handlePress = () => {
+        if (!currentContent.bookId) {
+            console.error('MiniPlayer missing bookId for playback navigation', { currentContent });
+            return;
+        }
+
         navigation.navigate('Play', {
             itemId: currentContent.id,
-            type: currentContent.type,
+            bookId: currentContent.bookId,
+            type: currentContent.type as ContentPath,
             autoPlay: false, // Don't trigger a new load/play if already playing
         });
     };
@@ -67,7 +74,8 @@ export const MiniPlayer = () => {
 
             navigation.navigate('Play', {
                 itemId: adjacent.verse_id,
-                type: currentContent.type,
+                bookId: currentContent.bookId ?? undefined,
+                type: currentContent.type as ContentPath,
                 autoPlay: true,
             });
         } catch (error: any) {

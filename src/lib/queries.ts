@@ -15,6 +15,18 @@ export const fetchBookBySlug = async (slug: string) => {
     return data;
 };
 
+export const fetchBookById = async (bookId: string) => {
+    const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .eq('book_id', bookId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+};
+
 export const fetchFirstVerseForBook = async (bookId: string) => {
     const { data, error } = await supabase
         .from('verses')
@@ -51,6 +63,18 @@ export const fetchVerses = async (bookId: string) => {
         .order('verse_no', { ascending: true });
 
     if (error) throw error;
+    return data;
+};
+
+export const fetchVerseByIdAndBookId = async (bookId: string, verseId: string) => {
+    const { data, error } = await supabase
+        .from('verses')
+        .select('*, books!inner(slug)')
+        .eq('book_id', bookId)
+        .eq('verse_id', verseId)
+        .maybeSingle();
+
+    if (error && error.code !== 'PGRST116') throw error;
     return data;
 };
 

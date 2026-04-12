@@ -68,7 +68,11 @@ export const LibraryScreen = () => {
         // Map internal content_type to ContentPath union type for routing
         // In our DB, 'verse' maps to 'gita' or 'upanishads', 'narrative' maps to others
         // For now, we use the book slug if available.
-        navigation.navigate('Play', { itemId: id, type: selectedBook.slug as ContentPath });
+        navigation.navigate('Play', {
+            itemId: id,
+            bookId: selectedBook.book_id,
+            type: selectedBook.slug as ContentPath
+        });
     };
 
     const renderVerseChapters = () => {

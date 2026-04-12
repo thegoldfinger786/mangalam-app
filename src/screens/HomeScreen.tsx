@@ -9,7 +9,7 @@ import { Card } from '../components/Card';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
-import { fetchActiveBooks, fetchDailyUsage, fetchStreakData, fetchUserProgress } from '../lib/queries';
+import { fetchActiveBooks, fetchBookById, fetchDailyUsage, fetchStreakData, fetchUserProgress } from '../lib/queries';
 import { supabase } from '../lib/supabase';
 import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
@@ -93,10 +93,21 @@ export const HomeScreen = () => {
             console.log('User progress:', progress);
 
             if (progress?.bookId && progress?.verseId) {
+                const cachedBook = books.find((book) => book.book_id === progress.bookId);
+                const resolvedBook = cachedBook ?? await fetchBookById(progress.bookId);
+
+                if (!resolvedBook?.slug) {
+                    console.error('Missing book slug for progress', { progress, resolvedBook });
+                    return;
+                }
+
+                const bookSlug = resolvedBook.slug as ContentPath;
+
                 console.log('Navigating to PLAY:', progress);
                 navigation.navigate(ROUTES.PLAY, {
                     bookId: progress.bookId,
                     verseId: progress.verseId,
+                    type: bookSlug,
                     position: progress.position,
                 });
                 return;

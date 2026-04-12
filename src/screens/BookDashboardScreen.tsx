@@ -15,6 +15,7 @@ import {
 import { Button } from '../components/Button';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
+import { ContentPath } from '../data/types';
 import { fetchActiveBooks, supabase } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
@@ -105,7 +106,11 @@ export const BookDashboardScreen = () => {
 
     const handleContinue = () => {
         if (!nextVerse) return;
-        navigation.navigate('Play', { itemId: nextVerse.verse_id, type });
+        navigation.navigate('Play', {
+            itemId: nextVerse.verse_id,
+            bookId: nextVerse.book_id,
+            type: type as ContentPath
+        });
     };
 
     // Calculate how many distinct chapters they've completed verses in
@@ -142,7 +147,11 @@ export const BookDashboardScreen = () => {
         const uncompleted = chapterVerses.find(v => !completedVerses.includes(v.verse_id));
         const startVerse = uncompleted || chapterVerses[0];
         
-        navigation.navigate('Play', { itemId: startVerse.verse_id, type });
+        navigation.navigate('Play', {
+            itemId: startVerse.verse_id,
+            bookId: startVerse.book_id,
+            type: type as ContentPath
+        });
     };
 
     const isGita = type === 'gita';

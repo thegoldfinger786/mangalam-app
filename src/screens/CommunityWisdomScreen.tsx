@@ -4,6 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     ScrollView,
     StyleSheet,
     Text,
@@ -11,6 +12,7 @@ import {
     View
 } from 'react-native';
 import { getScriptureIcon } from '../components/ScriptureIcons';
+import { ContentPath } from '../data/types';
 import { fetchTopContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -102,7 +104,19 @@ export const CommunityWisdomScreen = () => {
                                         { backgroundColor: colors.surface, borderColor: colors.border },
                                         isTopThree && { borderColor: (medalColor || colors.border) + '40' }
                                     ]}
-                                    onPress={() => navigation.navigate('Play', { itemId: item.content_id, type: item.book_slug as any })}
+                                    onPress={() => {
+                                        if (!item.book_id || !item.book_slug) {
+                                            console.error('CommunityWisdom missing playback identity', { item });
+                                            Alert.alert('Playback unavailable', 'This item is missing book context.');
+                                            return;
+                                        }
+
+                                        navigation.navigate('Play', {
+                                            itemId: item.content_id,
+                                            bookId: item.book_id,
+                                            type: item.book_slug as ContentPath
+                                        });
+                                    }}
                                 >
                                     <View style={styles.cardHeader}>
                                         {/* Rank Badge */}

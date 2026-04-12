@@ -5,12 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/mangalam-icon.png",
-    "scheme": "dailyshlokyaag",
+    "scheme": "mangalamapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dailyshlokyaag.mangalam",
+      "associatedDomains": [
+        "applinks:mangalamapp.com"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
@@ -22,6 +25,20 @@
       "package": "com.dailyshlokyaag.mangalam",
       "permissions": [
         "WAKE_LOCK"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "mangalamapp"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ],
       "adaptiveIcon": {
         "backgroundColor": "#cc7b4c",
@@ -70,8 +87,6 @@
       "url": "https://u.expo.dev/7416da99-e1bf-4259-a436-4aa40662b109",
       "enabled": true
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    }
+    "runtimeVersion": "1.0.0"
   }
 }
