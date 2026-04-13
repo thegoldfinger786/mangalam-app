@@ -13,6 +13,7 @@ import {
     View,
 } from 'react-native';
 import { Button } from '../components/Button';
+import { AppleAuthButton, AuthButtonWrapper, GoogleAuthButton } from '../components/AuthButton';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAuth } from '../auth/AuthProvider';
@@ -21,21 +22,38 @@ import { useTheme } from '../theme';
 
 export const LoginScreen = () => {
     const { colors, spacing, borderRadius } = useTheme();
-    const { signInWithGoogle, authLoading } = useAuth();
+    const { signInWithGoogle, signInWithApple, authLoading } = useAuth();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [isSignUp, setIsSignUp] = useState(false);
     const [agreedToTerms, setAgreedToTerms] = useState(false);
+    const [activeProvider, setActiveProvider] = useState<'apple' | 'google' | null>(null);
 
     const handleGoogleLogin = async () => {
         console.log('[AUTH] LoginScreen: handleGoogleLogin called');
+        setActiveProvider('google');
         try {
             await signInWithGoogle();
         } catch (error) {
             console.error('Failed to start Google login:', error);
-            Alert.alert('Google Sign-In Error', 'Unable to start Google sign-in. Check the console logs for details.');
+            Alert.alert('Sign-in failed', 'Something went wrong. Please try again.');
+        } finally {
+            setActiveProvider(null);
+        }
+    };
+
+    const handleAppleLogin = async () => {
+        console.log('[AUTH] LoginScreen: handleAppleLogin called');
+        setActiveProvider('apple');
+        try {
+            await signInWithApple();
+        } catch (error) {
+            console.error('Failed to start Apple login:', error);
+            Alert.alert('Sign-in failed', 'Something went wrong. Please try again.');
+        } finally {
+            setActiveProvider(null);
         }
     };
 
@@ -105,15 +123,21 @@ export const LoginScreen = () => {
 
                     <Card style={[styles.authCard, { backgroundColor: colors.surface, marginTop: spacing.xl }]}>
                         <Text style={[styles.instructionText, { color: colors.text, marginBottom: spacing.m }]}>
-                            Continue with Google to get started
+                            Sign in to get started
                         </Text>
 
-                        <Button
-                            title={authLoading ? 'Opening Google...' : 'Continue with Google'}
-                            onPress={handleGoogleLogin}
-                            disabled={authLoading || loading}
-                            style={styles.googleButton}
-                        />
+                        <AuthButtonWrapper>
+                            <AppleAuthButton 
+                                onPress={handleAppleLogin} 
+                                disabled={authLoading || loading || activeProvider === 'google'} 
+                                loading={activeProvider === 'apple' || (authLoading && activeProvider !== 'google')}
+                            />
+                            <GoogleAuthButton 
+                                onPress={handleGoogleLogin} 
+                                disabled={authLoading || loading || activeProvider === 'apple'} 
+                                loading={activeProvider === 'google'}
+                            />
+                        </AuthButtonWrapper>
 
                         <Text style={[styles.dividerText, { color: colors.textSecondary, marginVertical: spacing.l }]}>
                             or continue with email

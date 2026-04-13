@@ -14,6 +14,7 @@
       "associatedDomains": [
         "applinks:mangalamapp.com"
       ],
+      "usesAppleSignIn": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [

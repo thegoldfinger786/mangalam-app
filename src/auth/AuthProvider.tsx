@@ -9,10 +9,12 @@ import React, {
     useRef,
     useState,
 } from 'react';
+
 import {
     getSupabase,
     signInWithGoogle as startGoogleOAuth,
 } from '../lib/supabaseClient';
+import { signInWithAppleService as startAppleOAuth } from '../services/auth/appleSignIn';
 import { useAppStore } from '../store/useAppStore';
 
 type AuthContextValue = {
@@ -21,6 +23,7 @@ type AuthContextValue = {
     isProfileLoading: boolean;
     session: Session | null;
     signInWithGoogle: () => Promise<void>;
+    signInWithApple: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -194,12 +197,50 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                 if (activeOAuthRequestIdRef.current === requestId) {
                     resetAuthLoading();
                 }
+                throw error;
             }
         } catch (error) {
             console.error('Unexpected Google OAuth error:', error);
             if (activeOAuthRequestIdRef.current === requestId) {
                 resetAuthLoading();
             }
+            throw error;
+        }
+    }, [resetAuthLoading, startOAuthAttempt, applySession]);
+
+    const signInWithApple = useCallback(async () => {
+        if (activeOAuthRequestIdRef.current !== null) {
+            console.log('[AUTH] OAuth attempt already active; ignoring');
+            return;
+        }
+
+        setAuthLoading(true);
+        const requestId = startOAuthAttempt();
+
+        try {
+            console.log('[AUTH] Calling startAppleOAuth()');
+
+            const { data, error } = await startAppleOAuth();
+
+            if (data?.session) {
+                console.log('[AUTH] Session returned directly from Apple OAuth');
+                applySession(data.session);
+                resetAuthLoading();
+                return;
+            }
+
+            if (error) {
+                if (activeOAuthRequestIdRef.current === requestId) {
+                    resetAuthLoading();
+                }
+                throw error;
+            }
+        } catch (error) {
+            console.error('Unexpected Apple OAuth error:', error);
+            if (activeOAuthRequestIdRef.current === requestId) {
+                resetAuthLoading();
+            }
+            throw error;
         }
     }, [resetAuthLoading, startOAuthAttempt, applySession]);
 
@@ -209,7 +250,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         isProfileLoading,
         session,
         signInWithGoogle,
-    }), [authLoading, loading, isProfileLoading, session, signInWithGoogle]);
+        signInWithApple,
+    }), [authLoading, loading, isProfileLoading, session, signInWithGoogle, signInWithApple]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

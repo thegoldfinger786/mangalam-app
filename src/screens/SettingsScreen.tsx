@@ -17,6 +17,26 @@ import { useTheme } from '../theme';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+const isPrivateEmail = (email?: string | null) => {
+    if (!email) return false;
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const maskedDomains = [
+        'privaterelay.appleid.com',
+    ];
+
+    return maskedDomains.some(domain =>
+        normalizedEmail.endsWith(`@${domain}`)
+    );
+};
+
+const getDisplayEmail = (email?: string | null) => {
+    if (!email) return '—';
+    if (isPrivateEmail(email)) return '🔒 Private Email';
+    return email;
+};
+
 export const SettingsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
@@ -29,6 +49,7 @@ export const SettingsScreen = () => {
 
     const isDarkMode = themeMode === 'dark';
     const displayedBgVolume = bgEnabled ? targetBgVolume : 0;
+    const currentDisplayEmail = getDisplayEmail(session?.user?.email);
 
     useFocusEffect(
         useCallback(() => {
@@ -153,9 +174,18 @@ export const SettingsScreen = () => {
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
                 </View>
 
-                <View style={[styles.accountStatus, { marginBottom: spacing.s }]}>
+                <View style={[styles.accountStatus, { marginBottom: spacing.s, alignItems: 'flex-start' }]}>
                     <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Email:</Text>
-                    <Text style={[styles.accountValue, { color: colors.text }]}>{session?.user?.email || 'Not signed in'}</Text>
+                    <View style={{ alignItems: 'flex-end', flex: 1, paddingLeft: spacing.m }}>
+                        <Text style={[styles.accountValue, { color: colors.text, textAlign: 'right' }]}>
+                            {currentDisplayEmail}
+                        </Text>
+                        {isPrivateEmail(session?.user?.email) && (
+                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4, opacity: 0.8, textAlign: 'right' }}>
+                                Your email is protected by your sign-in provider
+                            </Text>
+                        )}
+                    </View>
                 </View>
 
                 <View style={styles.accountStatus}>
