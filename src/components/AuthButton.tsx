@@ -46,11 +46,16 @@ export const GoogleAuthButton = ({ onPress, disabled, loading }: { onPress: () =
             style={({ pressed }) => [
                 styles.googleButton,
                 {
-                    backgroundColor: colors.surface,
-                    borderColor: '#CED4DA', // subtle gray border as requested
+                    backgroundColor: '#FFFFFF',
+                    borderColor: 'rgba(0,0,0,0.15)',
                     borderRadius: borderRadius.m,
                     opacity: pressed ? 0.85 : 1,
                     transform: [{ scale: pressed ? 0.98 : 1 }],
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 1,
+                    elevation: 1,
                 }
             ]}
             onPress={onPress}
@@ -62,7 +67,7 @@ export const GoogleAuthButton = ({ onPress, disabled, loading }: { onPress: () =
                     <View style={styles.iconContainer}>
                         <GoogleIcon size={20} />
                     </View>
-                    <Text style={[styles.googleButtonText, { fontFamily: typography.fontFamilies.medium }]}>
+                    <Text style={[styles.googleButtonText, { fontFamily: typography.fontFamilies.medium, color: '#1F2937' }]}>
                         Continue with Google
                     </Text>
                 </>
@@ -78,12 +83,11 @@ const styles = StyleSheet.create({
     },
     googleButton: {
         width: '100%',
-        height: 48, // Visually aligned closer to native Apple standard bounds (usually 44-50)
+        height: 44, // Match Apple button precisely
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 1,
-        // Apple button uses subtle shadow on some designs, but Google with a border is very standard
     },
     iconContainer: {
         position: 'absolute',

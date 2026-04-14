@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -264,8 +264,9 @@ export const SettingsScreen = () => {
                     <View style={styles.toggleRow}>
                         <Text style={[styles.optionText, { color: colors.text }]}>Background Music</Text>
                         <Switch
-                            trackColor={{ false: colors.border, true: colors.primaryLight }}
-                            thumbColor={bgEnabled ? colors.primary : colors.surfaceSecondary}
+                            trackColor={{ false: '#E5E7EB', true: colors.primary }}
+                            thumbColor="#FFFFFF"
+                            ios_backgroundColor="#E5E7EB"
                             onValueChange={setBgEnabled}
                             value={bgEnabled}
                         />
@@ -312,8 +313,9 @@ export const SettingsScreen = () => {
                 <View style={[styles.toggleRow, { paddingVertical: spacing.s }]}>
                     <Text style={[styles.optionText, { color: colors.text }]}>Dark Mode</Text>
                     <Switch
-                        trackColor={{ false: colors.border, true: colors.primaryLight }}
-                        thumbColor={isDarkMode ? colors.primary : colors.surfaceSecondary}
+                        trackColor={{ false: '#E5E7EB', true: colors.primary }}
+                        thumbColor="#FFFFFF"
+                        ios_backgroundColor="#E5E7EB"
                         onValueChange={handleToggleTheme}
                         value={isDarkMode}
                     />
