@@ -8,7 +8,7 @@ import { signInWithPassword, signOut, signUp } from '../lib/supabase';
 import { useTheme } from '../theme';
 
 export const AuthScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');

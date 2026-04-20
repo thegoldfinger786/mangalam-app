@@ -42,7 +42,7 @@ export const SettingsScreen = () => {
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
     
-    const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const appVersion = Constants.expoConfig?.version ?? '1.0.0';
     const { narrationVolume, targetBgVolume, bgEnabled, hydrateAudioSettings, setNarrationVolume, setBgVolume, setBgEnabled } = useAudioStore();
     const [displayName, setDisplayName] = useState(userName);
@@ -355,7 +355,10 @@ export const SettingsScreen = () => {
     );
 };
 
-const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
+const createStyles = (
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography']
+) => StyleSheet.create({
     container: {
         flex: 1,
     },

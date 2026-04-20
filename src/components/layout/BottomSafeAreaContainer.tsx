@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { spacing } from '../../theme/spacing';
+import { useTheme } from '../../theme';
 
 export interface BottomSafeAreaContainerProps extends ViewProps {
     children: React.ReactNode;
@@ -12,11 +12,12 @@ export const BottomSafeAreaContainer: React.FC<BottomSafeAreaContainerProps> = (
     style, 
     ...props 
 }) => {
+    const { spacing } = useTheme();
     const insets = useSafeAreaInsets();
     
-    // Default to at least spacing.md (12) padding bottom, or the notch inset.
+    // Default to at least spacing.m padding bottom, or the notch inset.
     // This prevents overlaps with gesture bars on devices without safe area padding.
-    const bottomPadding = Math.max(insets.bottom, spacing.md);
+    const bottomPadding = Math.max(insets.bottom, spacing.m);
 
     return (
         <View 

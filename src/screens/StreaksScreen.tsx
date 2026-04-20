@@ -1,5 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -9,6 +9,7 @@ import { useTheme } from '../theme';
 
 export const StreaksScreen = () => {
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
+    const styles = useMemo(() => createStyles(typography), [typography]);
     const { session } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [streakCount, setStreakCount] = useState(0);
@@ -120,7 +121,7 @@ export const StreaksScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (typography: ReturnType<typeof useTheme>['typography']) => StyleSheet.create({
     container: {
         flex: 1,
     },

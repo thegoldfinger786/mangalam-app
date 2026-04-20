@@ -82,7 +82,8 @@ export const darkTheme = {
 
 export type Theme = typeof lightTheme & { themeMode: 'light' | 'dark' };
 
-const ThemeContext = createContext<Theme>({ ...lightTheme, themeMode: 'light' });
+const ThemeContext = createContext<Theme | undefined>(undefined);
+ThemeContext.displayName = 'ThemeContext';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { themeMode } = useAppStore();
@@ -99,7 +100,17 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 };
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = (): Theme => {
+  const ctx = useContext(ThemeContext);
 
-// Export a placeholder static theme for initial refactoring safety (will be removed)
-export const theme = lightTheme;
+  if (!ctx) {
+    throw new Error('THEME_MISSING_PROVIDER');
+  }
+
+  if (!ctx.typography) {
+    console.error("THEME_BROKEN_OBJECT", ctx);
+    throw new Error('THEME_MISSING_TYPOGRAPHY');
+  }
+
+  return ctx;
+};

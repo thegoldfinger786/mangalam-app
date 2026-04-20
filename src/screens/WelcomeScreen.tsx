@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import { Button } from '../components/Button';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
-import { theme, useTheme } from '../theme';
+import { useTheme } from '../theme';
 
 export const WelcomeScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const { setUserName, setHasCompletedOnboarding, session } = useAppStore();
+    const styles = useMemo(() => createStyles(colors, spacing, typography, borderRadius), [colors, spacing, typography, borderRadius]);
     const [name, setName] = useState(session?.user?.user_metadata?.full_name || '');
 
     const handleStart = async () => {
@@ -82,17 +83,22 @@ export const WelcomeScreen = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (
+    colors: ReturnType<typeof useTheme>['colors'],
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography'],
+    borderRadius: ReturnType<typeof useTheme>['borderRadius']
+) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: colors.background,
     },
     keyboardView: {
         flex: 1,
     },
     content: {
         flex: 1,
-        padding: theme.spacing.xl,
+        padding: spacing.xl,
         justifyContent: 'space-between',
     },
     headerSpacer: {
@@ -107,47 +113,47 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: theme.colors.primaryLight,
-        marginBottom: theme.spacing.l,
+        backgroundColor: colors.primaryLight,
+        marginBottom: spacing.l,
         opacity: 0.8,
     },
     appName: {
-        fontFamily: theme.typography.fontFamilies.semiBold,
-        fontSize: theme.typography.sizes.xxxl,
-        color: theme.colors.text,
-        marginBottom: theme.spacing.s,
+        fontFamily: typography.fontFamilies.semiBold,
+        fontSize: typography.sizes.xxxl,
+        color: colors.text,
+        marginBottom: spacing.s,
         textAlign: 'center',
     },
     tagline: {
-        fontFamily: theme.typography.fontFamilies.regular,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.textSecondary,
+        fontFamily: typography.fontFamilies.regular,
+        fontSize: typography.sizes.l,
+        color: colors.textSecondary,
         textAlign: 'center',
-        lineHeight: theme.typography.lineHeights.l,
-        paddingHorizontal: theme.spacing.l,
+        lineHeight: typography.lineHeights.l,
+        paddingHorizontal: spacing.l,
     },
     inputContainer: {
         flex: 2,
         justifyContent: 'center',
     },
     inputLabel: {
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.m,
-        color: theme.colors.textSecondary,
-        marginBottom: theme.spacing.m,
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.m,
+        color: colors.textSecondary,
+        marginBottom: spacing.m,
         textAlign: 'center',
     },
     input: {
-        backgroundColor: theme.colors.surface,
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: theme.colors.border,
-        borderRadius: theme.borderRadius.m,
-        padding: theme.spacing.l,
-        fontFamily: theme.typography.fontFamilies.medium,
-        fontSize: theme.typography.sizes.l,
-        color: theme.colors.text,
+        borderColor: colors.border,
+        borderRadius: borderRadius.m,
+        padding: spacing.l,
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.l,
+        color: colors.text,
         textAlign: 'center',
-        marginBottom: theme.spacing.xl,
+        marginBottom: spacing.xl,
     },
     startButton: {
         width: '100%',

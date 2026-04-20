@@ -1,4 +1,4 @@
-import { DefaultTheme, NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
 import { StatusBar } from 'expo-status-bar';
@@ -24,7 +24,7 @@ import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export const navigationRef = createNavigationContainerRef<RootStackParamList>();
+import { navigationRef } from './navigationRef';
 
 function getActiveRouteName(state: any): string | null {
     if (!state || !state.routes) return null;

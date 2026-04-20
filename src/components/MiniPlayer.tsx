@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { navigationRef } from '../navigation';
+import { navigationRef } from '../navigation/navigationRef';
 import { useAppStore } from '../store/useAppStore';
 import {
     Alert,
@@ -22,7 +22,7 @@ import { getScriptureIcon } from './ScriptureIcons';
 const { width } = Dimensions.get('window');
 
 export const MiniPlayer = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     
     // Performance optimization: Derived boolean selector
@@ -37,7 +37,6 @@ export const MiniPlayer = () => {
     const seekBackward = useAudioStore(state => state.seekBackward);
     const seekForward = useAudioStore(state => state.seekForward);
 
-    const { layout } = useTheme();
     const tabBarHeight = useAppStore(state => state.tabBarHeight);
     const currentRouteName = useAppStore(state => state.currentRouteName);
     const currentContent = useAudioStore(state => state.currentContent);

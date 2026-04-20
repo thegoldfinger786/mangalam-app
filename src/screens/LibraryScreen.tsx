@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,10 +15,9 @@ import { useTheme } from '../theme';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
 export const LibraryScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
-    const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
+    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const navigation = useNavigation<NavigationProp>();
-    const { layout } = useTheme();
     const [selectedBook, setSelectedBook] = useState<any | null>(null);
     const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
     const [books, setBooks] = useState<any[]>([]);
@@ -116,8 +114,8 @@ export const LibraryScreen = () => {
                                     <View style={[styles.tileProgressBar, { backgroundColor: colors.primary, width: `${(completedInChapter / totalInChapter) * 100}%` }]} />
                                 </View>
                                 <Text style={[styles.tileProgressText, { color: colors.textSecondary }]}>{completedInChapter}/{totalInChapter}</Text>
-                                <TouchableOpacity 
-                                    style={{ marginTop: spacing.s }} 
+                                <TouchableOpacity
+                                    style={{ marginTop: spacing.s }}
                                     onPress={() => {
                                         const firstVerse = chapterVerses.sort((a, b) => a.verse_no - b.verse_no)[0];
                                         if (firstVerse) handlePlayItem(firstVerse.verse_id);
@@ -221,11 +219,11 @@ export const LibraryScreen = () => {
         const meta = COLLECTION_METADATA[selectedBook.slug] || { icon: 'book', color: colors.primary };
 
         return (
-            <ScrollView contentContainerStyle={{ 
-                backgroundColor: colors.background, 
+            <ScrollView contentContainerStyle={{
+                backgroundColor: colors.background,
                 paddingHorizontal: spacing.l,
                 paddingTop: spacing.m,
-                paddingBottom: layout.miniPlayerHeight + spacing.m 
+                paddingBottom: layout.miniPlayerHeight + spacing.m
             }}>
                 <View style={[styles.innerHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                     <TouchableOpacity
@@ -275,10 +273,10 @@ export const LibraryScreen = () => {
                     <View style={[styles.header, { backgroundColor: colors.background }]}>
                         <Text style={[styles.screenTitle, { color: colors.text }]}>Library</Text>
                     </View>
-                    <ScrollView contentContainerStyle={{ 
+                    <ScrollView contentContainerStyle={{
                         paddingHorizontal: spacing.l,
                         paddingTop: spacing.m,
-                        paddingBottom: layout.miniPlayerHeight + spacing.m 
+                        paddingBottom: layout.miniPlayerHeight + spacing.m
                     }}>
                         {renderCollectionList()}
                     </ScrollView>
@@ -290,7 +288,10 @@ export const LibraryScreen = () => {
     );
 };
 
-const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
+const createStyles = (
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography']
+) => StyleSheet.create({
     container: {
         flex: 1,
     },

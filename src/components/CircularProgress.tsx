@@ -13,7 +13,7 @@ interface CircularProgressProps {
 export const CircularProgress = ({
     progress,
     size = 120,
-    strokeWidth = 6,
+    strokeWidth = 10,
     children,
 }: CircularProgressProps) => {
     const { colors } = useTheme();

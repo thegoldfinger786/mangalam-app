@@ -10,7 +10,7 @@ import { useTheme } from '../theme';
 
 export const SupportMangalamScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const navigation = useNavigation();
+    const navigation = useNavigation<NavigationProp<any>>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     // The Stripe payment link provided by the user

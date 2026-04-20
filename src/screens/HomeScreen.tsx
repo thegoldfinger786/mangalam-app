@@ -52,7 +52,7 @@ const EXPLORE_PATH_DISPLAY: Record<string, { title: string; color: string }> = {
 
 export const HomeScreen = () => {
     console.log("HOME_RENDER");
-    const { colors, spacing, typography, layout } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     
     // Strict selector-based subscriptions to prevent unnecessary re-renders
@@ -65,7 +65,7 @@ export const HomeScreen = () => {
     // Decoupled from playback ticks (position, isPlaying)
     const currentPlayingBookId = useAudioStore(state => state.currentContent?.bookId);
 
-    const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const hasLoadedRef = useRef(false);
 
     const [loading, setLoading] = useState(true);
@@ -491,7 +491,10 @@ export const HomeScreen = () => {
     );
 };
 
-const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
+const createStyles = (
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography']
+) => StyleSheet.create({
     container: {
         flex: 1,
     },

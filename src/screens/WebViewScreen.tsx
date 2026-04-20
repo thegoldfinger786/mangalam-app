@@ -14,7 +14,7 @@ type WebViewRouteProp = RouteProp<RootStackParamList, 'WebView'>;
 export const WebViewScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<WebViewRouteProp>();
-    const { colors } = useTheme();
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const { url } = route.params;
 
     return (
