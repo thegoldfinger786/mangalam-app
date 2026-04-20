@@ -6,20 +6,33 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { DynamicBackground } from '../components/DynamicBackground';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { Skeleton } from '../components/Skeleton';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
-import { fetchActiveBooks, fetchBookById, fetchDailyUsage, fetchStreakData, fetchUserProgress } from '../lib/queries';
+import { auditBookIds, assertValidBookId, assertBookIdentityConsistency } from '../lib/bookIdentity';
+import { fetchActiveBooks, fetchBookById, fetchDailyUsage, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
 import { supabase } from '../lib/supabase';
 import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
-import { DynamicBackground } from '../components/DynamicBackground';
-import { Skeleton } from '../components/Skeleton';
-import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
+import { useRef } from 'react';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
+
+type ResumeState = {
+    book_id: string;
+    verse_id: string;
+    chapter_no: number;
+    verse_no: number;
+    last_position_seconds: number;
+    book_slug: ContentPath;
+    book_title: string;
+};
 
 const EXPLORE_PATHS = [
     { id: 'gita', title: 'Bhagavad Gita', icon: 'book-outline', color: '#E88B4A' },
@@ -29,20 +42,110 @@ const EXPLORE_PATHS = [
     { id: 'upanishads', title: 'Upanishads', icon: 'leaf-outline', color: '#568E65', isComingSoon: true },
 ];
 
+const EXPLORE_PATH_DISPLAY: Record<string, { title: string; color: string }> = {
+    gita: { title: 'Bhagavad Gita', color: '#E88B4A' },
+    ramayan: { title: 'Ramayan', color: '#DE5D3D' },
+    mahabharat: { title: 'Mahabharat', color: '#D6A621' },
+    shiv_puran: { title: 'Shiv Puran', color: '#5C7485' },
+    upanishads: { title: 'Upanishads', color: '#568E65' },
+};
+
 export const HomeScreen = () => {
+    console.log("HOME_RENDER");
+    const { colors, spacing, typography, layout } = useTheme();
     const navigation = useNavigation<NavigationProp>();
-    const { session, activePath, setActivePath, userName, setUserName } = useAppStore();
-    const { colors, spacing, typography } = useTheme();
+    
+    // Strict selector-based subscriptions to prevent unnecessary re-renders
+    const session = useAppStore(state => state.session);
+    const activeBookId = useAppStore(state => state.activeBookId);
+    const setActiveBookId = useAppStore(state => state.setActiveBookId);
+    const userName = useAppStore(state => state.userName);
+    const setUserName = useAppStore(state => state.setUserName);
+
+    // Decoupled from playback ticks (position, isPlaying)
+    const currentPlayingBookId = useAudioStore(state => state.currentContent?.bookId);
+
     const styles = useMemo(() => createStyles(spacing), [spacing]);
-    console.log('HomeScreen loaded');
+    const hasLoadedRef = useRef(false);
 
     const [loading, setLoading] = useState(true);
     const [books, setBooks] = useState<any[]>([]);
     const [usage, setUsage] = useState<any>(null);
     const [streakCount, setStreakCount] = useState(0);
+    const [resumeLoading, setResumeLoading] = useState(true);
+    const [resumeState, setResumeState] = useState<ResumeState | null>(null);
+
+    const hydrateResumeState = useCallback(async (activeBooks: any[]) => {
+        if (!session?.user?.id) {
+            setResumeState(null);
+            setResumeLoading(false);
+            return;
+        }
+
+        // REMOVED: setResumeState(null) to stabilize UI during refresh
+        setResumeLoading(true);
+
+        try {
+            const progress = await fetchUserProgress(session.user.id);
+
+            if (!progress?.bookId || !progress?.verseId) {
+                console.log('CURRENT_PATH_UI_SOURCE', null);
+                // Only set null if we truly have no progress
+                setResumeState(null);
+                return;
+            }
+
+            const cachedBook = activeBooks.find((book) => book.book_id === progress.bookId);
+            const resolvedBook = cachedBook ?? await fetchBookById(progress.bookId);
+
+            if (!resolvedBook?.slug) {
+                console.error('Missing book slug for progress', { progress, resolvedBook });
+                console.log('CURRENT_PATH_UI_SOURCE', null);
+                setResumeState(null);
+                return;
+            }
+
+            const verse = await fetchVerseByIdAndBookId(progress.bookId, progress.verseId);
+            if (!verse) {
+                console.error('Missing verse metadata for current path UI', { progress });
+                console.log('CURRENT_PATH_UI_SOURCE', null);
+                setResumeState(null);
+                return;
+            }
+
+            const nextResumeState: ResumeState = {
+                book_id: progress.bookId,
+                verse_id: progress.verseId,
+                chapter_no: verse.chapter_no,
+                verse_no: verse.verse_no,
+                last_position_seconds: progress.position ?? 0,
+                book_slug: resolvedBook.slug as ContentPath,
+                book_title: resolvedBook.title ?? resolvedBook.name ?? resolvedBook.slug,
+            };
+
+            console.log('CURRENT_PATH_UI_SOURCE', nextResumeState);
+            console.log('RESUME_DEBUG', {
+                source: 'remote',
+                book_id: nextResumeState.book_id,
+                chapter_no: nextResumeState.chapter_no,
+                verse_no: nextResumeState.verse_no,
+                verse_id: nextResumeState.verse_id,
+                audio_path: null,
+            });
+            setActiveBookId(progress.bookId);
+            setResumeState(nextResumeState);
+        } catch (error) {
+            console.error('Error loading current path resume state:', error);
+            console.log('CURRENT_PATH_UI_SOURCE', null);
+            setResumeState(null);
+        } finally {
+            setResumeLoading(false);
+        }
+    }, [session?.user?.id, setActiveBookId]);
 
     const loadData = useCallback(async () => {
-        if (!session?.user) return;
+        if (!session?.user || hasLoadedRef.current) return;
+        hasLoadedRef.current = true;
         try {
             setLoading(true);
             const [activeBooks, dailyUsage, streakData] = await Promise.all([
@@ -50,6 +153,12 @@ export const HomeScreen = () => {
                 fetchDailyUsage(session.user.id),
                 fetchStreakData(session.user.id)
             ]);
+            auditBookIds(activeBooks);
+            console.log('BOOKS_LOADED', activeBooks.map((b: any) => ({
+                title: b.title,
+                book_id: b.book_id,
+                slug: b.slug,
+            })));
 
             if (!userName) {
                 const { data: profile } = await supabase
@@ -64,6 +173,7 @@ export const HomeScreen = () => {
             }
 
             setBooks(activeBooks);
+            await hydrateResumeState(activeBooks);
             setUsage(dailyUsage);
 
             // Basic streak calculation for MVP: count unique dates in the last 30 days
@@ -74,7 +184,7 @@ export const HomeScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [session, setUserName, userName]);
+    }, [hydrateResumeState, session, setUserName, userName]);
 
     useFocusEffect(
         useCallback(() => {
@@ -86,62 +196,90 @@ export const HomeScreen = () => {
         console.log('handleOpenPath START');
 
         try {
-            const progress = session?.user?.id
-                ? await fetchUserProgress(session.user.id)
-                : null;
-
-            console.log('User progress:', progress);
-
-            if (progress?.bookId && progress?.verseId) {
-                const cachedBook = books.find((book) => book.book_id === progress.bookId);
-                const resolvedBook = cachedBook ?? await fetchBookById(progress.bookId);
-
-                if (!resolvedBook?.slug) {
-                    console.error('Missing book slug for progress', { progress, resolvedBook });
-                    return;
+            if (resumeState) {
+                const navBookId = resumeState.book_id;
+                const navVerseId = resumeState.verse_id;
+                console.log('RESUME_COMPARE', {
+                    ui_book_id: resumeState.book_id,
+                    ui_verse_id: resumeState.verse_id,
+                    nav_book_id: navBookId,
+                    nav_verse_id: navVerseId,
+                });
+                if (resumeState.verse_id !== navVerseId) {
+                    console.warn('RESUME_COMPARE mismatch', {
+                        ui_verse_id: resumeState.verse_id,
+                        nav_verse_id: navVerseId,
+                    });
                 }
-
-                const bookSlug = resolvedBook.slug as ContentPath;
-
-                console.log('Navigating to PLAY:', progress);
+                assertBookIdentityConsistency({ source: 'HomeScreen.resume', bookId: navBookId });
                 navigation.navigate(ROUTES.PLAY, {
-                    bookId: progress.bookId,
-                    verseId: progress.verseId,
-                    type: bookSlug,
-                    position: progress.position,
+                    bookId: navBookId,
+                    verseId: navVerseId,
+                    autoPlay: true,
+                    startPosition: resumeState.last_position_seconds,
+                    position: resumeState.last_position_seconds,
+                    resumeSource: 'remote',
                 });
                 return;
             }
 
-            const { activePath } = useAppStore.getState();
-
+            const { activeBookId: currentActiveBookId } = useAppStore.getState();
+            assertBookIdentityConsistency({ source: 'HomeScreen.handleOpenPath', bookId: currentActiveBookId });
+            if (!assertValidBookId(currentActiveBookId, 'HomeScreen.handleOpenPath')) {
+                Alert.alert('Unavailable', 'No book is selected yet.');
+                return;
+            }
             navigation.navigate(ROUTES.BOOK_DASHBOARD, {
-                type: activePath ?? 'ramayan',
+                bookId: currentActiveBookId,
             });
         } catch (e) {
             console.log('Continue error:', e);
-            navigation.navigate(ROUTES.BOOK_DASHBOARD, {
-                type: 'ramayan',
-            });
         }
     };
 
-    const handlePathPress = (pathId: string, pathTitle: string) => {
-        if (pathId === activePath) {
-            handleOpenPath();
+    const handlePathPress = (book: any) => {
+        const clickedTitle = book?.title_en || book?.title_hi || book?.title || book?.name || 'Unknown';
+        console.log('BOOK_CLICK', {
+            clicked_title: clickedTitle,
+            clicked_book_id: book?.book_id ?? null,
+        });
+
+        const navigateToBookDashboard = () => {
+            if (!assertValidBookId(book?.book_id, 'HomeScreen.handlePathPress')) {
+                console.warn('BOOK_MISMATCH_DETECTED', {
+                    clicked_title: clickedTitle,
+                    clicked_book_id: null,
+                    reason: 'missing_book_mapping',
+                });
+                Alert.alert('Unavailable', 'This book is not available right now.');
+                return;
+            }
+            console.log('NAVIGATE_BOOK', {
+                passed_book_id: book.book_id,
+            });
+            assertBookIdentityConsistency({ source: 'HomeScreen.handlePathPress', bookId: book.book_id });
+            navigation.navigate(ROUTES.BOOK_DASHBOARD, {
+                bookId: book.book_id,
+                clickedBookId: book.book_id,
+                clickedTitle: clickedTitle,
+            });
+        };
+
+        if (book.book_id === activeBookId) {
+            navigateToBookDashboard();
         } else {
             console.log('Alert triggered');
             Alert.alert(
                 'Change Path?',
-                `You are currently focused on the ${PrimaryTitle} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?`,
+                `You are currently focused on the ${currentPathTitle} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?`,
                 [
                     { text: 'Stay Focused', style: 'cancel' },
                     {
                         text: 'Change Path',
                         onPress: () => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setActivePath(pathId as any);
-                            navigation.navigate(ROUTES.BOOK_DASHBOARD, { type: pathId });
+                            setActiveBookId(book.book_id);
+                            navigateToBookDashboard();
                         }
                     }
                 ]
@@ -159,13 +297,26 @@ export const HomeScreen = () => {
         return displayFirstName ? `${timeGreeting}, ${displayFirstName}.` : `${timeGreeting}.`;
     };
 
-    const PrimaryPathDesc = activePath === 'gita'
-        ? 'Continue your guided reflection on the Bhagavad Gita.'
-        : activePath === 'ramayan'
-        ? 'Continue the timeless narrative of the Ramayan.'
-        : 'Explore the grand epic of the Mahabharat.';
+    // Memoize derived UI values to improve stability
+    const currentPathColor = useMemo(() => resumeState
+        ? (EXPLORE_PATH_DISPLAY[resumeState.book_slug]?.color || colors.primary)
+        : colors.primary, [resumeState, colors.primary]);
 
-    const PrimaryTitle = EXPLORE_PATHS.find(p => p.id === activePath)?.title || 'Selected Path';
+    const currentPathTitle = useMemo(() => resumeState?.book_title || 'No recent verse', [resumeState]);
+
+    const currentPathDesc = useMemo(() => resumeState
+        ? `Chapter ${resumeState.chapter_no} · Verse ${resumeState.verse_no}`
+        : 'Your current path will appear here after you start a verse.', [resumeState]);
+
+    const currentPathMeta = useMemo(() => resumeState
+        ? `Resume at ${Math.max(0, Math.floor(resumeState.last_position_seconds))}s`
+        : 'Resume is unavailable until remote progress exists.', [resumeState]);
+
+    const exploreBooks = useMemo(() => books.map((book) => ({
+        ...book,
+        displayTitle: book.title_en || book.title_hi || book.title || book.name || EXPLORE_PATH_DISPLAY[book.slug]?.title || 'Untitled',
+        displayColor: EXPLORE_PATH_DISPLAY[book.slug]?.color || colors.primary,
+    })), [books, colors.primary]);
     console.log('handleOpenPath exists:', typeof handleOpenPath);
 
     if (loading && !books.length) {
@@ -201,7 +352,14 @@ export const HomeScreen = () => {
     return (
         <DynamicBackground style={styles.container}>
             <ScreenContainer edges={['top']} style={styles.container}>
-                <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+            <ScrollView 
+                style={styles.container} 
+                contentContainerStyle={{ 
+                    paddingTop: spacing.m,
+                    paddingBottom: layout.miniPlayerHeight + spacing.m 
+                }}
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.header}>
                     <Text style={[styles.greeting, { color: colors.textSecondary }]}>Namaste, </Text>
                     <Text style={[styles.userName, { color: colors.text }]}>{userName || 'Seeker'}</Text>
@@ -225,33 +383,52 @@ export const HomeScreen = () => {
                 {/* Current Path Section */}
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>My Current Path</Text>
-                    <TouchableOpacity activeOpacity={0.85} onPress={() => handleOpenPath?.()}>
-                        <Card style={[
-                            styles.primaryCard,
-                            {
-                                backgroundColor: 'transparent',
-                                borderColor: (EXPLORE_PATHS.find(p => p.id === activePath)?.color || colors.primary),
-                                borderWidth: 1.5,
-                                elevation: 0,
-                                shadowOpacity: 0
-                            }
-                        ]}>
-                            <View style={styles.cardHeader}>
-                                <View style={styles.cardInfo}>
-                                    <Text style={[styles.cardTitle, { color: colors.text }]}>{PrimaryTitle}</Text>
-                                    <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>{PrimaryPathDesc}</Text>
-                                </View>
-                                <View style={[styles.cardIconBox, { backgroundColor: (EXPLORE_PATHS.find(p => p.id === activePath)?.color || colors.primary) + '15' }]}>
-                                    {getScriptureIcon(activePath, 32, EXPLORE_PATHS.find(p => p.id === activePath)?.color || colors.primary)}
-                                </View>
-                            </View>
-                            <Button
-                                title="Continue"
-                                onPress={() => handleOpenPath?.()}
-                                style={styles.continueButton}
-                            />
-                        </Card>
-                    </TouchableOpacity>
+                    {resumeState || resumeLoading ? (
+                        <TouchableOpacity activeOpacity={0.85} onPress={() => handleOpenPath?.()} disabled={resumeLoading}>
+                            <Card style={[
+                                styles.primaryCard,
+                                {
+                                    backgroundColor: 'transparent',
+                                    borderColor: currentPathColor,
+                                    borderWidth: 1.5,
+                                    elevation: 0,
+                                    shadowOpacity: 0
+                                }
+                            ]}>
+                                {resumeLoading && !resumeState ? (
+                                    <View style={styles.cardHeader}>
+                                        <View style={styles.cardInfo}>
+                                            <Skeleton width={140} height={24} borderRadius={4} style={{ marginBottom: spacing.s }} />
+                                            <Skeleton width={170} height={18} borderRadius={4} style={{ marginBottom: spacing.xs }} />
+                                            <Skeleton width={120} height={16} borderRadius={4} />
+                                        </View>
+                                        <View style={[styles.cardIconBox, { backgroundColor: currentPathColor + '15' }]}>
+                                            <ActivityIndicator color={currentPathColor} />
+                                        </View>
+                                    </View>
+                                ) : (
+                                    <View style={styles.cardHeader}>
+                                        <View style={styles.cardInfo}>
+                                            <Text style={[styles.cardTitle, { color: colors.text }]}>{currentPathTitle}</Text>
+                                            <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>{currentPathDesc}</Text>
+                                            <Text style={[styles.cardMeta, { color: colors.textTertiary }]}>{currentPathMeta}</Text>
+                                        </View>
+                                        <View style={[styles.cardIconBox, { backgroundColor: currentPathColor + '15' }]}>
+                                            {getScriptureIcon(resumeState?.book_slug || 'book', 32, currentPathColor)}
+                                        </View>
+                                    </View>
+                                )}
+                                <Button
+                                    title="Continue"
+                                    onPress={() => handleOpenPath?.()}
+                                    style={styles.continueButton}
+                                    disabled={resumeLoading}
+                                />
+                            </Card>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={{ height: layout.placeholderHeight }} />
+                    )}
                 </View>
 
                 {/* Weekly Streak UI - Linked to Supabase */}
@@ -264,29 +441,46 @@ export const HomeScreen = () => {
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Explore Paths</Text>
                     <View style={styles.exploreGrid}>
-                        {EXPLORE_PATHS.map((path) => (
+                        {exploreBooks.map((book) => (
+                            <TouchableOpacity
+                                key={book.book_id}
+                                style={[
+                                    styles.exploreItem,
+                                    {
+                                        backgroundColor: colors.surface,
+                                        borderColor: activeBookId === book.book_id ? book.displayColor : colors.border,
+                                        borderWidth: activeBookId === book.book_id ? 2 : 1,
+                                    }
+                                ]}
+                                onPress={() => handlePathPress(book)}
+                            >
+                                <View style={[styles.exploreIconBox, { backgroundColor: book.displayColor + '15' }]}>
+                                    {getScriptureIcon(book.slug || 'book', 28, book.displayColor)}
+                                </View>
+                                <Text style={[styles.exploreItemTitle, { color: colors.text }]}>{book.displayTitle}</Text>
+                            </TouchableOpacity>
+                        ))}
+                        {EXPLORE_PATHS.filter((path) => path.isComingSoon).map((path) => (
                             <TouchableOpacity
                                 key={path.id}
                                 style={[
                                     styles.exploreItem,
                                     {
                                         backgroundColor: colors.surface,
-                                        borderColor: activePath === path.id ? path.color : colors.border,
-                                        borderWidth: activePath === path.id ? 2 : 1,
-                                        opacity: (path as any).isComingSoon ? 0.6 : 1
+                                        borderColor: colors.border,
+                                        borderWidth: 1,
+                                        opacity: 0.6,
                                     }
                                 ]}
-                                onPress={() => handlePathPress(path.id, path.title)}
+                                disabled
                             >
                                 <View style={[styles.exploreIconBox, { backgroundColor: path.color + '15' }]}>
                                     {getScriptureIcon(path.id, 28, path.color)}
                                 </View>
                                 <Text style={[styles.exploreItemTitle, { color: colors.text }]}>{path.title}</Text>
-                                {(path as any).isComingSoon && (
-                                    <View style={[styles.miniBadge, { backgroundColor: colors.surfaceSecondary }]}>
-                                        <Text style={[styles.miniBadgeText, { color: colors.textTertiary }]}>Soon</Text>
-                                    </View>
-                                )}
+                                <View style={[styles.miniBadge, { backgroundColor: colors.surfaceSecondary }]}>
+                                    <Text style={[styles.miniBadgeText, { color: colors.textTertiary }]}>Soon</Text>
+                                </View>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -385,6 +579,12 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         fontSize: 15,
         lineHeight: 22,
     },
+    cardMeta: {
+        fontSize: 13,
+        lineHeight: 18,
+        marginTop: spacing.s,
+        fontWeight: '500',
+    },
     continueButton: {
         width: '100%',
     },
@@ -411,11 +611,11 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginBottom: spacing.m,
     },
     sectionSubtitle: {
-        fontSize: 14,
+        fontSize: typography.sizes.s,
         marginTop: spacing.xs,
     },
     exploreItemTitle: {
-        fontSize: 14,
+        fontSize: typography.sizes.s,
         textAlign: 'center',
         fontWeight: '500',
     },
@@ -478,7 +678,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         height: 40, // Ensure fixed height for 2 lines
     },
     statCardSubtitle: {
-        fontSize: 12,
+        fontSize: typography.sizes.xs,
         fontWeight: '500',
     },
     miniBadge: {

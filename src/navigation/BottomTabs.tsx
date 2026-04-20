@@ -1,18 +1,31 @@
 import { Ionicons } from '@expo/vector-icons';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React from 'react';
+import { createBottomTabNavigator, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import React, { useEffect } from 'react';
 
 import { HomeScreen } from '../screens/HomeScreen';
 import { LibraryScreen } from '../screens/LibraryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StreaksScreen } from '../screens/StreaksScreen';
 
+import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { BottomTabParamList } from './types';
-import { MiniPlayer } from '../components/MiniPlayer';
 import { View } from 'react-native';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
+
+const TabBarHeightSync = () => {
+    const tabBarHeight = useBottomTabBarHeight();
+
+    useEffect(() => {
+        const current = useAppStore.getState().tabBarHeight;
+        if (current !== tabBarHeight) {
+            useAppStore.getState().setTabBarHeight(tabBarHeight);
+        }
+    }, [tabBarHeight]);
+
+    return null;
+};
 
 export const BottomTabs = () => {
     const { colors, typography } = useTheme();
@@ -52,12 +65,18 @@ export const BottomTabs = () => {
                 }
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Home">
+                {(props) => (
+                    <>
+                        <TabBarHeightSync />
+                        <HomeScreen {...props} />
+                    </>
+                )}
+            </Tab.Screen>
             <Tab.Screen name="Library" component={LibraryScreen} />
             <Tab.Screen name="Streaks" component={StreaksScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
-        <MiniPlayer />
     </View>
     );
 };

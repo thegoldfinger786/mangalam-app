@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
-import { ContentPath } from '../data/types';
+import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchActiveBooks, fetchVersesWithContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
@@ -18,6 +19,7 @@ export const LibraryScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const navigation = useNavigation<NavigationProp>();
+    const { layout } = useTheme();
     const [selectedBook, setSelectedBook] = useState<any | null>(null);
     const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
     const [books, setBooks] = useState<any[]>([]);
@@ -64,14 +66,13 @@ export const LibraryScreen = () => {
         }
     }, [selectedBook]);
 
-    const handlePlayItem = (id: string, contentType: string) => {
-        // Map internal content_type to ContentPath union type for routing
-        // In our DB, 'verse' maps to 'gita' or 'upanishads', 'narrative' maps to others
-        // For now, we use the book slug if available.
+    const handlePlayItem = (id: string) => {
+        if (!assertValidBookId(selectedBook?.book_id, 'LibraryScreen.handlePlayItem')) {
+            return;
+        }
         navigation.navigate('Play', {
             itemId: id,
             bookId: selectedBook.book_id,
-            type: selectedBook.slug as ContentPath
         });
     };
 
@@ -106,7 +107,7 @@ export const LibraryScreen = () => {
                                 onLongPress={() => {
                                     // Play first verse of chapter directly
                                     const firstVerse = chapterVerses.sort((a, b) => a.verse_no - b.verse_no)[0];
-                                    if (firstVerse) handlePlayItem(firstVerse.verse_id, 'verse');
+                                    if (firstVerse) handlePlayItem(firstVerse.verse_id);
                                 }}
                             >
                                 <Text style={[styles.chapterTileNumber, { color: colors.primary }]}>{chNo}</Text>
@@ -119,7 +120,7 @@ export const LibraryScreen = () => {
                                     style={{ marginTop: spacing.s }} 
                                     onPress={() => {
                                         const firstVerse = chapterVerses.sort((a, b) => a.verse_no - b.verse_no)[0];
-                                        if (firstVerse) handlePlayItem(firstVerse.verse_id, 'verse');
+                                        if (firstVerse) handlePlayItem(firstVerse.verse_id);
                                     }}
                                 >
                                     <Ionicons name="play-circle" size={24} color={colors.primary} />
@@ -149,7 +150,7 @@ export const LibraryScreen = () => {
                                 { backgroundColor: colors.surface, borderColor: colors.border },
                                 isCompleted && { borderColor: colors.primary + '40', backgroundColor: colors.primary + '05' }
                             ]}
-                            onPress={() => handlePlayItem(verse.verse_id, 'verse')}
+                            onPress={() => handlePlayItem(verse.verse_id)}
                         >
                             <View style={styles.verseHeader}>
                                 <View style={[
@@ -220,7 +221,12 @@ export const LibraryScreen = () => {
         const meta = COLLECTION_METADATA[selectedBook.slug] || { icon: 'book', color: colors.primary };
 
         return (
-            <ScrollView contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.background }]}>
+            <ScrollView contentContainerStyle={{ 
+                backgroundColor: colors.background, 
+                paddingHorizontal: spacing.l,
+                paddingTop: spacing.m,
+                paddingBottom: layout.miniPlayerHeight + spacing.m 
+            }}>
                 <View style={[styles.innerHeader, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
                     <TouchableOpacity
                         onPress={() => {
@@ -269,7 +275,11 @@ export const LibraryScreen = () => {
                     <View style={[styles.header, { backgroundColor: colors.background }]}>
                         <Text style={[styles.screenTitle, { color: colors.text }]}>Library</Text>
                     </View>
-                    <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <ScrollView contentContainerStyle={{ 
+                        paddingHorizontal: spacing.l,
+                        paddingTop: spacing.m,
+                        paddingBottom: layout.miniPlayerHeight + spacing.m 
+                    }}>
                         {renderCollectionList()}
                     </ScrollView>
                 </View>
@@ -301,7 +311,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         paddingTop: spacing.m,
     },
     screenTitle: {
-        fontSize: 32, // typography.sizes.xxl
+        fontSize: typography.sizes.xxl,
         fontWeight: 'bold',
     },
     collectionList: {
@@ -461,7 +471,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         elevation: 2,
     },
     chapterTileNumber: {
-        fontSize: 24, // typography.sizes.xl
+        fontSize: typography.sizes.xl,
         fontWeight: '600',
     },
     chapterTileLabel: {
@@ -487,7 +497,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         paddingHorizontal: spacing.m,
     },
     chapterHeaderTitle: {
-        fontSize: 24, // typography.sizes.xl
+        fontSize: typography.sizes.xl,
         fontWeight: '600',
     },
     verseNumberBadge: {

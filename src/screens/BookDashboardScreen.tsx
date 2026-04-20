@@ -12,10 +12,11 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
-import { ContentPath } from '../data/types';
+import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '../lib/bookIdentity';
 import { fetchActiveBooks, supabase } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
@@ -30,42 +31,68 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type BookDashboardRouteProp = RouteProp<RootStackParamList, 'BookDashboard'>;
 
 export const BookDashboardScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<BookDashboardRouteProp>();
+    const insets = useSafeAreaInsets();
     console.log('Route params:', route?.params);
-    const type = route?.params?.type ?? 'ramayan';
+    
+    const bookId = route.params?.bookId;
+    assertBookIdentityConsistency({ source: 'BookDashboardScreen', bookId });
+    if (!bookId) {
+        throw new Error("BOOK_ID_REQUIRED");
+    }
+
+    const clickedBookId = route?.params?.clickedBookId ?? null;
+    const clickedTitle = route?.params?.clickedTitle ?? null;
+    console.log('BOOK_SCREEN_RECEIVED', {
+        received_book_id: bookId,
+        clicked_book_id: clickedBookId,
+        clicked_title: clickedTitle,
+    });
 
     const { completedVerses } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [verses, setVerses] = useState<any[]>([]);
     const [stats, setStats] = useState({ totalChapters: 0, totalVerses: 0 });
     const [nextVerse, setNextVerse] = useState<any>(null);
-
-    if (!type) {
-        return null;
-    }
-
-
+    const [book, setBook] = useState<any>(null);
 
     const loadData = useCallback(async () => {
+        if (!assertValidBookId(bookId, 'BookDashboardScreen.loadData')) {
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const activeBooks = await fetchActiveBooks();
-            const book = activeBooks.find(b => b.slug === type);
+            const resolvedBook = activeBooks.find(b => b.book_id === bookId);
+            console.log('BOOK_FETCH', {
+                book_id_used_for_query: resolvedBook?.book_id ?? bookId ?? null,
+            });
 
-            if (!book) {
+            if (!resolvedBook) {
                 console.log('Alert triggered');
                 Alert.alert('Error', 'Book not found.');
                 navigation.goBack();
                 return;
             }
 
+            setBook(resolvedBook);
+
+            if (clickedBookId && clickedBookId !== resolvedBook.book_id) {
+                console.warn('BOOK_MISMATCH_DETECTED', {
+                    clicked_book_id: clickedBookId,
+                    received_book_id: bookId,
+                    resolved_book_id: resolvedBook.book_id,
+                });
+            }
+
             const { data: allVerses, error } = await supabase
                 .from('verses')
                 .select('*')
-                .eq('book_id', book.book_id)
+                .eq('book_id', resolvedBook.book_id)
                 .order('chapter_no', { ascending: true })
                 .order('verse_no', { ascending: true });
 
@@ -91,11 +118,15 @@ export const BookDashboardScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [type, completedVerses, navigation]);
+    }, [clickedBookId, completedVerses, navigation, bookId]);
 
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    if (!assertValidBookId(bookId, 'BookDashboardScreen.render')) {
+        return null;
+    }
 
     const handleContinueLabel = () => {
         if (!nextVerse) return 'Continue Journey';
@@ -105,11 +136,13 @@ export const BookDashboardScreen = () => {
     };
 
     const handleContinue = () => {
-        if (!nextVerse) return;
+        if (!nextVerse || !assertValidBookId(nextVerse.book_id, 'BookDashboardScreen.handleContinue')) return;
+        console.log('NAVIGATE_BOOK', {
+            passed_book_id: nextVerse.book_id,
+        });
         navigation.navigate('Play', {
             itemId: nextVerse.verse_id,
             bookId: nextVerse.book_id,
-            type: type as ContentPath
         });
     };
 
@@ -146,17 +179,19 @@ export const BookDashboardScreen = () => {
         // Find first uncompleted verse in this chapter, otherwise start from verse 1
         const uncompleted = chapterVerses.find(v => !completedVerses.includes(v.verse_id));
         const startVerse = uncompleted || chapterVerses[0];
+        if (!assertValidBookId(startVerse.book_id, 'BookDashboardScreen.handleChapterPress')) return;
         
         navigation.navigate('Play', {
             itemId: startVerse.verse_id,
             bookId: startVerse.book_id,
-            type: type as ContentPath
         });
     };
 
-    const isGita = type === 'gita';
-    const isMahabharat = type === 'mahabharat';
-    const BOOK_SLUG = isGita ? 'bhagavad-gita' : type as string;
+    const bookCode = getBookCode(bookId);
+    const gitaCheck = bookCode === 'gita' || bookCode === 'bhagavad_gita';
+    const mahabharatCheck = bookCode === 'mahabharat';
+    const resolvedType = (book?.slug ?? '') as string;
+    const BOOK_SLUG = gitaCheck ? 'bhagavad-gita' : resolvedType as string;
     const meta = COLLECTION_METADATA[BOOK_SLUG] || { title: 'Wisdom', icon: 'book', color: colors.primary };
 
     return (
@@ -166,30 +201,33 @@ export const BookDashboardScreen = () => {
                     <Ionicons name="chevron-down" size={28} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text, fontFamily: typography.fontFamilies.medium }]}>
-                    {isGita ? 'Bhagavad Gita' : (isMahabharat ? 'Mahabharat' : meta.title)}
+                    {gitaCheck ? 'Bhagavad Gita' : (mahabharatCheck ? 'Mahabharat' : meta.title)}
                 </Text>
                 <View style={{ width: 28 }} />
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + spacing.xl }]} 
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={styles.heroSection}>
-                    <View style={[styles.heroGlow, { backgroundColor: isMahabharat ? '#D6A621' : colors.primary }]} />
-                    {isGita ? (
+                    <View style={[styles.heroGlow, { backgroundColor: mahabharatCheck ? '#D6A621' : colors.primary }]} />
+                    {gitaCheck ? (
                         <Image source={GITA_COVER} style={[styles.heroImage, { borderRadius: borderRadius.xl, shadowColor: colors.primary }]} />
-                    ) : isMahabharat ? (
+                    ) : mahabharatCheck ? (
                         <Image source={MAHABHARAT_COVER} style={[styles.heroImage, { borderRadius: borderRadius.xl, shadowColor: '#D6A621' }]} />
                     ) : (
                         <View style={[styles.heroIconBox, { backgroundColor: colors.surface, borderRadius: borderRadius.xl, shadowColor: colors.cardShadow }]}>
-                            {getScriptureIcon(BOOK_SLUG, 80, isMahabharat ? '#D6A621' : colors.primary)}
+                            {getScriptureIcon(BOOK_SLUG, 80, mahabharatCheck ? '#D6A621' : colors.primary)}
                         </View>
                     )}
 
                     <View style={[styles.heroGlassPanel, { backgroundColor: colors.surface, borderRadius: borderRadius.xl, borderColor: colors.border }]}>
                         <Text style={[styles.bookTitle, { color: colors.text, fontFamily: typography.fontFamilies.semiBold }]}>
-                            {isGita ? 'श्रीमद्भगवद्गीता' : (isMahabharat ? 'महाभारत' : meta.title)}
+                            {gitaCheck ? 'श्रीमद्भगवद्गीता' : (mahabharatCheck ? 'महाभारत' : meta.title)}
                         </Text>
-                        <Text style={[styles.bookSubtitle, { color: isMahabharat ? '#D6A621' : colors.primary, fontFamily: typography.fontFamilies.medium }]}>
-                            {isGita ? 'The Song of God' : (isMahabharat ? 'The Great Epic' : 'Timeless Wisdom')}
+                        <Text style={[styles.bookSubtitle, { color: mahabharatCheck ? '#D6A621' : colors.primary, fontFamily: typography.fontFamilies.medium }]}>
+                            {gitaCheck ? 'The Song of God' : (mahabharatCheck ? 'The Great Epic' : 'Timeless Wisdom')}
                         </Text>
 
                         <View style={[styles.progressBox, { backgroundColor: colors.background, borderRadius: borderRadius.l, padding: spacing.l, marginBottom: spacing.xl, borderColor: colors.border }]}>
@@ -215,7 +253,7 @@ export const BookDashboardScreen = () => {
                                             <Text style={[styles.chapterStats, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>{ch.completed} / {ch.total} Verses</Text>
                                         </View>
                                         <View style={[styles.progressBarContainer, { backgroundColor: colors.surfaceSecondary }]}>
-                                            <View style={[styles.progressBarFill, { backgroundColor: isMahabharat ? '#D6A621' : colors.primary, width: `${ch.progress * 100}%` }]} />
+                                            <View style={[styles.progressBarFill, { backgroundColor: mahabharatCheck ? '#D6A621' : colors.primary, width: `${ch.progress * 100}%` }]} />
                                         </View>
                                     </TouchableOpacity>
                                 ))}
@@ -233,9 +271,9 @@ export const BookDashboardScreen = () => {
 
                 {/* ── Aesthetic Decorative Element ── */}
                 <View style={[styles.decorationContainer, { marginTop: spacing.xxxl }]}>
-                    <Ionicons name="sparkles" size={20} color={isMahabharat ? '#D6A621' : colors.primary} style={{ opacity: 0.5 }} />
+                    <Ionicons name="sparkles" size={20} color={mahabharatCheck ? '#D6A621' : colors.primary} style={{ opacity: 0.5 }} />
                     <View style={[styles.decorationLine, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
-                    <Ionicons name="book" size={20} color={isMahabharat ? '#D6A621' : colors.primary} style={{ opacity: 0.5 }} />
+                    <Ionicons name="book" size={20} color={mahabharatCheck ? '#D6A621' : colors.primary} style={{ opacity: 0.5 }} />
                 </View>
 
             </ScrollView>
@@ -262,7 +300,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         fontSize: 18, // typography.sizes.l
     },
     scrollContent: {
-        paddingBottom: 64, // spacing.xxxl
+        // Dynamic paddingBottom added inline to respect safe area + MiniPlayer height
     },
     heroSection: {
         alignItems: 'center',
@@ -301,8 +339,8 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     heroGlassPanel: {
         width: '100%',
-        marginTop: -60, // Overlap the image
-        paddingTop: 80, // Pad for the overlap
+        marginTop: -layout.heroGlassPanelOverlap, // Overlap the image
+        paddingTop: layout.heroGlassPanelOverlap + spacing.m, // Pad for the overlap
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.l,
         borderWidth: 1,

@@ -1,19 +1,8 @@
 import { supabase } from './supabase';
+import { syncBookIdentityCache } from './bookIdentity';
 export { supabase };
 
 // --- Book Queries ---
-
-export const fetchBookBySlug = async (slug: string) => {
-    const { data, error } = await supabase
-        .from('books')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .single();
-
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
-};
 
 export const fetchBookById = async (bookId: string) => {
     const { data, error } = await supabase
@@ -49,6 +38,13 @@ export const fetchActiveBooks = async () => {
         .eq('is_active', true);
 
     if (error) throw error;
+
+    // Populate the global book identity cache so feature-flag helpers
+    // (isRamayan, isGita, etc.) can resolve book_id → code/slug.
+    if (data) {
+        syncBookIdentityCache(data);
+    }
+
     return data;
 };
 
@@ -69,7 +65,7 @@ export const fetchVerses = async (bookId: string) => {
 export const fetchVerseByIdAndBookId = async (bookId: string, verseId: string) => {
     const { data, error } = await supabase
         .from('verses')
-        .select('*, books!inner(slug)')
+        .select('*, books!inner(book_id, slug, title, title_en, title_hi)')
         .eq('book_id', bookId)
         .eq('verse_id', verseId)
         .maybeSingle();
@@ -361,20 +357,19 @@ export const upsertUserProgress = async (params: {
     bookId: string;
     lastContentId: string;
     contentType: 'verse';
+    lastPositionSeconds: number;
     playbackSpeed: number;
 }) => {
-    const { error } = await supabase
-        .from('user_progress')
-        .upsert({
-            user_id: params.userId,
-            book_id: params.bookId,
-            last_content_id: params.lastContentId,
-            content_type: params.contentType,
-            playback_speed: params.playbackSpeed,
-            updated_at: new Date().toISOString()
-        }, {
-            onConflict: 'user_id,book_id'
-        });
+    const updatedAt = new Date().toISOString();
+    const { error } = await supabase.rpc('upsert_user_progress_resume', {
+        p_user_id: params.userId,
+        p_book_id: params.bookId,
+        p_last_content_id: params.lastContentId,
+        p_content_type: params.contentType,
+        p_last_position_seconds: params.lastPositionSeconds,
+        p_playback_speed: params.playbackSpeed,
+        p_updated_at: updatedAt
+    });
 
     if (error) throw error;
 };

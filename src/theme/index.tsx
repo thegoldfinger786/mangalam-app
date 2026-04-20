@@ -61,6 +61,10 @@ const baseTheme = {
             fieldPaddingHorizontal: baseSpacing.l,
             fieldPaddingVertical: baseSpacing.m,
         },
+        miniPlayerHeight: baseSpacing.xl * 2, // 64px
+        tabBarFallbackHeight: 70, // Fallback for initial render/non-tab screens
+        heroGlassPanelOverlap: baseSpacing.xxxl, // 64px
+        placeholderHeight: 220, // Stable height for CurrentPath card
     },
 };
 

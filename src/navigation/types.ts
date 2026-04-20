@@ -1,5 +1,4 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
-import { ContentPath } from '../data/types';
 
 export type BottomTabParamList = {
     Home: undefined;
@@ -12,10 +11,10 @@ export type RootStackParamList = {
     Auth: undefined;
     Welcome: undefined;
     MainTabs: NavigatorScreenParams<BottomTabParamList>;
-    BookDashboard: { type: string };
+    BookDashboard: { bookId: string; clickedBookId?: string; clickedTitle?: string };
     Play:
-        | { verseId: string; bookId: string; type: ContentPath; position?: number }
-        | { itemId: string; bookId: string; type: ContentPath; autoPlay?: boolean; position?: number };
+        | { verseId: string; bookId: string; autoPlay?: boolean; position?: number; startPosition?: number; resumeSource?: string }
+        | { itemId: string; bookId: string; autoPlay?: boolean; position?: number; startPosition?: number; resumeSource?: string };
     CommunityWisdom: undefined;
     About: undefined;
     SupportMangalam: undefined;

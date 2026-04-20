@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useMemo } from 'react';
+import { navigationRef } from '../navigation';
+import { useAppStore } from '../store/useAppStore';
 import {
     Alert,
     Dimensions,
@@ -12,8 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ContentPath } from '../data/types';
+import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchAdjacentVerse } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAudioStore } from '../store/useAudioStore';
@@ -21,44 +20,61 @@ import { useTheme } from '../theme';
 import { getScriptureIcon } from './ScriptureIcons';
 
 const { width } = Dimensions.get('window');
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const MiniPlayer = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
-    const navigation = useNavigation<NavigationProp>();
-    const {
-        currentContent,
-        isPlaying,
-        togglePlayPause,
-        unloadAudio,
-        position,
-        duration,
-        seekBackward,
-        seekForward
-    } = useAudioStore();
-    const insets = useSafeAreaInsets();
+    
+    // Performance optimization: Derived boolean selector
+    const hasSound = useAudioStore(state => !!state.currentContent);
+    const isPlaying = useAudioStore(state => state.isPlaying);
+    const position = useAudioStore(state => state.position);
+    const duration = useAudioStore(state => state.duration);
+    
+    // Stable actions
+    const togglePlayPause = useAudioStore(state => state.togglePlayPause);
+    const unloadAudio = useAudioStore(state => state.unloadAudio);
+    const seekBackward = useAudioStore(state => state.seekBackward);
+    const seekForward = useAudioStore(state => state.seekForward);
 
-    if (!currentContent) return null;
+    const { layout } = useTheme();
+    const tabBarHeight = useAppStore(state => state.tabBarHeight);
+    const currentRouteName = useAppStore(state => state.currentRouteName);
+    const currentContent = useAudioStore(state => state.currentContent);
+
+    // Visibility logic: Hide if route is not yet measured, if we're on the Play screen, 
+    // or if there's no active content. This prevents flickering during initial boot.
+    const isVisible = currentRouteName !== null && currentRouteName !== 'Play' && hasSound && !!currentContent;
+    
+    if (!isVisible) {
+        return null;
+    }
+
+    const bottomOffset = tabBarHeight || layout.tabBarFallbackHeight;
 
     const progress = duration > 0 ? position / duration : 0;
 
     const handlePress = () => {
-        if (!currentContent.bookId) {
+        if (!assertValidBookId(currentContent.bookId, 'MiniPlayer.handlePress')) {
             console.error('MiniPlayer missing bookId for playback navigation', { currentContent });
             return;
         }
 
-        navigation.navigate('Play', {
-            itemId: currentContent.id,
-            bookId: currentContent.bookId,
-            type: currentContent.type as ContentPath,
-            autoPlay: false, // Don't trigger a new load/play if already playing
-        });
+        if (navigationRef.isReady()) {
+            navigationRef.navigate('Play', {
+                itemId: currentContent.id,
+                bookId: currentContent.bookId,
+                autoPlay: false, // Don't trigger a new load/play if already playing
+            });
+        }
     };
 
     const navigateAdjacent = async (direction: 'prev' | 'next') => {
-        if (!currentContent.bookId || currentContent.chapterNo == null || currentContent.verseNo == null) {
+        if (
+            !assertValidBookId(currentContent.bookId, 'MiniPlayer.navigateAdjacent') ||
+            currentContent.chapterNo == null ||
+            currentContent.verseNo == null
+        ) {
             return;
         }
 
@@ -72,26 +88,29 @@ export const MiniPlayer = () => {
 
             if (!adjacent?.verse_id) return;
 
-            navigation.navigate('Play', {
-                itemId: adjacent.verse_id,
-                bookId: currentContent.bookId ?? undefined,
-                type: currentContent.type as ContentPath,
-                autoPlay: true,
-            });
+            if (navigationRef.isReady()) {
+                navigationRef.navigate('Play', {
+                    itemId: adjacent.verse_id,
+                    bookId: currentContent.bookId,
+                    autoPlay: true,
+                });
+            }
         } catch (error: any) {
             console.log('Alert triggered');
             Alert.alert('Playback Error', error?.message || 'Unable to change verse.');
         }
     };
 
-    const tabBarHeight = Platform.OS === 'ios' ? (64 + insets.bottom) : 74;
-
     return (
-        <View style={[styles.outerContainer, { 
-            backgroundColor: colors.surface, 
-            borderTopColor: colors.border,
-            bottom: tabBarHeight,
-        }]}>
+        <View 
+            pointerEvents="box-none"
+            style={[styles.outerContainer, { 
+                backgroundColor: colors.surface, 
+                borderTopColor: colors.border,
+                bottom: bottomOffset,
+                height: layout.miniPlayerHeight,
+            }]}
+        >
             {/* Progress line */}
             <View style={[styles.progressBackground, { backgroundColor: colors.border }]}>
                 <View style={[styles.progressBar, { width: `${progress * 100}%`, backgroundColor: colors.primary }]} />
@@ -101,7 +120,7 @@ export const MiniPlayer = () => {
                 <View style={[styles.contentRow, { paddingHorizontal: spacing.m, paddingVertical: spacing.s }]}>
                     {/* Icon */}
                     <View style={[styles.iconWrapper, { backgroundColor: colors.primary + '15', borderRadius: borderRadius.s, marginRight: spacing.m }]}>
-                        {getScriptureIcon(currentContent.type, 24, colors.primary)}
+                        {getScriptureIcon(currentContent.bookSlug || 'book', 24, colors.primary)}
                     </View>
 
                     {/* Text info */}
@@ -161,7 +180,8 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        zIndex: 100,
+        zIndex: 999,
+        elevation: 999,
     },
     progressBackground: {
         height: 2,

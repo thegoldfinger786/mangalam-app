@@ -12,7 +12,7 @@ import {
     View
 } from 'react-native';
 import { getScriptureIcon } from '../components/ScriptureIcons';
-import { ContentPath } from '../data/types';
+import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchTopContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -105,7 +105,7 @@ export const CommunityWisdomScreen = () => {
                                         isTopThree && { borderColor: (medalColor || colors.border) + '40' }
                                     ]}
                                     onPress={() => {
-                                        if (!item.book_id || !item.book_slug) {
+                                        if (!assertValidBookId(item.book_id, 'CommunityWisdomScreen.onPress')) {
                                             console.error('CommunityWisdom missing playback identity', { item });
                                             Alert.alert('Playback unavailable', 'This item is missing book context.');
                                             return;
@@ -114,7 +114,6 @@ export const CommunityWisdomScreen = () => {
                                         navigation.navigate('Play', {
                                             itemId: item.content_id,
                                             bookId: item.book_id,
-                                            type: item.book_slug as ContentPath
                                         });
                                     }}
                                 >

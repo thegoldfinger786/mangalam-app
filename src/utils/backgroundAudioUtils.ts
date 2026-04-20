@@ -1,26 +1,17 @@
-import Constants from 'expo-constants';
-
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://yhuvjcmemsqjkttizxem.supabase.co';
 
 export type AudioMood = 'calm' | 'devotional' | 'storytelling';
 
-export const getBackgroundMood = (bookIdOrType?: string | null): AudioMood => {
-    if (!bookIdOrType) return 'calm'; // Default
-    
-    const normalized = bookIdOrType.toLowerCase();
-    
-    // Exact or partial matches
-    if (normalized.includes('gita')) {
-        return 'calm';
-    }
-    if (normalized.includes('ramayan')) {
-        return 'devotional';
-    }
-    if (normalized.includes('mahabharat')) {
+import { isRamayan, isMahabharat, isGita } from '../lib/bookIdentity';
+
+export const getBackgroundMood = (bookId?: string | null): AudioMood => {
+    if (isRamayan(bookId) || isMahabharat(bookId)) {
         return 'storytelling';
     }
-    
-    return 'calm'; // Default fallback
+    if (isGita(bookId)) {
+        return 'devotional';
+    }
+    return 'calm';
 };
 
 export const getBackgroundDuration = (durationMs: number): number => {

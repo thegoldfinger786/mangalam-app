@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,14 +24,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Button } from '../components/Button';
 import { HighlightedText } from '../components/HighlightedText';
+import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
+import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
-import { ContentPath } from '../data/types';
+import { assertValidBookId, assertBookIdentityConsistency, assertBookIdentityReady, getBookCode } from '../lib/bookIdentity';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, fetchVerseByIdAndBookId, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { supabase } from '../lib/supabase';
-import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
-import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAppStore } from '../store/useAppStore';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
@@ -42,24 +42,31 @@ const RAMAYAN_COVER = require('../../assets/images/ramayan-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type PlayRouteProp = RouteProp<RootStackParamList, 'Play'>;
 
 export const PlayScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const styles = useMemo(
         () => createStyles(colors, spacing, typography, borderRadius),
         [colors, spacing, typography, borderRadius]
     );
     const navigation = useNavigation<NavigationProp>();
-    const route = useRoute<any>();
+    const route = useRoute<PlayRouteProp>();
     const params = route.params ?? {};
     const itemId = params.itemId ?? params.verseId;
-    const requestedType = params.type as ContentPath | undefined;
     const autoPlay = params.autoPlay ?? false;
-    const resumePosition = params.position ?? 0;
+    const resumePosition = params.startPosition ?? params.position ?? 0;
+    const resumeSource = params.resumeSource ?? 'default';
+    const bookId = params.bookId;
+    assertBookIdentityConsistency({ source: 'PlayScreen', bookId });
+    if (!bookId) {
+        throw new Error("BOOK_ID_REQUIRED");
+    }
 
     const { voicePreference, session, playbackRate, setPlaybackRate } = useAppStore();
     const {
         loadAudio,
+        syncRemoteProgress,
         togglePlayPause: storeTogglePlayPause,
         isPlaying,
         position,
@@ -71,8 +78,8 @@ export const PlayScreen = () => {
     const [loading, setLoading] = useState(true);
     const [content, setContent] = useState<any>(null);
     const [isAllowed, setIsAllowed] = useState(true);
-    const [bookId, setBookId] = useState<string | null>(null);
-    const [currentType, setCurrentType] = useState<ContentPath | null>(requestedType ?? null);
+
+    const [currentBookSlug, setCurrentBookSlug] = useState<string | null>(null);
     const [playbackError, setPlaybackError] = useState<string | null>(null);
     const [prevVerseId, setPrevVerseId] = useState<string | null>(null);
     const [nextVerseId, setNextVerseId] = useState<string | null>(null);
@@ -97,54 +104,30 @@ export const PlayScreen = () => {
     const scrollRef = useRef<ScrollView>(null);
     const isNavigatingToVerse = useRef(false);
     const isMountedRef = useRef(true);
-    const hasRestoredRoutePositionRef = useRef(false);
-
     useEffect(() => {
         isMountedRef.current = true;
         return () => {
             isMountedRef.current = false;
+            void syncRemoteProgress('unmount', { force: true });
             // Do not stop audio on screen unmount
         };
-    }, []);
+    }, [syncRemoteProgress]);
 
-    useEffect(() => {
-        setCurrentType(requestedType ?? null);
-    }, [requestedType, itemId]);
+
 
     const [scrollContentHeight, setScrollContentHeight] = useState(0);
     const [scrollViewHeight, setScrollViewHeight] = useState(0);
-    const [playerBarHeight, setPlayerBarHeight] = useState(220);
+    const [playerBarHeight, setPlayerBarHeight] = useState(layout.placeholderHeight);
+    const invalidPlaybackContext = !itemId || !assertValidBookId(bookId, 'PlayScreen.render');
 
-    if (!itemId || !requestedType) {
-        console.error('PlayScreen missing playback context', { params });
-        return (
-            <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
-                <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>
-                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
-                    Missing book context for this playback request.
-                </Text>
-            </View>
-        );
-    }
-
-    if (playbackError) {
-        return (
-            <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
-                <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>
-                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
-                    {playbackError}
-                </Text>
-            </View>
-        );
-    }
-
-    const meta = COLLECTION_METADATA[currentType as string] || { title: 'Unknown', icon: 'book', color: colors.primary };
+    const meta = COLLECTION_METADATA[currentBookSlug as string] || { title: 'Unknown', icon: 'book', color: colors.primary };
     const isVerse = true; // Hardcoded to true as all content utilizes the unified Verses DB structure now
 
-    // Robust checks for scripture types
-    const isRamayan = currentType?.toLowerCase().includes('ramayan');
-    const isMahabharat = currentType?.toLowerCase().includes('mahabharat');
-    const isGita = currentType?.toLowerCase().includes('gita');
+    // Single cache lookup for classification — avoids 3 separate scans
+    const bookCode = getBookCode(bookId);
+    const isRamayan = bookCode === 'ramayan';
+    const isMahabharat = bookCode === 'mahabharat';
+    const isGita = bookCode === 'gita' || bookCode === 'bhagavad_gita';
 
     const loadContentAndCheckUsage = useCallback(async () => {
         if (!session) return;
@@ -157,7 +140,7 @@ export const PlayScreen = () => {
             // 1. Content Fetching
             const lang = voicePreference.startsWith('hindi') ? 'hi' : 'en';
 
-            if (!params.bookId) {
+            if (!assertValidBookId(bookId, 'PlayScreen.loadContentAndCheckUsage')) {
                 console.error('PlayScreen missing bookId for playback', { params });
                 if (isMountedRef.current) {
                     setPlaybackError('Missing book identity for this playback request.');
@@ -166,7 +149,7 @@ export const PlayScreen = () => {
                 return;
             }
 
-            const verse = await fetchVerseByIdAndBookId(params.bookId, itemId);
+            const verse = await fetchVerseByIdAndBookId(bookId, itemId);
             if (!verse) {
                 console.error('Verse not found for playback', { params });
                 if (isMountedRef.current) {
@@ -176,24 +159,16 @@ export const PlayScreen = () => {
                 return;
             }
 
-            const resolvedType = verse?.books?.slug as ContentPath | undefined;
+            const resolvedBookSlug = verse?.books?.slug ?? null;
 
-            if (params.bookId && verse.book_id !== params.bookId) {
+            if (bookId && verse.book_id !== bookId) {
                 console.error('BOOK MISMATCH BUG', { params, verse });
-            }
-
-            if (!resolvedType) {
-                console.error('Missing slug from DB verse', { verse });
-                if (isMountedRef.current) {
-                    setPlaybackError('Missing book metadata for this playback item.');
-                    setLoading(false);
-                }
-                return;
             }
 
             let data: any = {
                 ...verse,
-                book_slug: resolvedType,
+                book_slug: resolvedBookSlug,
+                book_title: verse?.books?.title ?? verse?.books?.title_en ?? verse?.books?.title_hi ?? null,
             };
             delete data.books;
 
@@ -206,7 +181,8 @@ export const PlayScreen = () => {
 
             data = { ...verse, ...verseContent };
             delete data.books;
-            data.book_slug = resolvedType;
+            data.book_slug = resolvedBookSlug;
+            data.book_title = verse?.books?.title ?? verse?.books?.title_en ?? verse?.books?.title_hi ?? null;
 
             // Track progress
             useAppStore.getState().addCompletedVerse(itemId);
@@ -214,12 +190,11 @@ export const PlayScreen = () => {
             if (!isMountedRef.current) return;
             setContent(data);
             setIsAllowed(true);
-            setCurrentType(resolvedType);
+            setCurrentBookSlug(resolvedBookSlug);
 
             let nextId: string | null = null;
             if (data?.book_id) {
                 if (!isMountedRef.current) return;
-                setBookId(data.book_id);
                 const [prev, next] = await Promise.all([
                     fetchAdjacentVerse(data.book_id, data.chapter_no, data.verse_no, 'prev'),
                     fetchAdjacentVerse(data.book_id, data.chapter_no, data.verse_no, 'next'),
@@ -264,10 +239,7 @@ export const PlayScreen = () => {
 
             try {
                 let cache = null;
-                const isCanonicalBook =
-                    resolvedType === 'gita' ||
-                    resolvedType === 'ramayan' ||
-                    resolvedType === 'mahabharat';
+                const isCanonicalBook = isGita || isRamayan || isMahabharat;
 
                 if (isCanonicalBook && data.book_id) {
                     // Refined canonical layer: use is_primary_playback and status='ready'
@@ -292,9 +264,9 @@ export const PlayScreen = () => {
 
 
                 let resolvedArtworkUrl: string | undefined;
-                if (resolvedType === 'gita') resolvedArtworkUrl = Image.resolveAssetSource(GITA_COVER).uri;
-                else if (resolvedType === 'ramayan') resolvedArtworkUrl = Image.resolveAssetSource(RAMAYAN_COVER).uri;
-                else if (resolvedType === 'mahabharat') resolvedArtworkUrl = Image.resolveAssetSource(MAHABHARAT_COVER).uri;
+                if (isGita) resolvedArtworkUrl = Image.resolveAssetSource(GITA_COVER).uri;
+                else if (isRamayan) resolvedArtworkUrl = Image.resolveAssetSource(RAMAYAN_COVER).uri;
+                else if (isMahabharat) resolvedArtworkUrl = Image.resolveAssetSource(MAHABHARAT_COVER).uri;
 
                 if (cache?.storage_path) {
                     const bucket = (cache as any).storage_bucket || 'audio-content';
@@ -321,14 +293,35 @@ export const PlayScreen = () => {
                         }
 
                         const freshUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                        loadAudio(freshUrl, { ...data, type: resolvedType, artworkUrl: resolvedArtworkUrl }, autoPlay, onFinish);
+                        console.log('PLAYBACK_SOURCE', {
+                            book_id: data.book_id ?? null,
+                            verse_id: itemId ?? null,
+                            audio_path: freshUrl,
+                        });
+                        console.log('RESUME_DEBUG', {
+                            source: resumeSource,
+                            book_id: data.book_id ?? null,
+                            chapter_no: data.chapter_no ?? null,
+                            verse_no: data.verse_no ?? null,
+                            verse_id: itemId ?? null,
+                            audio_path: freshUrl,
+                        });
+                        loadAudio(freshUrl, { ...data, artworkUrl: resolvedArtworkUrl }, autoPlay, onFinish, resumePosition);
                     }
                 } else {
                     console.log(`[PlayScreen] No audio found for ${itemId} in ${lang}-${gender}`);
-                    // Ensure state is updated so user can still see text and manually navigate
-                    loadAudio('', { ...data, type: resolvedType, artworkUrl: resolvedArtworkUrl }, false, () => {
-                        if (nextId) navigateToVerse(nextId, true);
+                    console.log('RESUME_DEBUG', {
+                        source: resumeSource === 'remote' ? 'remote' : 'default',
+                        book_id: data.book_id ?? null,
+                        chapter_no: data.chapter_no ?? null,
+                        verse_no: data.verse_no ?? null,
+                        verse_id: itemId ?? null,
+                        audio_path: null,
                     });
+                    // Ensure state is updated so user can still see text and manually navigate
+                    loadAudio('', { ...data, artworkUrl: resolvedArtworkUrl }, false, () => {
+                        if (nextId) navigateToVerse(nextId, true);
+                    }, resumePosition);
                 }
             } catch (cacheError) {
                 console.error('Audio cache error:', cacheError);
@@ -350,6 +343,7 @@ export const PlayScreen = () => {
                         bookId: data.book_id,
                         lastContentId: itemId,
                         contentType: 'verse',
+                        lastPositionSeconds: Math.max(0, Math.floor(resumePosition)),
                         playbackSpeed: progress?.playback_speed || playbackRate
                     });
                 } catch (progError) {
@@ -365,7 +359,7 @@ export const PlayScreen = () => {
         } finally {
             if (isMountedRef.current) setLoading(false);
         }
-    }, [autoPlay, itemId, loadAudio, params, playbackRate, requestedType, session, setPlaybackRate, voicePreference]);
+    }, [autoPlay, itemId, loadAudio, params, playbackRate, bookId, resumePosition, resumeSource, session, setPlaybackRate, voicePreference]);
 
     useEffect(() => {
         loadContentAndCheckUsage();
@@ -379,15 +373,14 @@ export const PlayScreen = () => {
     }, [isPlaying]);
 
     useEffect(() => {
-        if (
-            resumePosition >= 0 &&
-            duration > 1 &&
-            !hasRestoredRoutePositionRef.current
-        ) {
-            hasRestoredRoutePositionRef.current = true;
-            seek(resumePosition * 1000);
-        }
-    }, [duration, resumePosition, seek]);
+        const unsubscribeBlur = navigation.addListener('blur', () => {
+            void syncRemoteProgress('unmount', { force: true });
+        });
+
+        return () => {
+            unsubscribeBlur();
+        };
+    }, [navigation, syncRemoteProgress]);
 
     // Auto-scroll transcript proportionally to audio position
     useEffect(() => {
@@ -436,6 +429,7 @@ export const PlayScreen = () => {
                     bookId: bookId,
                     lastContentId: itemId,
                     contentType: 'verse',
+                    lastPositionSeconds: Math.max(0, Math.floor(position / 1000)),
                     playbackSpeed: newRate
                 });
             } catch (e) {
@@ -479,15 +473,15 @@ export const PlayScreen = () => {
     const navigateToVerse = async (targetVerseId: string, forceAutoPlay?: boolean) => {
         const wasPlaying = forceAutoPlay ?? isPlaying;
         isNavigatingToVerse.current = true;
-        if (!currentType || !bookId) {
-            console.error('Playback navigation missing book context', { targetVerseId, currentType, bookId });
+        void syncRemoteProgress('track_change', { force: true });
+        if (!assertValidBookId(bookId, 'PlayScreen.navigateToVerse')) {
+            console.error('Playback navigation missing book context', { targetVerseId, bookId });
             return;
         }
 
         navigation.replace('Play', {
             itemId: targetVerseId,
             bookId,
-            type: currentType,
             autoPlay: wasPlaying
         });
         setHasLoggedListen(false); // Reset tracking for new verse
@@ -526,6 +520,29 @@ export const PlayScreen = () => {
             overflow: 'hidden'
         };
     });
+
+    if (invalidPlaybackContext) {
+        console.error('PlayScreen missing playback context', { params });
+        return (
+            <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
+                <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>
+                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
+                    Missing book context for this playback request.
+                </Text>
+            </View>
+        );
+    }
+
+    if (playbackError) {
+        return (
+            <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
+                <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>
+                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
+                    {playbackError}
+                </Text>
+            </View>
+        );
+    }
 
     if (loading) {
         return (
@@ -594,7 +611,7 @@ export const PlayScreen = () => {
                         <Image source={MAHABHARAT_COVER} style={[styles.coverImage, { borderRadius: borderRadius.xl }]} resizeMode="cover" />
                     ) : (
                         <View style={[styles.coverArt, { backgroundColor: meta.color + '20', borderRadius: borderRadius.xl }]}>
-                            {getScriptureIcon(currentType as string, 64, meta.color)}
+                            {getScriptureIcon(currentBookSlug || 'book', 64, meta.color)}
                         </View>
                     )}
                 </View>

@@ -40,7 +40,8 @@ const getDisplayEmail = (email?: string | null) => {
 export const SettingsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
+    
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const appVersion = Constants.expoConfig?.version ?? '1.0.0';
     const { narrationVolume, targetBgVolume, bgEnabled, hydrateAudioSettings, setNarrationVolume, setBgVolume, setBgEnabled } = useAudioStore();
@@ -159,7 +160,14 @@ export const SettingsScreen = () => {
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView style={styles.container} contentContainerStyle={[styles.content, { padding: spacing.l, paddingTop: spacing.m, paddingBottom: spacing.xxxl }]}>
+            <ScrollView 
+                style={styles.container} 
+                contentContainerStyle={{ 
+                    paddingHorizontal: spacing.l, 
+                    paddingTop: spacing.m, 
+                    paddingBottom: layout.miniPlayerHeight + spacing.m 
+                }}
+            >
                 <View style={styles.headerRow}>
                     <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
                     <TouchableOpacity onPress={handleSignOut} style={styles.signOutIcon}>
@@ -355,7 +363,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     screenTitle: {
         fontWeight: 'bold',
-        fontSize: 32,
+        fontSize: typography.sizes.xxl,
     },
     headerRow: {
         flexDirection: 'row',
@@ -397,7 +405,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     displayNameInput: {
         borderWidth: 1,
-        fontSize: 16,
+        fontSize: typography.sizes.m,
     },
     inlineDisplayName: {
         flex: 1,
@@ -415,7 +423,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     inlineInput: {
         flex: 1,
-        fontSize: 16,
+        fontSize: typography.sizes.m,
         fontWeight: '600',
         textAlign: 'right',
     },

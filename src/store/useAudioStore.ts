@@ -1,9 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAudioPlayer, setIsAudioActiveAsync } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
-import { Image } from 'react-native';
+import { AppState, Image } from 'react-native';
 import { create } from 'zustand';
+import { upsertUserProgress } from '../lib/queries';
 import { getBackgroundMood, getBackgroundTrackUrl } from '../utils/backgroundAudioUtils';
+import { isRamayan, isGita, isMahabharat, assertBookIdentityConsistency, isBookIdentityReady } from '../lib/bookIdentity';
+import { useAppStore } from './useAppStore';
 
 type AudioPlayerLike = ReturnType<typeof createAudioPlayer>;
 
@@ -14,7 +17,6 @@ type SubscriptionLike = {
 interface CurrentContent {
     id: string;
     title: string;
-    type: string;
     bookId?: string | null;
     bookSlug?: string | null;
     chapterNo?: number | null;
@@ -43,20 +45,24 @@ interface AudioState {
     audioSettingsLoaded: boolean;
     mainStatusSub: SubscriptionLike;
     bgStatusSub: SubscriptionLike;
+    appStateSub: SubscriptionLike;
     loadToken: number;
+    lastRemoteSyncAt: number;
+    remoteSyncInFlight: boolean;
 
     hydrateAudioSettings: () => Promise<void>;
     setNarrationVolume: (volume: number, persist?: boolean) => Promise<void>;
     setBgVolume: (volume: number, persist?: boolean) => Promise<void>;
     setBgEnabled: (enabled: boolean, persist?: boolean) => Promise<void>;
-    loadAudio: (url: string, content: any, autoPlay?: boolean, onFinish?: () => void) => Promise<void>;
+    loadAudio: (url: string, content: any, autoPlay?: boolean, onFinish?: () => void, startPositionSeconds?: number | null) => Promise<void>;
     unloadAudio: () => Promise<void>;
     togglePlayPause: () => Promise<void>;
     seek: (position: number) => Promise<void>;
     seekForward: () => Promise<void>;
     seekBackward: () => Promise<void>;
     setPlaybackRate: (rate: number) => Promise<void>;
-    stopAllAudio: (options?: { keepBg?: boolean }) => Promise<void>;
+    stopAllAudio: (options?: { keepBg?: boolean; syncEvent?: 'progress' | 'pause' | 'background' | 'unmount' | 'track_change' | 'complete' }) => Promise<void>;
+    syncRemoteProgress: (reason: 'progress' | 'pause' | 'background' | 'unmount' | 'track_change' | 'complete', options?: { force?: boolean; positionMs?: number; verseId?: string | null }) => Promise<void>;
     _stopFade: () => void;
     _fadeBgAudio: (toVolume: number, durationMs: number) => void;
 }
@@ -85,12 +91,7 @@ function getRef(content: any): string | null {
     return content?.ref || null;
 }
 
-function getContentType(content: any): string {
-    return content?.type || content?.book_slug || (content?.verse_id ? 'verse' : 'episode');
-}
-
 function getBookDisplayName(content: any): string {
-    const slug = (content?.book_slug || content?.slug || content?.type || '').toLowerCase();
     const explicit =
         content?.book_title ||
         content?.bookTitle ||
@@ -98,9 +99,13 @@ function getBookDisplayName(content: any): string {
         content?.collectionTitle;
 
     if (explicit) return explicit;
-    if (slug.includes('gita')) return 'Bhagavad Gita';
-    if (slug.includes('ram')) return 'Ramayan';
-    if (slug.includes('mahabharat')) return 'Mahabharat';
+    
+    // Strict identity-based resolution
+    const bookId = content?.book_id || content?.bookId;
+    if (isGita(bookId)) return 'Bhagavad Gita';
+    if (isRamayan(bookId)) return 'Ramayan';
+    if (isMahabharat(bookId)) return 'Mahabharat';
+    
     if (content?.book_name) return content.book_name;
 
     return 'Mangalam';
@@ -155,7 +160,6 @@ function mapCurrentContent(content: any): CurrentContent {
     return {
         id: getContentId(content),
         title: getDisplayTitle(content),
-        type: getContentType(content),
         bookId: content?.book_id ?? null,
         bookSlug: getBookSlug(content),
         chapterNo: getChapterNo(content),
@@ -171,6 +175,7 @@ const MIN_BG_VOLUME = 0.01;
 const DEFAULT_ARTWORK_URL = Image.resolveAssetSource(require('../../assets/images/Mangalam-cover.jpeg')).uri;
 const clampNarrationVolume = (volume: number) => Math.min(1, Math.max(0.7, volume));
 const clampBgVolume = (volume: number) => Math.min(0.8, Math.max(0, volume));
+const REMOTE_SYNC_INTERVAL_MS = 15000;
 const normalize = (url?: string | null) =>
     url ? url.split('?')[0] : null;
 
@@ -195,7 +200,10 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     audioSettingsLoaded: false,
     mainStatusSub: null,
     bgStatusSub: null,
+    appStateSub: null,
     loadToken: 0,
+    lastRemoteSyncAt: 0,
+    remoteSyncInFlight: false,
 
     hydrateAudioSettings: async () => {
         if (get().audioSettingsLoaded) return;
@@ -409,18 +417,65 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         set({ bgFadeInterval: interval });
     },
 
-    stopAllAudio: async (options?: { keepBg?: boolean }) => {
+    syncRemoteProgress: async (reason, options) => {
+        const { currentContent, position, playbackRate, lastRemoteSyncAt, remoteSyncInFlight } = get();
+        const session = useAppStore.getState().session;
+        const userId = session?.user?.id;
+        const bookId = currentContent?.bookId;
+        const verseId = options?.verseId ?? currentContent?.id ?? null;
+        const force = options?.force ?? false;
+        const positionMs = options?.positionMs ?? position;
+        const now = Date.now();
+
+        if (!userId || !bookId || !verseId) return;
+        if (remoteSyncInFlight) return;
+        if (!force && now - lastRemoteSyncAt < REMOTE_SYNC_INTERVAL_MS) return;
+
+        set({ remoteSyncInFlight: true });
+        console.log('REMOTE_SYNC_EVENT', {
+            event: reason,
+            position: Math.max(0, Math.floor(positionMs / 1000)),
+        });
+
+        try {
+            await upsertUserProgress({
+                userId,
+                bookId,
+                lastContentId: verseId,
+                contentType: 'verse',
+                lastPositionSeconds: Math.max(0, Math.floor(positionMs / 1000)),
+                playbackSpeed: playbackRate,
+            });
+            set({ lastRemoteSyncAt: now });
+            console.log('REMOTE_PROGRESS_SYNC', {
+                reason,
+                book_id: bookId,
+                verse_id: verseId,
+                last_position_seconds: Math.max(0, Math.floor(positionMs / 1000)),
+            });
+        } catch (error) {
+            console.error('Remote progress sync error:', error);
+        } finally {
+            set({ remoteSyncInFlight: false });
+        }
+    },
+
+    stopAllAudio: async (options?: { keepBg?: boolean; syncEvent?: 'progress' | 'pause' | 'background' | 'unmount' | 'track_change' | 'complete' }) => {
         const keepBg = options?.keepBg || false;
+        const syncEvent = options?.syncEvent || 'unmount';
 
         if (!keepBg) {
             get()._stopFade();
         }
 
-        const { sound, bgSound, mainStatusSub, bgStatusSub } = get();
+        const { sound, bgSound, mainStatusSub, bgStatusSub, appStateSub } = get();
+
+        await get().syncRemoteProgress(syncEvent, { force: true });
 
         mainStatusSub?.remove?.();
         if (!keepBg) {
             bgStatusSub?.remove?.();
+            appStateSub?.remove?.();
         }
 
         if (sound) {
@@ -448,11 +503,17 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             lockScreenActivated: false,
             mainStatusSub: null,
             bgStatusSub: keepBg ? state.bgStatusSub : null,
+            appStateSub: keepBg ? state.appStateSub : null,
             ...(keepBg ? {} : { bgFadeInterval: null }),
         }));
     },
 
-    loadAudio: async (url, content, autoPlay = false, onFinish) => {
+    loadAudio: async (url, content, autoPlay = false, onFinish, startPositionSeconds = null) => {
+        const bookId = content?.book_id || content?.bookId;
+        assertBookIdentityConsistency({ source: 'useAudioStore.loadAudio', bookId });
+        if (!isBookIdentityReady()) {
+            console.warn('BOOK_IDENTITY_NOT_READY', { source: 'useAudioStore.loadAudio', bookId });
+        }
         await get().hydrateAudioSettings();
 
         const nextToken = get().loadToken + 1;
@@ -469,10 +530,10 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         get()._stopFade();
 
         if (audioUrl === url && existingSound) {
-            set({
-                onFinish,
-                currentContent: mapCurrentContent(content),
-            });
+                set({
+                    onFinish,
+                    currentContent: mapCurrentContent(content),
+                });
 
             try {
                 existingSound.updateLockScreenMetadata(
@@ -501,11 +562,17 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             return;
         }
 
-        const expectedMood = getBackgroundMood(content?.type || content?.book_id || content?.book_slug);
+        const expectedMood = getBackgroundMood(content?.book_id);
         const expectedBgUrl = getBackgroundTrackUrl(expectedMood, 60000);
         const keepBg = existingBgSound !== null && get().currentBgUrl === expectedBgUrl;
+        const currentContent = get().currentContent;
+        const nextContentId = getContentId(content);
+        const syncEvent =
+            currentContent?.id && currentContent.id !== nextContentId
+                ? 'track_change'
+                : 'unmount';
 
-        await get().stopAllAudio({ keepBg });
+        await get().stopAllAudio({ keepBg, syncEvent });
 
         try {
             if (get().loadToken !== nextToken) return;
@@ -538,11 +605,21 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             newSound.setPlaybackRate(playbackRate, 'medium');
 
             let isInitialPlayback = true;
+            let hasLoadedAudio = false;
+            let resolveLoadedAudio: (() => void) | null = null;
+            const loadedAudioPromise = new Promise<void>((resolve) => {
+                resolveLoadedAudio = resolve;
+            });
 
             const mainStatusSubNew = newSound.addListener('playbackStatusUpdate', (status: any) => {
                 const currentState = get();
                 if (currentState.sound !== newSound) return;
                 if (!status?.isLoaded) return;
+                if (!hasLoadedAudio) {
+                    hasLoadedAudio = true;
+                    resolveLoadedAudio?.();
+                    resolveLoadedAudio = null;
+                }
 
                 const positionMs = Math.max(0, Math.floor((status.currentTime || 0) * 1000));
                 const durationMs = Math.max(1, Math.floor((status.duration || 0) * 1000));
@@ -567,6 +644,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                             const key = `progress_${normalize(currentAudioUrl)}`;
                             AsyncStorage.setItem(key, String(pos));
                         } catch { }
+
+                        void get().syncRemoteProgress('progress', { positionMs: pos });
                     }
                 }
 
@@ -594,6 +673,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 if (wasPlaying && !isNowPlaying) {
                     console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by narration sync (wasPlaying->!isNowPlaying)`);
                     console.log(`[DIAG-AMBIENT-PAUSE] bgSound exists: ${!!currentState.bgSound}, bgSound.volume: ${currentState.bgSound?.volume}`);
+                    void get().syncRemoteProgress('pause', { force: true, positionMs: status.positionMillis ?? positionMs });
                     // Narration paused (e.g. by lock screen or OS interruption)
                     if (currentState.bgSound) {
                         try { currentState.bgSound.pause(); } catch (e) {
@@ -631,7 +711,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 if (status.didJustFinish) {
                     set({
                         isPlaying: false,
-                        position: durationMs,
+                        position: 0,
                     });
 
                     try {
@@ -640,6 +720,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                             AsyncStorage.removeItem(key);
                         }
                     } catch { }
+
+                    void get().syncRemoteProgress('complete', { force: true, positionMs: 0, verseId: getContentId(content) || null });
 
                     const bg = get().bgSound;
                     if (bg) {
@@ -675,7 +757,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     ? Math.floor(newSound.duration * 1000)
                     : 60000;
 
-            const mood = getBackgroundMood(content?.type || content?.book_id || content?.book_slug);
+            const mood = getBackgroundMood(content?.book_id);
             const bgUrl = getBackgroundTrackUrl(mood, durationMsForBed);
 
             if (get().loadToken !== nextToken) {
@@ -685,6 +767,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
             let newBgSound = get().bgSound;
             let bgStatusSubNew = get().bgStatusSub;
+            let appStateSubNew = get().appStateSub;
 
             if (!keepBg || !newBgSound) {
                 console.log(`[DEBUG-AMBIENT] Creating new ambient player for bgUrl: ${bgUrl}`);
@@ -755,6 +838,14 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 return;
             }
 
+            if (!appStateSubNew) {
+                appStateSubNew = AppState.addEventListener('change', (nextState) => {
+                    if (nextState !== 'active') {
+                        void get().syncRemoteProgress('background', { force: true });
+                    }
+                });
+            }
+
             set({
                 sound: newSound,
                 bgSound: newBgSound,
@@ -764,14 +855,47 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 lockScreenActivated: false,
                 mainStatusSub: mainStatusSubNew,
                 bgStatusSub: bgStatusSubNew,
+                appStateSub: appStateSubNew,
             });
 
             if (autoPlay) {
+                let localPositionMs = 0;
+                let remotePositionMs = 0;
+                let finalPositionMs = 0;
                 try {
                     const key = `progress_${normalize(url)}`;
                     const saved = await AsyncStorage.getItem(key);
-                    if (saved) {
-                        await newSound.seekTo(Number(saved) / 1000);
+                    localPositionMs = saved ? Number(saved) : 0;
+                    remotePositionMs = startPositionSeconds != null && startPositionSeconds > 0
+                        ? Math.floor(startPositionSeconds * 1000)
+                        : 0;
+                    finalPositionMs = remotePositionMs || localPositionMs || 0;
+
+                    console.log('RESUME_DEBUG', {
+                        source: remotePositionMs > 0 ? 'remote' : saved ? 'local' : 'default',
+                        book_id: content?.book_id ?? content?.bookId ?? null,
+                        chapter_no: getChapterNo(content),
+                        verse_no: getVerseNo(content),
+                        verse_id: getContentId(content) || null,
+                        audio_path: normalize(url),
+                    });
+                    console.log('RESUME_FINAL', {
+                        verse_id: getContentId(content) || null,
+                        remote_position: remotePositionMs > 0 ? remotePositionMs / 1000 : 0,
+                        local_position: localPositionMs > 0 ? localPositionMs / 1000 : 0,
+                        final_position_used: finalPositionMs > 0 ? finalPositionMs / 1000 : 0,
+                    });
+                    if (remotePositionMs === 0 && localPositionMs > 0) {
+                        console.log('RESUME_FALLBACK_LOCAL_USED', {
+                            local_position: localPositionMs / 1000,
+                        });
+                    }
+                    await Promise.race([
+                        loadedAudioPromise,
+                        new Promise<void>((resolve) => setTimeout(resolve, 4000)),
+                    ]);
+                    if (hasLoadedAudio && finalPositionMs > 0) {
+                        await newSound.seekTo(finalPositionMs / 1000);
                     }
                 } catch { }
 
@@ -834,7 +958,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     },
 
     unloadAudio: async () => {
-        await get().stopAllAudio();
+        await get().syncRemoteProgress('unmount', { force: true });
+        await get().stopAllAudio({ syncEvent: 'unmount' });
     },
 
     togglePlayPause: async () => {
@@ -842,6 +967,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         if (!sound) return;
 
         if (isPlaying) {
+            await get().syncRemoteProgress('pause', { force: true });
             if (bgSound) {
                 console.log(`[DIAG-AMBIENT-PAUSE] bgSound.pause() triggered by togglePlayPause (user paused)`);
                 get()._fadeBgAudio(MIN_BG_VOLUME, 500);

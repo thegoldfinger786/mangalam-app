@@ -8,7 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 
 export const StreaksScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const { session } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [streakCount, setStreakCount] = useState(0);
@@ -67,7 +67,14 @@ export const StreaksScreen = () => {
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView style={styles.container} contentContainerStyle={[styles.content, { padding: spacing.l, paddingBottom: spacing.xl }]}>
+            <ScrollView 
+                style={styles.container} 
+                contentContainerStyle={{ 
+                    paddingHorizontal: spacing.l, 
+                    paddingTop: spacing.m, 
+                    paddingBottom: layout.miniPlayerHeight + spacing.m 
+                }}
+            >
             <Text style={[styles.screenTitle, { color: colors.text, marginBottom: spacing.l }]}>Your Journey</Text>
 
             <Card style={[styles.streakCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
@@ -126,7 +133,7 @@ const styles = StyleSheet.create({
     },
     screenTitle: {
         fontWeight: 'bold',
-        fontSize: 32, // theme.typography.sizes.xl-ish
+        fontSize: typography.sizes.xxl,
     },
     streakCard: {
         alignItems: 'center',
@@ -135,9 +142,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     streakNumber: {
-        fontSize: 72,
+        fontSize: typography.sizes.hero,
         fontWeight: 'bold',
-        marginBottom: -10,
     },
     streakLabel: {
         fontSize: 18,
