@@ -6,6 +6,7 @@ import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { fetchDailyUsage, fetchStreakData } from '../lib/queries';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
+import { logger } from '../lib/logger';
 
 export const StreaksScreen = () => {
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
@@ -32,7 +33,7 @@ export const StreaksScreen = () => {
             const dates = streakData?.map((row: any) => row.usage_date) || [];
             setHistoryDates(dates);
         } catch (error) {
-            console.error('Error loading streak screen data:', error);
+            logger.error('Failed to load streak screen data', { error });
         } finally {
             setLoading(false);
         }

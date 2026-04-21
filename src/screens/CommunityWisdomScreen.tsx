@@ -17,6 +17,7 @@ import { fetchTopContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -41,7 +42,7 @@ export const CommunityWisdomScreen = () => {
             ]);
             setTopStats({ listened, shared, bookmarked });
         } catch (error) {
-            console.error('Error loading wisdom data:', error);
+            logger.error('Failed to load wisdom data', { error });
         } finally {
             setLoading(false);
         }
@@ -106,7 +107,7 @@ export const CommunityWisdomScreen = () => {
                                     ]}
                                     onPress={() => {
                                         if (!assertValidBookId(item.book_id, 'CommunityWisdomScreen.onPress')) {
-                                            console.error('CommunityWisdom missing playback identity', { item });
+                                            logger.error('CommunityWisdom missing playback identity', { context: { item } });
                                             Alert.alert('Playback unavailable', 'This item is missing book context.');
                                             return;
                                         }

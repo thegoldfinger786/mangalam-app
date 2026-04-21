@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { syncBookIdentityCache } from './bookIdentity';
+import { logger } from '../lib/logger';
 export { supabase };
 
 // --- Book Queries ---
@@ -11,20 +12,6 @@ export const fetchBookById = async (bookId: string) => {
         .eq('book_id', bookId)
         .eq('is_active', true)
         .maybeSingle();
-
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
-};
-
-export const fetchFirstVerseForBook = async (bookId: string) => {
-    const { data, error } = await supabase
-        .from('verses')
-        .select('verse_id, chapter_no, verse_no')
-        .eq('book_id', bookId)
-        .order('chapter_no', { ascending: true })
-        .order('verse_no', { ascending: true })
-        .limit(1)
-        .single();
 
     if (error && error.code !== 'PGRST116') throw error;
     return data;
@@ -198,7 +185,7 @@ export const fetchVerseAudio = async (
         };
 
         if (!normalizedVoicePref || !voiceMap[normalizedVoicePref]) {
-            console.warn('Unknown voicePreference:', voicePreference);
+            logger.warn('Unknown voicePreference:', voicePreference);
         }
 
         const preferredVoices = voiceMap[normalizedVoicePref] || [];
@@ -229,10 +216,10 @@ export const fetchVerseAudio = async (
             );
 
             if (voiceMatchedError) {
-                console.error('Error fetching voice-matched verse audio:', voiceMatchedError);
+                logger.error('Failed to fetch voice-matched verse audio', { error: voiceMatchedError, context: { bookId, verseId } });
             } else if (voiceMatchedData) {
                 if (DEBUG_AUDIO) {
-                    console.log('AUDIO FETCH RESULT:', {
+                    logger.log('AUDIO FETCH RESULT:', {
                         stage: 'voice-match',
                         bookId,
                         verseId,
@@ -250,10 +237,10 @@ export const fetchVerseAudio = async (
         );
 
         if (primaryError) {
-            console.error('Error fetching primary verse audio:', primaryError);
+            logger.error('Failed to fetch primary verse audio', { error: primaryError, context: { bookId, verseId } });
         } else if (primaryData) {
             if (DEBUG_AUDIO) {
-                console.log('AUDIO FETCH RESULT:', {
+                logger.log('AUDIO FETCH RESULT:', {
                     stage: 'primary',
                     bookId,
                     verseId,
@@ -268,12 +255,12 @@ export const fetchVerseAudio = async (
         const { data: fallbackData, error: fallbackError } = await finalizeQuery(baseQuery());
 
         if (fallbackError) {
-            console.error('Error fetching fallback verse audio:', fallbackError);
+            logger.error('Failed to fetch fallback verse audio', { error: fallbackError, context: { bookId, verseId } });
             return null;
         }
 
         if (DEBUG_AUDIO) {
-            console.log('AUDIO FETCH RESULT:', {
+            logger.log('AUDIO FETCH RESULT:', {
                 stage: 'fallback',
                 bookId,
                 verseId,
@@ -285,7 +272,7 @@ export const fetchVerseAudio = async (
 
         return fallbackData ?? null;
     } catch (error) {
-        console.error('Error fetching verse audio:', error);
+        logger.error('Failed to fetch verse audio', { error, context: { bookId, verseId } });
         return null;
     }
 };
@@ -340,16 +327,12 @@ export const fetchUserProgress = async (userId: string, bookId?: string) => {
 
     if (!data) return null;
 
-    if (!bookId) {
-        return {
-            ...data,
-            bookId: data.book_id,
-            verseId: data.last_content_id,
-            position: data.last_position_seconds ?? 0,
-        };
-    }
-
-    return data;
+    return {
+        ...data,
+        bookId: data.book_id,
+        verseId: data.last_content_id,
+        position: data.last_position_seconds ?? 0,
+    };
 };
 
 export const upsertUserProgress = async (params: {
@@ -417,7 +400,7 @@ export const logActivity = async (userId: string | null, contentId: string, cont
         action_type: actionType
     });
     // We don't throw here to avoid blocking the UI for a non-critical tracking event
-    if (error) console.warn('Activity log error:', error.message);
+    if (error) logger.warn('Activity log error:', error.message);
 };
 
 // --- Aggregate Stats ---

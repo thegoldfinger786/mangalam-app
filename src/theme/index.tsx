@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { colors, darkColors } from './colors';
 import { typography } from './typography';
+import { logger } from '../lib/logger';
 
 const baseSpacing = {
     micro: 2,
@@ -108,7 +109,7 @@ export const useTheme = (): Theme => {
   }
 
   if (!ctx.typography) {
-    console.error("THEME_BROKEN_OBJECT", ctx);
+    logger.error('THEME_BROKEN_OBJECT', { error: new Error('Theme object missing typography') });
     throw new Error('THEME_MISSING_TYPOGRAPHY');
   }
 

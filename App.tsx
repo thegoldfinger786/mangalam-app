@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import {
     Outfit_400Regular,
     Outfit_500Medium,
@@ -16,8 +17,12 @@ import * as WebBrowser from 'expo-web-browser';
 
 WebBrowser.maybeCompleteAuthSession();
 
-export default function App() {
-    console.log('[APP ROOT] rendering');
+Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN || '',
+    enabled: !__DEV__ && !!(process.env.EXPO_PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN),
+});
+
+function App() {
     const [fontsLoaded] = useFonts({
         Outfit_400Regular,
         Outfit_500Medium,
@@ -47,3 +52,5 @@ export default function App() {
         </SafeAreaProvider>
     );
 }
+
+export default Sentry.wrap(App);

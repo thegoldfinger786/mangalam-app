@@ -4,21 +4,24 @@ import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import 'react-native-url-polyfill/auto';
 
+import { Database } from './database.types';
+import { logger } from '../lib/logger';
+
 WebBrowser.maybeCompleteAuthSession();
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn('Supabase URL or Anon Key is missing. Check your Expo public env vars.');
+    logger.warn('Supabase URL or Anon Key is missing. Check your Expo public env vars.');
 }
 
-let _supabase: ReturnType<typeof createClient> | null = null;
+let _supabase: ReturnType<typeof createClient<Database>> | null = null;
 
 export const getSupabase = () => {
     if (!_supabase) {
-        console.log('[SUPABASE] client initialized');
-        _supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        logger.log('[SUPABASE] client initialized');
+        _supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
             auth: {
                 storage: AsyncStorage,
                 autoRefreshToken: true,
@@ -49,7 +52,7 @@ const forceLogout = async () => {
     try {
         await getSupabase().auth.signOut();
     } catch (error) {
-        console.error('Error forcing sign out:', error);
+        logger.error('Error forcing sign out', { error });
     } finally {
         isForceSigningOut = false;
     }
@@ -59,11 +62,11 @@ export const signOut = async () => {
     try {
         const { error } = await getSupabase().auth.signOut();
         if (error) {
-            console.error('Error signing out:', error.message);
+            logger.error('Error signing out', { error });
         }
         return { error };
     } catch (error) {
-        console.error('Error signing out:', error);
+        logger.error('Error signing out', { error });
         return { error: error as AuthError };
     }
 };
@@ -99,7 +102,7 @@ export const signUp = async (params: { email: string; password: string }) => {
 };
 
 export const signInWithGoogle = async () => {
-    console.log('[AUTH] Starting Google OAuth');
+    logger.log('[AUTH] Starting Google OAuth');
 
     try {
         const redirectUri = AuthSession.makeRedirectUri({
@@ -118,7 +121,7 @@ export const signInWithGoogle = async () => {
         });
 
         if (error) {
-            console.error('[AUTH] signInWithOAuth error:', error);
+            logger.error('[AUTH] signInWithOAuth error', { error });
             return { data: null, error };
         }
 
@@ -126,14 +129,14 @@ export const signInWithGoogle = async () => {
             return { data: null, error: new Error('No OAuth URL returned') };
         }
 
-        console.log('[AUTH] Opening AuthSession');
+        logger.log('[AUTH] Opening AuthSession');
 
         const result = await WebBrowser.openAuthSessionAsync(
             data.url,
             redirectUri
         );
 
-        console.log('[AUTH] AuthSession result:', result.type);
+        logger.log('[AUTH] AuthSession result:', result.type);
 
         if (result.type !== 'success' || !result.url) {
             return { data: null, error: new Error('OAuth cancelled or failed') };
@@ -154,12 +157,12 @@ export const signInWithGoogle = async () => {
                 refresh_token,
             });
 
-        console.log('[AUTH] Session established:', sessionData?.session?.user?.email);
+        logger.log('[AUTH] Session established');
 
         return { data: sessionData, error: sessionError };
 
     } catch (err) {
-        console.error('[AUTH] OAuth exception:', err);
+        logger.error('[AUTH] OAuth exception', { error: err });
         return { data: null, error: err };
     }
 };

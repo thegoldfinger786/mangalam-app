@@ -11,6 +11,7 @@ import { fetchActiveBooks, fetchVersesWithContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
+import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
@@ -38,7 +39,7 @@ export const LibraryScreen = () => {
             const data = await fetchActiveBooks();
             setBooks(data);
         } catch (error) {
-            console.error('Error loading books:', error);
+            logger.error('Failed to load books', { error });
         } finally {
             setLoading(false);
         }
@@ -50,7 +51,7 @@ export const LibraryScreen = () => {
             const data = await fetchVersesWithContent(book.book_id, lang);
             setItems(data);
         } catch (error) {
-            console.error('Error loading items:', error);
+            logger.error('Failed to load items', { error });
         } finally {
             setItemsLoading(false);
         }

@@ -1,43 +1,31 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
 import {
     Alert,
     Image,
-    KeyboardAvoidingView,
-    Platform,
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
-    TouchableOpacity,
     View,
 } from 'react-native';
-import { Button } from '../components/Button';
 import { AppleAuthButton, AuthButtonWrapper, GoogleAuthButton } from '../components/AuthButton';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAuth } from '../auth/AuthProvider';
-import { getSupabase, signInWithPassword, signOut, signUp } from '../lib/supabaseClient';
 import { useTheme } from '../theme';
+import { logger } from '../lib/logger';
 
 export const LoginScreen = () => {
-    const { colors, spacing, borderRadius } = useTheme();
+    const { colors, spacing, typography } = useTheme();
     const { signInWithGoogle, signInWithApple, authLoading } = useAuth();
-    const styles = useMemo(() => createStyles(spacing), [spacing]);
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [isSignUp, setIsSignUp] = useState(false);
-    const [agreedToTerms, setAgreedToTerms] = useState(false);
+    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const [activeProvider, setActiveProvider] = useState<'apple' | 'google' | null>(null);
 
     const handleGoogleLogin = async () => {
-        console.log('[AUTH] LoginScreen: handleGoogleLogin called');
         setActiveProvider('google');
         try {
             await signInWithGoogle();
         } catch (error) {
-            console.error('Failed to start Google login:', error);
+            logger.error('Failed to start Google login', { error });
             Alert.alert('Sign-in failed', 'Something went wrong. Please try again.');
         } finally {
             setActiveProvider(null);
@@ -45,187 +33,69 @@ export const LoginScreen = () => {
     };
 
     const handleAppleLogin = async () => {
-        console.log('[AUTH] LoginScreen: handleAppleLogin called');
         setActiveProvider('apple');
         try {
             await signInWithApple();
         } catch (error) {
-            console.error('Failed to start Apple login:', error);
+            logger.error('Failed to start Apple login', { error });
             Alert.alert('Sign-in failed', 'Something went wrong. Please try again.');
         } finally {
             setActiveProvider(null);
         }
     };
 
-    const handleEmailAuth = async () => {
-        if (!email || !password) {
-            Alert.alert('Error', 'Please enter both email and password.');
-            return;
-        }
-        if (isSignUp && !agreedToTerms) {
-            Alert.alert('Terms & Conditions', 'Please agree to the Terms and Conditions to create an account.');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            if (isSignUp) {
-                const { error } = await signUp({
-                    email,
-                    password,
-                });
-                if (error) throw error;
-                Alert.alert('Verification Required', 'Please check your email to verify your account.');
-            } else {
-                const { error } = await signInWithPassword({
-                    email,
-                    password,
-                });
-                if (error) throw error;
-            }
-        } catch (error: any) {
-            if (error?.code === 'refresh_token_not_found') {
-                await signOut();
-            }
-            console.error('Email auth error:', error);
-            Alert.alert('Auth Error', error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleForgotPassword = () => {
-        if (!email) {
-            Alert.alert('Forgot Password', 'Please enter your email address first.');
-            return;
-        }
-        Alert.alert('Coming Soon', 'Password reset functionality is being configured.');
-    };
-
     return (
         <ScreenContainer edges={['top', 'bottom']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.container}
-            >
-                <ScrollView contentContainerStyle={[styles.scrollContent, { padding: spacing.xl }]}>
-                    <View style={styles.brandingHeader}>
-                        <View style={[styles.imageContainer, { borderColor: colors.border, shadowColor: colors.primary }]}>
-                            <Image
-                                source={require('../../assets/images/Mangalam-cover.jpeg')}
-                                style={styles.brandImage}
-                                resizeMode="cover"
-                            />
-                        </View>
-                        <Text style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</Text>
-                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</Text>
-                    </View>
-
-                    <Card style={[styles.authCard, { backgroundColor: colors.surface, marginTop: spacing.xl }]}>
-                        <Text style={[styles.instructionText, { color: colors.text, marginBottom: spacing.m }]}>
-                            Sign in to get started
-                        </Text>
-
-                        <AuthButtonWrapper>
-                            <AppleAuthButton 
-                                onPress={handleAppleLogin} 
-                                disabled={authLoading || loading || activeProvider === 'google'} 
-                                loading={activeProvider === 'apple' || (authLoading && activeProvider !== 'google')}
-                            />
-                            <GoogleAuthButton 
-                                onPress={handleGoogleLogin} 
-                                disabled={authLoading || loading || activeProvider === 'apple'} 
-                                loading={activeProvider === 'google'}
-                            />
-                        </AuthButtonWrapper>
-
-                        <Text style={[styles.dividerText, { color: colors.textSecondary, marginVertical: spacing.l }]}>
-                            or continue with email
-                        </Text>
-
-                        <View style={[styles.inputGroup, { backgroundColor: colors.background, borderRadius: borderRadius.m, borderColor: colors.border }]}>
-                            <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: colors.text }]}
-                                placeholder="Email Address"
-                                placeholderTextColor={colors.textSecondary}
-                                value={email}
-                                onChangeText={setEmail}
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                            />
-                        </View>
-
-                        <View style={[styles.inputGroup, { backgroundColor: colors.background, borderRadius: borderRadius.m, borderColor: colors.border, marginTop: spacing.m }]}>
-                            <Ionicons name="lock-closed-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
-                            <TextInput
-                                style={[styles.input, { color: colors.text }]}
-                                placeholder="Password"
-                                placeholderTextColor={colors.textSecondary}
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry
-                            />
-                        </View>
-
-                        {!isSignUp && (
-                            <TouchableOpacity
-                                style={[styles.forgotPassword, { marginTop: spacing.s }]}
-                                onPress={handleForgotPassword}
-                            >
-                                <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
-                            </TouchableOpacity>
-                        )}
-
-                        {isSignUp && (
-                            <TouchableOpacity
-                                style={[styles.termsRow, { marginTop: spacing.m }]}
-                                onPress={() => setAgreedToTerms(!agreedToTerms)}
-                            >
-                                <Ionicons
-                                    name={agreedToTerms ? 'checkbox' : 'square-outline'}
-                                    size={20}
-                                    color={agreedToTerms ? colors.primary : colors.textSecondary}
-                                />
-                                <Text style={[styles.termsText, { color: colors.textSecondary, marginLeft: spacing.s }]}>
-                                    I agree to the <Text style={{ color: colors.primary }}>Terms & Conditions</Text>
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-
-                        <Button
-                            title={loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
-                            onPress={handleEmailAuth}
-                            disabled={loading || authLoading}
-                            style={{ marginTop: spacing.xl }}
+            <ScrollView contentContainerStyle={[styles.scrollContent, { padding: spacing.xl }]}>
+                <View style={styles.brandingHeader}>
+                    <View style={[styles.imageContainer, { borderColor: colors.border, shadowColor: colors.primary }]}>
+                        <Image
+                            source={require('../../assets/images/Mangalam-cover.jpeg')}
+                            style={styles.brandImage}
+                            resizeMode="cover"
                         />
-                        <TouchableOpacity
-                            style={[styles.switchMode, { marginTop: spacing.l }]}
-                            onPress={() => setIsSignUp(!isSignUp)}
-                        >
-                            <Text style={[styles.switchModeText, { color: colors.textSecondary }]}>
-                                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-                                <Text style={{ color: colors.primary }}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
-                            </Text>
-                        </TouchableOpacity>
-
-                        <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
-                            Mangalam is a quiet space for reflection. We do not collect any of your personal data.
-                        </Text>
-                    </Card>
-
-                    <View style={[styles.footer, { paddingVertical: spacing.xl }]}>
-                        <Text style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
-                            OAuth callback: mangalamapp://login-callback
-                        </Text>
                     </View>
-                </ScrollView>
-            </KeyboardAvoidingView>
+                    <Text style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</Text>
+                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</Text>
+                </View>
+
+                <Card style={[styles.authCard, { backgroundColor: colors.surface, marginTop: spacing.xl }]}>
+                    <Text style={[styles.instructionText, { color: colors.text, marginBottom: spacing.l }]}>
+                        Sign in to get started
+                    </Text>
+
+                    <AuthButtonWrapper>
+                        <AppleAuthButton
+                            onPress={handleAppleLogin}
+                            disabled={authLoading || activeProvider === 'google'}
+                            loading={activeProvider === 'apple' || (authLoading && activeProvider !== 'google')}
+                        />
+                        <GoogleAuthButton
+                            onPress={handleGoogleLogin}
+                            disabled={authLoading || activeProvider === 'apple'}
+                            loading={activeProvider === 'google'}
+                        />
+                    </AuthButtonWrapper>
+
+                    <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
+                        Mangalam is a quiet space for reflection.{'\n'}We do not collect any of your personal data.
+                    </Text>
+                </Card>
+
+                <View style={[styles.footer, { paddingVertical: spacing.xl }]}>
+                    <Text style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
+                        By signing in, you agree to our Terms of Service.
+                    </Text>
+                </View>
+            </ScrollView>
         </ScreenContainer>
     );
 };
 
-const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
+const createStyles = (
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography'],
+) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -252,11 +122,12 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         height: '100%',
     },
     title: {
-        fontWeight: 'bold',
+        fontFamily: typography.fontFamilies.semiBold,
         fontSize: 32,
         letterSpacing: 0.5,
     },
     subtitle: {
+        fontFamily: typography.fontFamilies.regular,
         fontSize: 16,
         textAlign: 'center',
         opacity: 0.8,
@@ -269,59 +140,21 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         shadowRadius: 8,
     },
     instructionText: {
-        fontWeight: '600',
+        fontFamily: typography.fontFamilies.semiBold,
         fontSize: 20,
         textAlign: 'center',
     },
-    googleButton: {
-        marginTop: spacing.s,
-    },
-    dividerText: {
-        fontSize: 14,
-        textAlign: 'center',
-    },
-    inputGroup: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        paddingHorizontal: spacing.m,
-    },
-    inputIcon: {
-        marginRight: spacing.s,
-    },
-    input: {
-        flex: 1,
-        height: 52,
-        fontSize: 16,
-    },
-    forgotPassword: {
-        alignSelf: 'flex-end',
-    },
-    forgotPasswordText: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    termsRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    termsText: {
-        fontSize: 14,
-    },
-    switchMode: {
-        alignItems: 'center',
-    },
-    switchModeText: {
-        fontSize: 14,
-    },
     privacyNote: {
+        fontFamily: typography.fontFamilies.regular,
         fontSize: 13,
         textAlign: 'center',
+        lineHeight: 18,
     },
     footer: {
         alignItems: 'center',
     },
     footerText: {
+        fontFamily: typography.fontFamilies.regular,
         fontSize: 12,
         textAlign: 'center',
     },

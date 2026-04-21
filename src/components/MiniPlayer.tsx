@@ -18,6 +18,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
 import { getScriptureIcon } from './ScriptureIcons';
+import { logger } from '../lib/logger';
 
 const { width } = Dimensions.get('window');
 
@@ -54,8 +55,8 @@ export const MiniPlayer = () => {
     const progress = duration > 0 ? position / duration : 0;
 
     const handlePress = () => {
-        if (!assertValidBookId(currentContent.bookId, 'MiniPlayer.handlePress')) {
-            console.error('MiniPlayer missing bookId for playback navigation', { currentContent });
+        if (!currentContent?.bookId) {
+            logger.warn('MiniPlayer missing bookId for playback navigation', { currentContent });
             return;
         }
 
@@ -95,7 +96,6 @@ export const MiniPlayer = () => {
                 });
             }
         } catch (error: any) {
-            console.log('Alert triggered');
             Alert.alert('Playback Error', error?.message || 'Unable to change verse.');
         }
     };
@@ -174,7 +174,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         position: 'absolute',
         width: width,
         borderTopWidth: 1,
-        elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,

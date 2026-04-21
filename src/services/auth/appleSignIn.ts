@@ -1,9 +1,10 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { getSupabase } from '../../lib/supabaseClient';
+import { logger } from '../../lib/logger';
 
 const persistAppleProfileSafely = async (userId: string, displayName: string) => {
     try {
-        console.log('[AUTH] Apple Sign-In: Checking idempotency for first-time user data out-of-band...');
+        logger.log('[AUTH] Apple Sign-In: Checking idempotency for first-time user data out-of-band...');
         const supabase = getSupabase();
         
         const { data: existingProfile, error: fetchError } = await supabase
@@ -13,12 +14,12 @@ const persistAppleProfileSafely = async (userId: string, displayName: string) =>
             .maybeSingle();
 
         if (fetchError) {
-             console.error('[AUTH] Failed to fetch existing profile during Apple onboarding:', fetchError);
+             logger.error('[AUTH] Failed to fetch existing profile during Apple onboarding', { error: fetchError });
              return;
         }
 
         if (!existingProfile?.display_name) {
-            console.log('[AUTH] No existing display_name found. Persisting Apple metadata out-of-band safely.');
+            logger.log('[AUTH] No existing display_name found. Persisting Apple metadata out-of-band safely.');
             const { error: profileError } = await supabase.from('profiles').upsert({
                 id: userId,
                 display_name: displayName,
@@ -26,20 +27,20 @@ const persistAppleProfileSafely = async (userId: string, displayName: string) =>
             });
             
             if (profileError) {
-                console.error('[AUTH] Background save for Apple user profile failed:', profileError);
+                logger.error('[AUTH] Background save for Apple user profile failed', { error: profileError });
             } else {
-                console.log('[AUTH] Background save for Apple user profile succeeded.');
+                logger.log('[AUTH] Background save for Apple user profile succeeded.');
             }
         } else {
-            console.log('[AUTH] Profile already exists. Safely aborting Apple metadata write to maintain idempotency.');
+            logger.log('[AUTH] Profile already exists. Safely aborting Apple metadata write to maintain idempotency.');
         }
     } catch (e) {
-        console.error('[AUTH] Unexpected error saving async Apple profile persistence:', e);
+        logger.error('[AUTH] Unexpected error saving async Apple profile persistence', { error: e });
     }
 };
 
 export const signInWithAppleService = async () => {
-    console.log('[AUTH] Starting Apple OAuth via Service');
+    logger.log('[AUTH] Starting Apple OAuth via Service');
     try {
         const credential = await AppleAuthentication.signInAsync({
             requestedScopes: [
@@ -49,7 +50,7 @@ export const signInWithAppleService = async () => {
         });
         
         if (credential.identityToken) {
-            console.log('[AUTH] Received Apple identityToken, calling Supabase');
+            logger.log('[AUTH] Received Apple identityToken, calling Supabase');
             const { data, error } = await getSupabase().auth.signInWithIdToken({
                 provider: 'apple',
                 token: credential.identityToken,
@@ -75,22 +76,22 @@ export const signInWithAppleService = async () => {
                 if (displayName) {
                     // Fire and forget profile persistence independent of login phase
                     persistAppleProfileSafely(userId, displayName).catch((e) => {
-                        console.error('[AUTH] Uncaught promise error in background profile persist:', e);
+                        logger.error('[AUTH] Uncaught promise error in background profile persist', { error: e });
                     });
                 }
             }
             
-            console.log('[AUTH] Supabase session established via Apple token');
+            logger.log('[AUTH] Supabase session established via Apple token');
             return { data, error: null };
         } else {
             return { data: null, error: new Error('No identityToken returned from Apple') };
         }
     } catch (e: any) {
         if (e.code === 'ERR_REQUEST_CANCELED') {
-            console.log('[AUTH] Apple OAuth canceled');
+            logger.log('[AUTH] Apple OAuth canceled');
             return { data: null, error: new Error('User canceled') };
         }
-        console.error('[AUTH] Apple OAuth exception:', e);
+        logger.error('[AUTH] Apple OAuth exception', { error: e });
         return { data: null, error: e };
     }
 };

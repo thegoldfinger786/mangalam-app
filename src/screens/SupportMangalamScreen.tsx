@@ -1,23 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useMemo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
+import { logger } from '../lib/logger';
 
 export const SupportMangalamScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const navigation = useNavigation<NavigationProp<any>>();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     // The Stripe payment link provided by the user
     const STRIPE_PAYMENT_URL = "https://buy.stripe.com/3cI3cv7xj1IS6bobI00Ba00";
 
     const handleSupport = () => {
-        Linking.openURL(STRIPE_PAYMENT_URL).catch(err => console.error("Couldn't load page", err));
+        Linking.openURL(STRIPE_PAYMENT_URL).catch(err => logger.error("Couldn't load Stripe payment page", { error: err }));
     };
 
     const SectionCard = ({ title, content, children }: { title?: string, content?: string, children?: React.ReactNode }) => (

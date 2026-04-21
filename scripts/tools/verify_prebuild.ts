@@ -19,8 +19,8 @@ const run = async () => {
         password: 'Test@1234'
     });
 
-    if (error) {
-        console.error('❌ Login failed:', error.message);
+    if (error || !session) {
+        console.error('❌ Login failed:', error?.message ?? 'No session returned');
         process.exit(1);
     }
 

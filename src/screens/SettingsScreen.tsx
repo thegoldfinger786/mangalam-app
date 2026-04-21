@@ -10,10 +10,12 @@ import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { RootStackParamList } from '../navigation/types';
 import { VoicePreference } from '../data/types';
-import { signOut, supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../auth/AuthProvider';
 import { useAudioStore } from '../store/useAudioStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
+import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -39,6 +41,7 @@ const getDisplayEmail = (email?: string | null) => {
 
 export const SettingsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
+    const { signOut } = useAuth();
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
     
@@ -107,7 +110,6 @@ export const SettingsScreen = () => {
         });
 
         if (error) {
-            console.log('Alert triggered');
             Alert.alert('Error', error.message);
             return;
         }
@@ -118,7 +120,6 @@ export const SettingsScreen = () => {
     };
 
     const handleSignOut = async () => {
-        console.log('Alert triggered');
         Alert.alert(
             'Sign Out',
             'Are you sure you want to sign out?',
@@ -127,10 +128,10 @@ export const SettingsScreen = () => {
                 {
                     text: 'Sign Out',
                     onPress: async () => {
-                        const { error } = await signOut();
-                        if (error) {
-                            console.log('Alert triggered');
-                            Alert.alert('Error', error.message);
+                        try {
+                            await signOut();
+                        } catch (error: any) {
+                            Alert.alert('Error', error?.message || 'Failed to sign out.');
                         }
                     },
                     style: 'destructive'

@@ -8,6 +8,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -23,7 +24,6 @@ export const AboutScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
-    console.log('AboutScreen rendered');
 
     const openLink = async (url: string) => {
         try {

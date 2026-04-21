@@ -22,6 +22,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
+import { logger } from '../lib/logger';
 
 const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
@@ -36,7 +37,6 @@ export const BookDashboardScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<BookDashboardRouteProp>();
     const insets = useSafeAreaInsets();
-    console.log('Route params:', route?.params);
     
     const bookId = route.params?.bookId;
     assertBookIdentityConsistency({ source: 'BookDashboardScreen', bookId });
@@ -46,11 +46,6 @@ export const BookDashboardScreen = () => {
 
     const clickedBookId = route?.params?.clickedBookId ?? null;
     const clickedTitle = route?.params?.clickedTitle ?? null;
-    console.log('BOOK_SCREEN_RECEIVED', {
-        received_book_id: bookId,
-        clicked_book_id: clickedBookId,
-        clicked_title: clickedTitle,
-    });
 
     const { completedVerses } = useAppStore();
     const [loading, setLoading] = useState(true);
@@ -68,26 +63,14 @@ export const BookDashboardScreen = () => {
             setLoading(true);
             const activeBooks = await fetchActiveBooks();
             const resolvedBook = activeBooks.find(b => b.book_id === bookId);
-            console.log('BOOK_FETCH', {
-                book_id_used_for_query: resolvedBook?.book_id ?? bookId ?? null,
-            });
 
             if (!resolvedBook) {
-                console.log('Alert triggered');
                 Alert.alert('Error', 'Book not found.');
                 navigation.goBack();
                 return;
             }
 
             setBook(resolvedBook);
-
-            if (clickedBookId && clickedBookId !== resolvedBook.book_id) {
-                console.warn('BOOK_MISMATCH_DETECTED', {
-                    clicked_book_id: clickedBookId,
-                    received_book_id: bookId,
-                    resolved_book_id: resolvedBook.book_id,
-                });
-            }
 
             const { data: allVerses, error } = await supabase
                 .from('verses')
@@ -112,8 +95,7 @@ export const BookDashboardScreen = () => {
             }
 
         } catch (e) {
-            console.error('Error loading book dashboard:', e);
-            console.log('Alert triggered');
+            logger.error('Failed to load book dashboard', { error: e });
             Alert.alert('Error', 'Unable to load dashboard data.');
         } finally {
             setLoading(false);
@@ -137,9 +119,6 @@ export const BookDashboardScreen = () => {
 
     const handleContinue = () => {
         if (!nextVerse || !assertValidBookId(nextVerse.book_id, 'BookDashboardScreen.handleContinue')) return;
-        console.log('NAVIGATE_BOOK', {
-            passed_book_id: nextVerse.book_id,
-        });
         navigation.navigate('Play', {
             itemId: nextVerse.verse_id,
             bookId: nextVerse.book_id,
@@ -339,8 +318,9 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     heroGlassPanel: {
         width: '100%',
-        marginTop: -layout.heroGlassPanelOverlap, // Overlap the image
-        paddingTop: layout.heroGlassPanelOverlap + spacing.m, // Pad for the overlap
+        marginTop: -90, // heroGlassPanelOverlap constant
+        paddingTop: 90 + spacing.m, // Pad for the overlap
+
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.l,
         borderWidth: 1,

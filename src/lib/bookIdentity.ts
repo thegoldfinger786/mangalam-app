@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger';
 // ─── Book Identity System ───────────────────────────────────────────────────
 // book_id  = identity (navigation, fetch, playback — NEVER hardcoded)
 // code/slug = classification (feature flags only — fetched from backend)
@@ -19,7 +20,7 @@ let _booksCache: BookCacheEntry[] = [];
  */
 export function syncBookIdentityCache(books: BookCacheEntry[]) {
     _booksCache = books;
-    console.log('BOOK_IDENTITY_CACHE_SYNCED', _booksCache.map(b => ({
+    logger.log('BOOK_IDENTITY_CACHE_SYNCED', _booksCache.map(b => ({
         book_id: b.book_id,
         code: b.code ?? null,
         slug: b.slug ?? null,
@@ -58,7 +59,7 @@ export function getBookCode(bookId: string | null | undefined): string {
     if (!bookId) return 'unknown';
     const book = _booksCache.find(b => b.book_id === bookId);
     if (!book) {
-        console.error('BOOK_CODE_MISSING', { bookId, cacheSize: _booksCache.length });
+        logger.warn('Book code missing from cache', { action: 'BOOK_CODE_MISSING', bookId, cacheSize: _booksCache.length });
         return 'unknown';
     }
     return book.code || book.slug || 'unknown';
@@ -92,7 +93,7 @@ export function isGita(bookId: string | null | undefined): boolean {
 
 export const assertValidBookId = (bookId: string | null | undefined, context: string): bookId is string => {
     if (!bookId) {
-        console.error('INVALID_BOOK_ID', { context, bookId });
+        logger.error('Invalid book ID provided', { context: { action: 'INVALID_BOOK_ID', sourceContext: context, bookId } });
         return false;
     }
 
@@ -109,7 +110,7 @@ export const requireBookId = (bookId: string | null | undefined, context: string
 
 export function assertBookIdentityConsistency({ source, bookId }: { source: string; bookId?: string | null }) {
     if (!bookId) {
-        console.error("BOOK_ID_BROKEN", { source, bookId });
+        logger.error('Book ID is broken or null', { context: { action: 'BOOK_ID_BROKEN', source, bookId } });
     }
 }
 
@@ -128,7 +129,7 @@ export const auditBookIds = (books: { book_id?: string | null; title?: string | 
         seen.add(book.book_id);
     });
 
-    console.log(
+    logger.log(
         'BOOK_ID_AUDIT',
         books.map((book) => ({
             title: book.title ?? null,
@@ -137,8 +138,9 @@ export const auditBookIds = (books: { book_id?: string | null; title?: string | 
     );
 
     if (duplicates.size > 0) {
-        console.error('BOOK_ID_DUPLICATES_DETECTED', {
-            duplicate_book_ids: Array.from(duplicates),
+        logger.error('Book ID duplicates detected during audit', { 
+            context: { action: 'BOOK_ID_DUPLICATES_DETECTED', duplicate_book_ids: Array.from(duplicates) },
+            level: 'warning'
         });
     }
 };

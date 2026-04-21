@@ -3,12 +3,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as Linking from 'expo-linking';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 // Navigators & Screens
 import { useAuth } from '../auth/AuthProvider';
 import { MiniPlayer } from '../components/MiniPlayer';
-import { getSupabase } from '../lib/supabaseClient';
 import { AboutScreen } from '../screens/AboutScreen';
 import { BookDashboardScreen } from '../screens/BookDashboardScreen';
 import { CommunityWisdomScreen } from '../screens/CommunityWisdomScreen';
@@ -25,6 +24,7 @@ import { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 import { navigationRef } from './navigationRef';
+import { logger } from '../lib/logger';
 
 function getActiveRouteName(state: any): string | null {
     if (!state || !state.routes) return null;
@@ -122,20 +122,10 @@ const AuthLoadingScreen = () => {
     return (
         <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
             <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.text }]}>AUTH: LOADING</Text>
         </View>
     );
 };
 
-const AuthDebugBadge = ({ label }: { label: string }) => {
-    const { colors } = useTheme();
-
-    return (
-        <View style={[styles.debugBadge, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.debugBadgeText, { color: colors.text }]}>{label}</Text>
-        </View>
-    );
-};
 
 export const AppNavigator = () => {
     const { loading, isProfileLoading, session } = useAuth();
@@ -156,20 +146,11 @@ export const AppNavigator = () => {
     const linking = {
         prefixes: ['mangalamapp://'],
         subscribe(listener: (url: string) => void) {
-            const onReceiveURL = async ({ url }: { url: string }) => {
-                // Ignore OAuth callback so Supabase can process it
+            const onReceiveURL = ({ url }: { url: string }) => {
+                // OAuth callbacks are handled by supabaseClient.ts (token extraction + setSession).
+                // Swallow them here to prevent React Navigation from trying to match them as routes.
                 if (url.includes('login-callback')) {
-                    console.log('[LINKING] OAuth callback received:', url);
-
-                    // 🔥 THIS IS THE FIX
-                    const supabase = getSupabase();
-                    const { data, error } = await supabase.auth.setSession({
-                        access_token: url.split('#access_token=')[1]?.split('&')[0],
-                        refresh_token: url.split('refresh_token=')[1]?.split('&')[0],
-                    });
-
-                    console.log('[AUTH] Manual session set:', data, error);
-
+                    logger.log('[LINKING] OAuth callback intercepted (handled by auth flow)');
                     return;
                 }
                 listener(url);
@@ -206,9 +187,6 @@ export const AppNavigator = () => {
                     {session ? <AuthenticatedApp /> : <UnauthenticatedApp />}
                 </NavigationContainer>
             )}
-            <AuthDebugBadge
-                label={loading || isProfileLoading ? 'AUTH: LOADING' : session ? 'AUTH: LOGGED IN' : 'AUTH: LOGGED OUT'}
-            />
         </View>
     );
 };
@@ -221,25 +199,5 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12,
-    },
-    loadingText: {
-        fontSize: 14,
-        fontWeight: '600',
-        letterSpacing: 0.4,
-    },
-    debugBadge: {
-        position: 'absolute',
-        top: 56,
-        right: 16,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 999,
-        borderWidth: 1,
-        opacity: 0.92,
-    },
-    debugBadgeText: {
-        fontSize: 12,
-        fontWeight: '700',
     },
 });

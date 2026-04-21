@@ -21,6 +21,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
 import { useRef } from 'react';
+import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 
@@ -51,7 +52,6 @@ const EXPLORE_PATH_DISPLAY: Record<string, { title: string; color: string }> = {
 };
 
 export const HomeScreen = () => {
-    console.log("HOME_RENDER");
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     
@@ -89,7 +89,6 @@ export const HomeScreen = () => {
             const progress = await fetchUserProgress(session.user.id);
 
             if (!progress?.bookId || !progress?.verseId) {
-                console.log('CURRENT_PATH_UI_SOURCE', null);
                 // Only set null if we truly have no progress
                 setResumeState(null);
                 return;
@@ -99,16 +98,14 @@ export const HomeScreen = () => {
             const resolvedBook = cachedBook ?? await fetchBookById(progress.bookId);
 
             if (!resolvedBook?.slug) {
-                console.error('Missing book slug for progress', { progress, resolvedBook });
-                console.log('CURRENT_PATH_UI_SOURCE', null);
+                logger.warn('Missing book slug for progress', { progress, resolvedBook });
                 setResumeState(null);
                 return;
             }
 
             const verse = await fetchVerseByIdAndBookId(progress.bookId, progress.verseId);
             if (!verse) {
-                console.error('Missing verse metadata for current path UI', { progress });
-                console.log('CURRENT_PATH_UI_SOURCE', null);
+                logger.warn('Missing verse metadata for current path UI', { progress });
                 setResumeState(null);
                 return;
             }
@@ -122,21 +119,11 @@ export const HomeScreen = () => {
                 book_slug: resolvedBook.slug as ContentPath,
                 book_title: resolvedBook.title ?? resolvedBook.name ?? resolvedBook.slug,
             };
-
-            console.log('CURRENT_PATH_UI_SOURCE', nextResumeState);
-            console.log('RESUME_DEBUG', {
-                source: 'remote',
-                book_id: nextResumeState.book_id,
-                chapter_no: nextResumeState.chapter_no,
-                verse_no: nextResumeState.verse_no,
-                verse_id: nextResumeState.verse_id,
-                audio_path: null,
-            });
+            
             setActiveBookId(progress.bookId);
             setResumeState(nextResumeState);
         } catch (error) {
-            console.error('Error loading current path resume state:', error);
-            console.log('CURRENT_PATH_UI_SOURCE', null);
+            logger.error('Failed to load current path resume state', { error });
             setResumeState(null);
         } finally {
             setResumeLoading(false);
@@ -154,11 +141,6 @@ export const HomeScreen = () => {
                 fetchStreakData(session.user.id)
             ]);
             auditBookIds(activeBooks);
-            console.log('BOOKS_LOADED', activeBooks.map((b: any) => ({
-                title: b.title,
-                book_id: b.book_id,
-                slug: b.slug,
-            })));
 
             if (!userName) {
                 const { data: profile } = await supabase
@@ -180,7 +162,7 @@ export const HomeScreen = () => {
             // (Real logic would check for gaps, but user says "compute streak from user_daily_usage rows")
             setStreakCount(streakData?.length || 0);
         } catch (error) {
-            console.error('Error loading home data:', error);
+            logger.error('Failed to load home data', { error });
         } finally {
             setLoading(false);
         }
@@ -193,24 +175,10 @@ export const HomeScreen = () => {
     );
 
     const handleOpenPath = async () => {
-        console.log('handleOpenPath START');
-
         try {
             if (resumeState) {
                 const navBookId = resumeState.book_id;
                 const navVerseId = resumeState.verse_id;
-                console.log('RESUME_COMPARE', {
-                    ui_book_id: resumeState.book_id,
-                    ui_verse_id: resumeState.verse_id,
-                    nav_book_id: navBookId,
-                    nav_verse_id: navVerseId,
-                });
-                if (resumeState.verse_id !== navVerseId) {
-                    console.warn('RESUME_COMPARE mismatch', {
-                        ui_verse_id: resumeState.verse_id,
-                        nav_verse_id: navVerseId,
-                    });
-                }
                 assertBookIdentityConsistency({ source: 'HomeScreen.resume', bookId: navBookId });
                 navigation.navigate(ROUTES.PLAY, {
                     bookId: navBookId,
@@ -233,30 +201,18 @@ export const HomeScreen = () => {
                 bookId: currentActiveBookId,
             });
         } catch (e) {
-            console.log('Continue error:', e);
+            logger.error('Failed to continue path', { error: e });
         }
     };
 
     const handlePathPress = (book: any) => {
         const clickedTitle = book?.title_en || book?.title_hi || book?.title || book?.name || 'Unknown';
-        console.log('BOOK_CLICK', {
-            clicked_title: clickedTitle,
-            clicked_book_id: book?.book_id ?? null,
-        });
 
         const navigateToBookDashboard = () => {
             if (!assertValidBookId(book?.book_id, 'HomeScreen.handlePathPress')) {
-                console.warn('BOOK_MISMATCH_DETECTED', {
-                    clicked_title: clickedTitle,
-                    clicked_book_id: null,
-                    reason: 'missing_book_mapping',
-                });
                 Alert.alert('Unavailable', 'This book is not available right now.');
                 return;
             }
-            console.log('NAVIGATE_BOOK', {
-                passed_book_id: book.book_id,
-            });
             assertBookIdentityConsistency({ source: 'HomeScreen.handlePathPress', bookId: book.book_id });
             navigation.navigate(ROUTES.BOOK_DASHBOARD, {
                 bookId: book.book_id,
@@ -268,7 +224,6 @@ export const HomeScreen = () => {
         if (book.book_id === activeBookId) {
             navigateToBookDashboard();
         } else {
-            console.log('Alert triggered');
             Alert.alert(
                 'Change Path?',
                 `You are currently focused on the ${currentPathTitle} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?`,
@@ -317,7 +272,6 @@ export const HomeScreen = () => {
         displayTitle: book.title_en || book.title_hi || book.title || book.name || EXPLORE_PATH_DISPLAY[book.slug]?.title || 'Untitled',
         displayColor: EXPLORE_PATH_DISPLAY[book.slug]?.color || colors.primary,
     })), [books, colors.primary]);
-    console.log('handleOpenPath exists:', typeof handleOpenPath);
 
     if (loading && !books.length) {
         return (

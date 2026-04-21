@@ -35,6 +35,7 @@ import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
+import { logger } from '../lib/logger';
 
 const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
@@ -52,8 +53,8 @@ export const PlayScreen = () => {
     );
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<PlayRouteProp>();
-    const params = route.params ?? {};
-    const itemId = params.itemId ?? params.verseId;
+    const params = route.params;
+    const itemId = 'itemId' in params ? params.itemId : params.verseId;
     const autoPlay = params.autoPlay ?? false;
     const resumePosition = params.startPosition ?? params.position ?? 0;
     const resumeSource = params.resumeSource ?? 'default';
@@ -140,8 +141,8 @@ export const PlayScreen = () => {
             // 1. Content Fetching
             const lang = voicePreference.startsWith('hindi') ? 'hi' : 'en';
 
-            if (!assertValidBookId(bookId, 'PlayScreen.loadContentAndCheckUsage')) {
-                console.error('PlayScreen missing bookId for playback', { params });
+            if (!bookId || typeof bookId !== 'string') {
+                logger.warn('PlayScreen missing bookId for playback', { params });
                 if (isMountedRef.current) {
                     setPlaybackError('Missing book identity for this playback request.');
                     setLoading(false);
@@ -151,7 +152,7 @@ export const PlayScreen = () => {
 
             const verse = await fetchVerseByIdAndBookId(bookId, itemId);
             if (!verse) {
-                console.error('Verse not found for playback', { params });
+                logger.warn('Verse not found for playback', { params });
                 if (isMountedRef.current) {
                     setPlaybackError('This verse could not be found for playback.');
                     setLoading(false);
@@ -162,7 +163,11 @@ export const PlayScreen = () => {
             const resolvedBookSlug = verse?.books?.slug ?? null;
 
             if (bookId && verse.book_id !== bookId) {
-                console.error('BOOK MISMATCH BUG', { params, verse });
+                logger.error('BOOK MISMATCH BUG', { 
+                    context: { params, verseId: verse?.verse_id },
+                    level: 'fatal',
+                    tags: { module: 'audio' }
+                });
             }
 
             let data: any = {
@@ -220,7 +225,7 @@ export const PlayScreen = () => {
             try {
                 await incrementDailyUsage(session.user.id);
             } catch (usageError: any) {
-                console.warn('Usage tracking issue:', usageError.message);
+                // Ignore usage error silently
             }
 
             // 3. Audio Cache Check
@@ -293,38 +298,17 @@ export const PlayScreen = () => {
                         }
 
                         const freshUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-                        console.log('PLAYBACK_SOURCE', {
-                            book_id: data.book_id ?? null,
-                            verse_id: itemId ?? null,
-                            audio_path: freshUrl,
-                        });
-                        console.log('RESUME_DEBUG', {
-                            source: resumeSource,
-                            book_id: data.book_id ?? null,
-                            chapter_no: data.chapter_no ?? null,
-                            verse_no: data.verse_no ?? null,
-                            verse_id: itemId ?? null,
-                            audio_path: freshUrl,
-                        });
+                        
                         loadAudio(freshUrl, { ...data, artworkUrl: resolvedArtworkUrl }, autoPlay, onFinish, resumePosition);
                     }
                 } else {
-                    console.log(`[PlayScreen] No audio found for ${itemId} in ${lang}-${gender}`);
-                    console.log('RESUME_DEBUG', {
-                        source: resumeSource === 'remote' ? 'remote' : 'default',
-                        book_id: data.book_id ?? null,
-                        chapter_no: data.chapter_no ?? null,
-                        verse_no: data.verse_no ?? null,
-                        verse_id: itemId ?? null,
-                        audio_path: null,
-                    });
                     // Ensure state is updated so user can still see text and manually navigate
                     loadAudio('', { ...data, artworkUrl: resolvedArtworkUrl }, false, () => {
                         if (nextId) navigateToVerse(nextId, true);
                     }, resumePosition);
                 }
             } catch (cacheError) {
-                console.error('Audio cache error:', cacheError);
+                logger.warn('Audio cache lookup failed', { cacheError });
             }
             // 4. Progress Persistence (Sync current verse and restore speed)
             if (data?.book_id) {
@@ -347,12 +331,15 @@ export const PlayScreen = () => {
                         playbackSpeed: progress?.playback_speed || playbackRate
                     });
                 } catch (progError) {
-                    console.error('Progress sync error:', progError);
+                    logger.error('Progress sync failed', { error: progError });
                 }
             }
 
-        } catch (error: any) {
-            console.error('PlayScreen init error:', error);
+        } catch (error) {
+            logger.error('PlayScreen initialization failed', { 
+                error,
+                tags: { module: 'audio' }
+            });
             if (isMountedRef.current) {
                 setPlaybackError('Failed to load content for playback.');
             }
@@ -433,7 +420,7 @@ export const PlayScreen = () => {
                     playbackSpeed: newRate
                 });
             } catch (e) {
-                console.error('Failed to save speed:', e);
+                logger.error('Failed to save playback speed', { error: e });
             }
         }
     };
@@ -444,7 +431,7 @@ export const PlayScreen = () => {
             const { bookmarked } = await toggleBookmark(session.user.id, itemId, 'verse');
             setIsBookmarked(bookmarked);
         } catch (error) {
-            console.error('Bookmark error:', error);
+            logger.error('Bookmark toggle failed', { error });
         }
     };
 
@@ -466,7 +453,7 @@ export const PlayScreen = () => {
                 await logActivity(session.user.id, itemId, 'verse', 'share');
             }
         } catch (error) {
-            console.error('Share error:', error);
+            logger.error('Share action failed', { error });
         }
     };
 
@@ -474,8 +461,8 @@ export const PlayScreen = () => {
         const wasPlaying = forceAutoPlay ?? isPlaying;
         isNavigatingToVerse.current = true;
         void syncRemoteProgress('track_change', { force: true });
-        if (!assertValidBookId(bookId, 'PlayScreen.navigateToVerse')) {
-            console.error('Playback navigation missing book context', { targetVerseId, bookId });
+        if (!targetVerseId || !bookId) {
+            logger.warn('Playback navigation missing book context', { targetVerseId, bookId });
             return;
         }
 
@@ -522,7 +509,7 @@ export const PlayScreen = () => {
     });
 
     if (invalidPlaybackContext) {
-        console.error('PlayScreen missing playback context', { params });
+        logger.warn('PlayScreen missing playback context', { params });
         return (
             <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
                 <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>

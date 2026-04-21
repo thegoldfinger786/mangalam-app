@@ -66,10 +66,10 @@ export const BottomTabs = () => {
             })}
         >
             <Tab.Screen name="Home">
-                {(props) => (
+                {() => (
                     <>
                         <TabBarHeightSync />
-                        <HomeScreen {...props} />
+                        <HomeScreen />
                     </>
                 )}
             </Tab.Screen>
