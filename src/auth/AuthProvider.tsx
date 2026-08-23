@@ -196,6 +196,23 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                 }
 
                 logger.log('[AUTH] onAuthStateChange:', event);
+
+                // TOKEN_REFRESHED carries a new access token for the *same* user.
+                // The profile cannot have changed, so refetching it is redundant —
+                // and because applySession() raises isProfileLoading, which gates
+                // the whole NavigationContainer, doing so tore down and remounted
+                // the navigation tree mid-session: the listener was bounced out of
+                // the verse they were reading. Supabase refreshes on a timer and
+                // on app foreground, so this fired without any user action.
+                // Update the session in place and leave the navigator alone.
+                if (event === 'TOKEN_REFRESHED') {
+                    setSession(eventSession);
+                    setAuthState(eventSession);
+                    clearAuthLoadingTimeout();
+                    setAuthLoading(false);
+                    return;
+                }
+
                 applySession(eventSession);
 
                 // Reset OAuth loading state if an OAuth flow was pending
@@ -241,7 +258,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
             resetAuthLoading();
             subscription.unsubscribe();
         };
-    }, [applySession, clearAuthLoadingTimeout, resetAuthLoading]);
+    }, [applySession, clearAuthLoadingTimeout, resetAuthLoading, setAuthState]);
 
     // ── Sign-in handlers ──
 
