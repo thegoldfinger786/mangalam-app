@@ -3,7 +3,9 @@ import json
 import os
 
 def generate_preview():
-    api_key = "AIzaSyAsAhe1ioeVcPr9pRoXkDqBsj6spPmTg2I"
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise SystemExit("GEMINI_API_KEY is not set in the environment.")
     chapter = 1
     verse = 1
     

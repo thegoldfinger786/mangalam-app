@@ -1,0 +1,18 @@
+project_id = "yhuvjcmemsqjkttizxem"
+
+# Edge Function deployment settings.
+#
+# Both functions below are operator-only: they spend money (Gemini / Google TTS)
+# and write to the published catalogue with the service-role key. Nothing in
+# src/ invokes them.
+#
+# verify_jwt is the gateway gate. It only proves the caller holds a token signed
+# by this project — and the anon key is such a token, published in the mobile
+# bundle — so it is NOT sufficient on its own. Real authorization is the
+# x-admin-secret check in supabase/functions/_shared/adminAuth.ts. Keep both.
+
+[functions.generate-tts]
+verify_jwt = true
+
+[functions.import-content]
+verify_jwt = true
