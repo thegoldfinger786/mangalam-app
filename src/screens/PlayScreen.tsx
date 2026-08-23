@@ -139,7 +139,17 @@ export const PlayScreen = () => {
     const isGita = bookCode === 'gita' || bookCode === 'bhagavad_gita';
 
     const loadContentAndCheckUsage = useCallback(async () => {
-        if (!session) return;
+        // Read session and playbackRate at call time instead of closing over them.
+        // Neither identifies *which* verse to load, but both change for unrelated
+        // reasons: the session object is replaced on every token refresh, and
+        // playbackRate changes whenever the user taps the speed pill. As
+        // dependencies they re-ran this entire loader — re-incrementing daily
+        // usage each time and inflating the streak data it feeds.
+        // Same getState() pattern already used elsewhere in this file.
+        const { session: currentSession, playbackRate: currentPlaybackRate } =
+            useAppStore.getState();
+
+        if (!currentSession) return;
 
         try {
             if (!isMountedRef.current) return;
@@ -224,14 +234,14 @@ export const PlayScreen = () => {
 
             // Check bookmark status
             if (session) {
-                const bookmarked = await fetchIsBookmarked(session.user.id, itemId);
+                const bookmarked = await fetchIsBookmarked(currentSession.user.id, itemId);
                 if (!isMountedRef.current) return;
                 setIsBookmarked(bookmarked);
             }
 
             // 2. Increment Usage (Non-blocking)
             try {
-                await incrementDailyUsage(session.user.id);
+                await incrementDailyUsage(currentSession.user.id);
             } catch (usageError: any) {
                 // Ignore usage error silently
             }
@@ -321,7 +331,7 @@ export const PlayScreen = () => {
             // 4. Progress Persistence (Sync current verse and restore speed)
             if (data?.book_id) {
                 try {
-                    const progress = await fetchUserProgress(session.user.id, data.book_id);
+                    const progress = await fetchUserProgress(currentSession.user.id, data.book_id);
 
                     // If we have saved progress, and this is the first load of the session (optional check)
                     // or just generally restore the speed if available.
@@ -331,12 +341,12 @@ export const PlayScreen = () => {
 
                     // Save current position
                     await upsertUserProgress({
-                        userId: session.user.id,
+                        userId: currentSession.user.id,
                         bookId: data.book_id,
                         lastContentId: itemId,
                         contentType: 'verse',
                         lastPositionSeconds: Math.max(0, Math.floor(resumePosition)),
-                        playbackSpeed: progress?.playback_speed || playbackRate
+                        playbackSpeed: progress?.playback_speed || currentPlaybackRate
                     });
                 } catch (progError) {
                     logger.error('Progress sync failed', { error: progError });
@@ -354,7 +364,7 @@ export const PlayScreen = () => {
         } finally {
             if (isMountedRef.current) setLoading(false);
         }
-    }, [autoPlay, itemId, loadAudio, params, playbackRate, bookId, resumePosition, resumeSource, session, setPlaybackRate, voicePreference]);
+    }, [autoPlay, itemId, loadAudio, params, bookId, resumePosition, resumeSource, setPlaybackRate, voicePreference]);
 
     useEffect(() => {
         loadContentAndCheckUsage();
