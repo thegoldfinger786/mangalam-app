@@ -16,3 +16,37 @@ verify_jwt = true
 
 [functions.import-content]
 verify_jwt = true
+
+# The eight functions below were deployed without ever being committed to this
+# repository. Their source was recovered via `supabase functions download` on
+# 2026-08-23 and each now uses the same requireAdmin check.
+# They are NOT deleted: five of them read/write content_master and
+# audio_segments, production tables this repo has no record of, and their
+# callers are unknown. Gate first, decide later.
+
+[functions.smooth-endpoint]
+verify_jwt = true
+
+[functions.generate-audio-segments]
+verify_jwt = true
+
+[functions.generate-audio-segment]
+verify_jwt = true
+
+[functions.edit-audio-segment]
+verify_jwt = true
+
+# Non-standard entrypoint: this function has no index.ts in production.
+[functions.dynamic-responder]
+verify_jwt = true
+entrypoint = "./functions/dynamic-responder/Gemini-2.5-Pro-TTS.ts"
+
+[functions.generate-tts-new]
+verify_jwt = true
+
+[functions.batch-generate-audio]
+verify_jwt = true
+
+# Name is misspelled in production; recorded verbatim so deploys target it.
+[functions.geenerate-audio-edge]
+verify_jwt = true
