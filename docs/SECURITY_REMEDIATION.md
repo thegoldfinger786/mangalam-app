@@ -180,7 +180,7 @@ writing.
 | 4 | `increment_daily_usage` trusts caller-supplied `p_user_id` | `20260302_usage_rpc.sql` [REPO] | Medium | **RESOLVED** 2026-08-23 — enforces `p_user_id = auth.uid()`, applied to production and validated |
 | 5 | `audio_cache` created without RLS in its own migration | `20260302_audio_cache.sql` [REPO] | Low | **RESOLVED** 2026-03-05 (pre-existing, by `20260305_fix_rls_warnings.sql`) |
 | 6 | Render-time throw in PlayScreen, no error boundary | `src/screens/PlayScreen.tsx:71` [REPO] | High | **DEFERRED** |
-| 7 | Speed change / token refresh refetches content and re-increments usage | `PlayScreen.tsx` loader deps [REPO] | High | **FIXED (uncommitted)** 2026-08-23 — `session`/`playbackRate` read via `getState()` and removed from the dependency array. Change sits in the working tree alongside unrelated in-progress work in the same file |
+| 7 | Speed change / token refresh refetches content and re-increments usage | `PlayScreen.tsx` loader deps [REPO] | High | **RESOLVED** 2026-08-23 — `session`/`playbackRate` read via `getState()` and removed from the dependency array. Committed `a925f14` |
 | 8 | Progress and history leak across account switches | `AuthProvider.tsx:76` vs `useAppStore.partialize` [REPO] | High | **DEFERRED** |
 | 9 | Day boundary computed in UTC | `queries.ts:126,143`; `StreaksScreen.tsx:53` [REPO] | Medium | **DEFERRED** |
 | 10 | Cache-busting `?t=` defeats audio caching | `PlayScreen.tsx:295` [REPO] | Medium | **DEFERRED** |
@@ -1621,11 +1621,12 @@ values remain inside the loader. The `exhaustive-deps` warning about the removed
 `session` dependency is expected and intentional — `getState()` is the standard
 escape hatch for values that must not drive re-execution.
 
-**Status: implemented but NOT committed.** `PlayScreen.tsx` already carried
-unrelated in-progress work (a share-sheet rewrite adding store links and
-platform-specific share content). Committing the file would have swept that in.
-The fix is in the working tree and should be committed together with, or after,
-that work.
+**Status: committed** as `a925f14`. `PlayScreen.tsx` also carried unrelated
+in-progress work (a share-sheet rewrite adding store links and platform-specific
+share content). The two change sets touch disjoint regions of the file, so they
+were separated and committed independently — the share work as `95985b3`, this
+fix as `a925f14` — rather than as one mixed commit. Each state was typechecked
+before its commit.
 
 ### 2026-08-23 — #24: token refresh no longer tears down navigation
 
@@ -1657,3 +1658,16 @@ Unchanged and still open: #6 (render throw, no error boundary), #8
 chosen. #25 means the number on the Streaks tab is currently wrong for every
 user — it counts total distinct days used, not consecutive days — so it is the
 highest-value remaining APP item once the definition is settled.
+
+### 2026-08-23 — commit hygiene note
+
+`PlayScreen.tsx` carried two unrelated change sets at once: an in-progress
+share-sheet rewrite and the #7 loader fix. They were committed separately
+(`95985b3`, then `a925f14`) by reconstructing the share-only state, verifying
+its diff contained only the share hunks, then restoring the combined file. Both
+intermediate states typechecked. Neither change set was rewritten or discarded.
+
+Worth repeating if it recurs: the two sets touched disjoint regions, which is
+what made clean separation possible. Where edits overlap, a single combined
+commit with a clear message is the honest option.
+
