@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     Share,
     StyleSheet,
@@ -41,6 +42,13 @@ const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
 const RAMAYAN_COVER = require('../../assets/images/ramayan-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
+const MANGALAM_ICON = require('../../assets/images/mangalam-icon.png');
+
+// ── App download links ───────────────────────────────────────────────────────────────
+// Included in every share message so recipients can download the app.
+// TODO: confirm iOS App Store numeric ID once listing is live, then update APP_STORE_URL.
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.dailyshlokyaag.mangalam';
+const APP_STORE_URL  = 'https://apps.apple.com/app/mangalam/id6741428426'; // ← update ID if needed
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type PlayRouteProp = RouteProp<RootStackParamList, 'Play'>;
@@ -438,15 +446,31 @@ export const PlayScreen = () => {
     const handleShare = async () => {
         try {
             const verseTitle = content?.title || `Chapter ${content?.chapter_no}  ·  Verse ${content?.verse_no}`;
-            const bookTitle = meta.title || 'Daily Shlokya';
+            const bookTitle = meta.title || 'Mangalam';
 
-            // Build a more attractive share message
-            const message = `🌟 Wisdom from ${bookTitle}:\n\n"${verseTitle}"\n\nListen to the full story and commentary on the Mangalam app. 🙏`;
+            // Platform-specific download link embedded in the message.
+            // iOS: App Store link  |  Android: Play Store link
+            const downloadUrl = Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;
 
-            await Share.share({
+            const message =
+                `🌟 Wisdom from ${bookTitle}:\n\n` +
+                `"${verseTitle}"\n\n` +
+                `Listen to the full story and commentary on the Mangalam app. 🙏\n\n` +
+                `📱 Download free: ${downloadUrl}`;
+
+            // On iOS, passing `url` (the App Store link) causes the share sheet
+            // to render a rich App Store preview card instead of the generic
+            // plain-text document icon. On Android, `url` is not used here
+            // because the download link is already in the message text.
+            const shareContent: { message: string; url?: string; title?: string } = {
                 message,
-                title: `Share ${bookTitle} Wisdom`,
-            });
+                title: `${bookTitle} Wisdom`,
+            };
+            if (Platform.OS === 'ios') {
+                shareContent.url = APP_STORE_URL;
+            }
+
+            await Share.share(shareContent);
 
             // Log activity
             if (session) {
