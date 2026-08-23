@@ -180,11 +180,20 @@ async function triggerTTS(verseId) {
     console.warn('SUPABASE_ANON_KEY not set, skipping TTS trigger. Run manually.');
     return;
   }
-  
+
+  // generate-tts is operator-only. The bearer token satisfies the gateway;
+  // x-admin-secret is the actual authorization check inside the handler.
+  const ADMIN_API_SECRET = process.env.ADMIN_API_SECRET;
+  if (!ADMIN_API_SECRET) {
+    console.warn('ADMIN_API_SECRET not set, skipping TTS trigger. Run manually.');
+    return;
+  }
+
   const ttsUrl = `${SUPABASE_URL}/functions/v1/generate-tts`;
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+    'x-admin-secret': ADMIN_API_SECRET,
   };
   
   const combos = [

@@ -9,9 +9,17 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+// generate-tts is operator-only: the anon key satisfies the gateway, but the
+// handler authorizes on x-admin-secret. Never hardcode this value.
+const ADMIN_API_SECRET = process.env.ADMIN_API_SECRET || '';
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error('❌ Missing credentials in .env');
+    process.exit(1);
+}
+
+if (!ADMIN_API_SECRET) {
+    console.error('❌ Missing ADMIN_API_SECRET in the environment (required by generate-tts)');
     process.exit(1);
 }
 
@@ -67,11 +75,12 @@ const run = async () => {
                 attempts++;
                 try {
                     const { data, error: invokeError } = await supabase.functions.invoke('generate-tts', {
+                        headers: { 'x-admin-secret': ADMIN_API_SECRET },
                         body: {
                             verse_id: v.verse_id,
                             language: t.lang,
                             gender: t.gender,
-                            force: true 
+                            force: true
                         }
                     });
 

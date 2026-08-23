@@ -2,8 +2,15 @@
 
 # Configuration
 URL="https://yhuvjcmemsqjkttizxem.supabase.co/functions/v1/import-content"
-# Use the ANON_KEY from .env or hardcoded for test
+# Use the ANON_KEY from .env
 AUTH_HEADER="Authorization: Bearer $EXPO_PUBLIC_SUPABASE_ANON_KEY"
+
+# import-content is operator-only: the bearer token above satisfies the gateway,
+# but the handler authorizes on x-admin-secret. Never hardcode this value.
+if [ -z "$ADMIN_API_SECRET" ]; then
+  echo "Error: ADMIN_API_SECRET is not set in the environment (required by import-content)" >&2
+  exit 1
+fi
 
 # Verse 1.1 Data from CSV (Extracted manually for test)
 TRANSLATION="In the ancient and hallowed Naimisha forest, a profound twelve-year sacrifice was underway, conducted by a multitude of revered sages under the sagacious leadership of the venerable Saunaka. The air vibrated with sacred chants, and the flickering flames of the sacrificial altars cast long shadows, illuminating the serene countenances of those devoted to spiritual pursuit. It was into this sanctified assembly that Sauti, the distinguished son of Lomaharshana, arrived. He carried an aura of wisdom and experience, his eyes reflecting the vastness of the lands he had traversed and the profound narratives he had absorbed."
@@ -27,5 +34,6 @@ EOF
 echo "Triggering import-content for Verse 1.1 with $URL..."
 curl -v -X POST "$URL" \
   -H "$AUTH_HEADER" \
+  -H "x-admin-secret: $ADMIN_API_SECRET" \
   -H "Content-Type: application/json" \
   -d "$PAYLOAD"
