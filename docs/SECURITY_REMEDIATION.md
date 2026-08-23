@@ -180,7 +180,7 @@ writing.
 | 4 | `increment_daily_usage` trusts caller-supplied `p_user_id` | `20260302_usage_rpc.sql` [REPO] | Medium | **RESOLVED** 2026-08-23 — enforces `p_user_id = auth.uid()`, applied to production and validated |
 | 5 | `audio_cache` created without RLS in its own migration | `20260302_audio_cache.sql` [REPO] | Low | **RESOLVED** 2026-03-05 (pre-existing, by `20260305_fix_rls_warnings.sql`) |
 | 6 | Render-time throw in PlayScreen, no error boundary | `src/screens/PlayScreen.tsx:71` [REPO] | High | **DEFERRED** |
-| 7 | Speed change / token refresh refetches content and re-increments usage | `PlayScreen.tsx:354,358,230` [REPO] | High | **DEFERRED** |
+| 7 | Speed change / token refresh refetches content and re-increments usage | `PlayScreen.tsx` loader deps [REPO] | High | **FIXED (uncommitted)** 2026-08-23 — `session`/`playbackRate` read via `getState()` and removed from the dependency array. Change sits in the working tree alongside unrelated in-progress work in the same file |
 | 8 | Progress and history leak across account switches | `AuthProvider.tsx:76` vs `useAppStore.partialize` [REPO] | High | **DEFERRED** |
 | 9 | Day boundary computed in UTC | `queries.ts:126,143`; `StreaksScreen.tsx:53` [REPO] | Medium | **DEFERRED** |
 | 10 | Cache-busting `?t=` defeats audio caching | `PlayScreen.tsx:295` [REPO] | Medium | **DEFERRED** |
@@ -191,13 +191,13 @@ writing.
 | 15 | Most of the production schema has no migration | 9 local migrations; 32 remote-only [REPO+LIVE] | High | **OPEN** |
 | 16 | `books.code` referenced in code, absent from schema | `bookIdentity.ts:65` vs `database.types.ts:84-93` [REPO] | Low | **DEFERRED** |
 | 17 | Empty `catch`/`if` blocks from log-stripping script | `useAudioStore.ts` (6 catch, 4 if) [REPO] | Low | **DEFERRED** |
-| 18 | `react-hooks/exhaustive-deps` not enforced | `eslint.config.js` [REPO] | Low | **DEFERRED** |
+| 18 | `react-hooks/exhaustive-deps` not enforced | `eslint.config.js` [REPO] | Low | **FALSE POSITIVE** — corrected 2026-08-23. The rule **is** enabled via `eslint-config-expo`; the original check read only the tail of the output and missed the hook warnings. It reports as a warning, not an error |
 | 19 | 57 hardcoded colours outside the theme | 8 files [REPO] | Low | **DEFERRED** |
 | 20 | Dead scaffolding and config | root `components/`, `constants/`, `hooks/`, `typedRoutes` [REPO] | Low | **DEFERRED** — "orphaned parallel implementations" half **FALSE POSITIVE** (see below) |
 | 21 | `runtimeVersion` pinned to a literal with OTA enabled | `app.json` [REPO] | Medium | **DEFERRED** — build-number half **FALSE POSITIVE** |
 | 22 | No tests, no typecheck script, no CI | `package.json`; no `.github/` [REPO] | Medium | **DEFERRED** |
 | 23 | TTS generation exposed as callable Postgres RPCs | `pg_proc` ACLs read directly [LIVE] | Critical | **RESOLVED** 2026-08-23 — EXECUTE revoked from PUBLIC, anon, authenticated on all 4 signatures. Functions retained, not dropped |
-| 24 | Token refresh unmounts the entire navigation tree | `AuthProvider.tsx:143`, `navigation/index.tsx:168` [REPO] | High | **DEFERRED** |
+| 24 | Token refresh unmounts the entire navigation tree | `AuthProvider.tsx:143`, `navigation/index.tsx:168` [REPO] | High | **RESOLVED** 2026-08-23 — `TOKEN_REFRESHED` now updates the session in place without touching `isProfileLoading`. Committed |
 | 25 | "Streak" is total distinct days used, not consecutive days | `HomeScreen.tsx:163`, `StreaksScreen.tsx:30`, `WeeklyStreak.tsx:74` [REPO] | High (product) | **DEFERRED** |
 | 26 | HomeScreen never refreshes after first load | `HomeScreen.tsx:134` [REPO] | Medium | **DEFERRED** |
 | 27 | Sentry may be disabled in production builds | `App.tsx:20-23`; DSN absent from `.env*`/`eas.json` [REPO] | High | **OPEN** |
@@ -1577,4 +1577,83 @@ authorization import, the guard, and (for two) the forwarded header.
 2026-08-23 — #39 ACCEPTED/CANNOT FIX: net schema and net.http_* are owned by supabase_admin, which postgres cannot assume — REVOKE returns "no privileges could be revoked" — recorded a forward-looking rule for any future function calling net.http_*
 2026-08-23 — #40 ACCEPTED: views left with security-definer semantics — canonical_* read storage.objects, so security_invoker would change results for zero security gain — recorded a forward-looking rule for views over user-data tables
 2026-08-23 — #15 deliberately NOT reconciled — repairing history would assert a consistency that does not exist while 32 remote migrations have no local form — recommended a baseline dump as an explicit architecture task
+2026-08-23 — Security work committed in 4 reviewable slices (0ea6670, 01f249c, 6c74954, 8273c76) — production and repository now aligned for everything remediated
+2026-08-23 — #24 RESOLVED: TOKEN_REFRESHED no longer routes through applySession — it was unmounting the whole NavigationContainer mid-session — committed 88f150a
+2026-08-23 — #7 FIXED but uncommitted: PlayScreen loader no longer depends on session/playbackRate — evidence showed usage averaging 13.6/user-day, max 66 — left uncommitted because the file carries unrelated in-progress work
+2026-08-23 — #18 corrected to FALSE POSITIVE — react-hooks/exhaustive-deps IS enabled; the original check only read the tail of the eslint output
 ```
+
+## 13. APP correctness — phase 2
+
+Security remediation reached its stopping point on 2026-08-23. This section
+tracks the follow-on work on application correctness.
+
+### 2026-08-23 — #7: playback loader no longer re-runs on unrelated state
+
+`loadContentAndCheckUsage` listed `session` and `playbackRate` as dependencies,
+but used them only for `session.user.id` and as a playback-speed fallback —
+neither identifies which verse to load. Both change for unrelated reasons:
+Supabase replaces the session object on every token refresh, and `playbackRate`
+changes whenever the user taps the speed pill. Each change re-ran the whole
+loader, which calls `incrementDailyUsage()`.
+
+**Production evidence** — `user_daily_usage` across 14 test users: 70 rows,
+average **13.6 sessions per user-day**, maximum **66 in a single day**.
+Implausible for a one-verse-per-session model and consistent with inflation on
+every token refresh and speed change. Suggestive rather than conclusive on its
+own (these are development users), but the code path is deterministic.
+
+This also matters for #25: the streak is computed from `user_daily_usage`, so any
+streak work would otherwise have been built on inflated data.
+
+**Fix:** read both values from `useAppStore.getState()` at call time — the
+pattern already used elsewhere in this file — and reduce the dependency array to
+what identifies the content: `itemId`, `bookId`, `voicePreference`, plus the
+stable route-derived values and store actions. No behaviour is lost: PlayScreen
+is only reachable while authenticated, so `session` never meaningfully changes
+while it is mounted.
+
+Incidentally removes a latent feedback loop — the loader called
+`setPlaybackRate()` to restore a saved speed while depending on `playbackRate`.
+
+**Validation:** `tsc --noEmit` clean; no live references to the closed-over
+values remain inside the loader. The `exhaustive-deps` warning about the removed
+`session` dependency is expected and intentional — `getState()` is the standard
+escape hatch for values that must not drive re-execution.
+
+**Status: implemented but NOT committed.** `PlayScreen.tsx` already carried
+unrelated in-progress work (a share-sheet rewrite adding store links and
+platform-specific share content). Committing the file would have swept that in.
+The fix is in the working tree and should be committed together with, or after,
+that work.
+
+### 2026-08-23 — #24: token refresh no longer tears down navigation
+
+`TOKEN_REFRESHED` went through `applySession()`, which raises
+`isProfileLoading` before awaiting a `profiles` query — and `AppNavigator`
+renders a spinner instead of the `NavigationContainer` whenever that flag is
+true. The entire navigation tree unmounted and remounted for the duration of a
+network round trip, with no user action involved, returning a listener to the
+tab root mid-verse. Audio continued (the store is global), which disguised the
+cause as a UI glitch.
+
+**Fix:** handle `TOKEN_REFRESHED` by updating the session in place and leaving
+`isProfileLoading` untouched. A refreshed token is the same user, so the profile
+cannot have changed. Sign-in, sign-out and `INITIAL_SESSION` are unchanged.
+Also removes a redundant `profiles` query on every refresh.
+
+**Validation:** `tsc --noEmit` clean, `eslint` clean on the file. Committed as
+`88f150a`.
+
+### Remaining APP findings
+
+Unchanged and still open: #6 (render throw, no error boundary), #8
+(account-switch state leakage), #10 (cache-busting defeats audio caching), #11
+(silent missing content), #12, #13, #26 (HomeScreen never refreshes), #29, #30,
+#31.
+
+**Blocked on a product decision:** #9 (what is a "day") and #25 (what is a
+"streak"). Three options for each were recorded on 2026-08-23; none has been
+chosen. #25 means the number on the Streaks tab is currently wrong for every
+user — it counts total distinct days used, not consecutive days — so it is the
+highest-value remaining APP item once the definition is settled.
