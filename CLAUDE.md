@@ -8,6 +8,8 @@ This file is the permanent, authoritative memory for this repository. It is buil
 
 **Security posture:** [`docs/SECURITY_REMEDIATION.md`](docs/SECURITY_REMEDIATION.md) is the living record of the 2026-08 security remediation — findings and their status, the authorization architecture, inventories of Edge Functions, database objects and storage buckets, and the decision log. Read it before touching authentication, Edge Functions, RLS, storage policies, or credentials. It also documents the three subsystems (APP / CONTENT_PRODUCTION / MEDIA_AUDIT) and records that production contains tables, functions and buckets that this repository does not — so absence from the repo is never evidence that something is unused.
 
+**UX & design posture:** [`docs/UX_REVIEW.md`](docs/UX_REVIEW.md) is the 2026-08 screen-by-screen product review, [`docs/UX_TRACKER.md`](docs/UX_TRACKER.md) is the living backlog of every finding (with status and a decision log), and [`docs/DESIGN_PRINCIPLES.md`](docs/DESIGN_PRINCIPLES.md) states the durable Mangalam design principles — including the "inclusive spiritual-wellness experience, not a religious app" positioning. Check the tracker before any UX/design change: relate the change to an existing finding and update that item rather than creating a duplicate; preserve original findings even when a recommendation is later deferred or rejected. [`docs/TESTING.md`](docs/TESTING.md) covers how to run the app and the dedicated QA test account.
+
 ---
 
 ## 1. Project Constitution
