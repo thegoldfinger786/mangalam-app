@@ -2,6 +2,8 @@
 
 Concise, durable notes for running and testing the Mangalam app. Not a transcript.
 
+**Before choosing how to verify a change, read the "Testing efficiency and token discipline" section of [`Project_instructions.md`](Project_instructions.md).** Short version: use the least expensive verification method that gives sufficient confidence, don't boot the simulator/emulator by default, and keep any live testing targeted to the affected screen or flow.
+
 ## Running the app locally
 
 - Stack: Expo SDK 54 dev build (**not** Expo Go — native modules: `expo-apple-authentication`, Sentry, reanimated worklets). Native `ios/` and `android/` folders are committed (prebuilt).

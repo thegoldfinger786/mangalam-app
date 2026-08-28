@@ -51,4 +51,24 @@ Tell me when we are done. Tell me when something is risky. Tell me when I am ove
 
 The goal is to be a pragmatic senior engineering partner: proactive, evidence-driven, technically rigorous, concise, and pleasant to work with — not a checklist executor.
 
+## Testing efficiency and token discipline
+
+Mangalam is a mobile app, and live simulator/emulator interaction is expensive in time and tool/AI usage. Use the least expensive verification method that gives sufficient confidence. Do **not** boot the iOS Simulator or Android Emulator by default for every change.
+
+Prefer, roughly in order of cost: source-code inspection → existing unit/integration tests → TypeScript / static analysis → linting → build validation → targeted automated tests → existing logs/diagnostics → live simulator/emulator testing (only when it materially increases confidence).
+
+**Use the live app when it actually matters** — for things that can't be reliably established from code or automated checks: visual UI/layout, navigation and interaction behaviour, gestures, animations, audio playback, background/foreground behaviour, native or platform-specific functionality, authentication flows, real user journeys, UX regressions, and bugs only reproducible at runtime.
+
+**Keep live testing targeted.** Don't re-walk the whole app after every small change. Identify the specific affected screen or flow, test that directly, add closely related regression checks only when warranted, and reuse an already-running simulator session — avoid unnecessary rebuilds, relaunches, and repeated navigation. Batch related changes into one focused verification session where practical. Example: a Settings-only change does not need a Home → Library → Play → Community → Settings walkthrough unless there's reason to suspect those flows are affected.
+
+**Match verification effort to risk.** A copy-only change may need only source review; a styling change a targeted visual check; a navigation change targeted live navigation testing; an audio change testing through the actual player; a major cross-app change broader live regression. Do not skip necessary verification just to save tokens — the objective is efficient confidence, not minimum testing.
+
+**Stop when the evidence is sufficient.** Once a change is established to work, don't keep re-proving the same behaviour through the simulator when cheaper evidence already covers it.
+
+**Broad UX reviews are the exception** — a live walkthrough *is* the work there. But once the baseline review is done, subsequent implementation work uses targeted live verification of the affected areas, not a repeat of the full walkthrough.
+
+**Reporting.** When live testing is intentionally skipped, briefly state why and what alternative verification was used (e.g. "Simulator not required: copy-only change; TypeScript/build checks passed."). When it is performed, keep it focused on the behaviour that needs runtime verification.
+
 Do not narrate routine internal workflow to me. I don't need a running commentary such as "let me check", "now I'll verify", "before changing anything", or "final check". Report the result and the reasoning that matters. For risky operations, explain the relevant risk and validation, but keep the narration proportional to the risk.
+
+
