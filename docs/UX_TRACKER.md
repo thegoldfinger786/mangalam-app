@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-28 (batch 1 — PlayScreen navigation fix)_
+_Last updated: 2026-08-28 (batch 1 merged — PR #1)_
 
 | Metric | Count |
 |---|---|
@@ -28,20 +28,20 @@ _Last updated: 2026-08-28 (batch 1 — PlayScreen navigation fix)_
 | — NEEDS IMPROVEMENT | 39 |
 | — NEEDS CHANGE | 13 |
 | — Systemic (UX-0x) | 15 |
-| P0 | 1 (implemented) |
+| P0 | 1 (merged — PR #1) |
 | P1 | 30 |
 | P2 | 34 |
 | KEEP | 11 |
-| Implemented | 2 (PLAY-01, NAV-01) |
+| Implemented / Merged | 2 (PLAY-01, NAV-01 — PR #1, 2026-08-28) |
 | Verified | 2 (PLAY-01, NAV-01 — simulator, 2026-08-28) |
 | Deferred / Rejected | 1 (CONTENT-04) |
 | Open | 73 |
 
 ### Change log
 
-| Date | Batch | Tracker items | What shipped |
-|---|---|---|---|
-| 2026-08-28 | Batch 1 — PlayScreen navigation | PLAY-01, NAV-01 (+ PLAY-14, PLAY-15 recorded) | `navigateToVerse` in `src/screens/PlayScreen.tsx` now returns early when `!navigation.isFocused()`, so a verse ending while the listener is on another tab / backgrounded no longer drives `navigation.replace('Play')` from a stale unfocused screen — which previously collapsed the nav stack and stranded the user on the player with a dead close chevron. Verified on the running iOS app. |
+| Date | Batch | Tracker items | Status | What shipped |
+|---|---|---|---|---|
+| 2026-08-28 | Batch 1 — UX baseline + PlayScreen navigation | PLAY-01, NAV-01 (+ PLAY-14, PLAY-15 recorded); establishes this tracker + `UX_REVIEW.md` + `DESIGN_PRINCIPLES.md` + `TESTING.md` | **Merged** (PR #1 → `security/edge-function-authorization`, merge commit `9c51ba1`, 2026-08-28) | The UX review baseline docs, testing-efficiency guidance, and the P0 fix: `navigateToVerse` in `src/screens/PlayScreen.tsx` now returns early when `!navigation.isFocused()`, so a verse ending while the listener is on another tab / backgrounded no longer drives `navigation.replace('Play')` from a stale unfocused screen — which previously collapsed the nav stack and stranded the user on the player with a dead close chevron. Verified on the running iOS app. |
 
 ---
 
@@ -125,7 +125,7 @@ _Last updated: 2026-08-28 (batch 1 — PlayScreen navigation fix)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| PLAY-01 | Navigation dead-end | [SRC+LIVE] `navigateToVerse` calls `navigation.replace('Play', …)`. It is also invoked from the audio store's `onFinish` callback when a verse ends. If the listener has navigated away (mini-player showing / app on another tab / backgrounded), that stale, unfocused `navigation` dispatches `replace('Play')` against a stack that no longer contains Play — collapsing the root to a lone Play route with no parent. The close chevron then fires an unhandled `GO_BACK` and the listener is stranded on the player (silent no-op in production; red toast in dev). | NEEDS CHANGE | Guard `navigateToVerse` with `navigation.isFocused()` — only the focused PlayScreen drives stack navigation; when unfocused, let playback simply end and the mini-player / resume state carry the session | **P0** | High | **IMPLEMENTED** | ref NAV-01, PLAY-14. Fix: early `return` in `navigateToVerse` (`src/screens/PlayScreen.tsx`) when `!navigation.isFocused()`. Verified on simulator 2026-08-28: verse finishing while on another tab no longer navigates or breaks the chevron; prev/next buttons, mini-player→Play→close, and normal open/close all still work; no `GO_BACK` errors post-fix; `tsc` clean. |
+| PLAY-01 | Navigation dead-end | [SRC+LIVE] `navigateToVerse` calls `navigation.replace('Play', …)`. It is also invoked from the audio store's `onFinish` callback when a verse ends. If the listener has navigated away (mini-player showing / app on another tab / backgrounded), that stale, unfocused `navigation` dispatches `replace('Play')` against a stack that no longer contains Play — collapsing the root to a lone Play route with no parent. The close chevron then fires an unhandled `GO_BACK` and the listener is stranded on the player (silent no-op in production; red toast in dev). | NEEDS CHANGE | Guard `navigateToVerse` with `navigation.isFocused()` — only the focused PlayScreen drives stack navigation; when unfocused, let playback simply end and the mini-player / resume state carry the session | **P0** | High | **MERGED** (PR #1) | ref NAV-01, PLAY-14. Fix: early `return` in `navigateToVerse` (`src/screens/PlayScreen.tsx`) when `!navigation.isFocused()`. Verified on simulator 2026-08-28: verse finishing while on another tab no longer navigates or breaks the chevron; prev/next buttons, mini-player→Play→close, and normal open/close all still work; no `GO_BACK` errors post-fix; `tsc` clean. Merged to `security/edge-function-authorization` 2026-08-28 (`9c51ba1`). |
 | PLAY-02 | Silent no-audio state | [SRC] No audio asset → empty player (0:00/0:00), play does nothing, no message | NEEDS IMPROVEMENT | Explicit "audio unavailable" state | P1 | Med | IDENTIFIED | Not reproduced live — all tested verses had audio |
 | PLAY-03 | Swallowed playback errors | [SRC] Audio-engine `status.error` handler is empty | NEEDS IMPROVEMENT | Surface + retry | P1 | High | IDENTIFIED | ref UX-08 |
 | PLAY-04 | Auto-scroll fights reader | [SRC+LIVE] Every position tick calls `scrollTo`; reading ahead/back is undone within ~1s | NEEDS IMPROVEMENT | Pause auto-scroll while user scrolls; resume after idle | P1 | High | IDENTIFIED | |
@@ -215,7 +215,7 @@ _Last updated: 2026-08-28 (batch 1 — PlayScreen navigation fix)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen shows an unhandled `GO_BACK` on the close chevron; swipe-dismiss also fails. Root cause (confirmed by reproduction): an **unfocused** PlayScreen driving `navigation.replace('Play')` via the audio store's `onFinish` callback — not the modal-dismiss sequence originally hypothesised. See PLAY-01. | NEEDS CHANGE | See PLAY-01 | **P0** | High | **IMPLEMENTED** | Fixed with PLAY-01 (focus guard in `navigateToVerse`). Verified on simulator 2026-08-28. |
+| NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen shows an unhandled `GO_BACK` on the close chevron; swipe-dismiss also fails. Root cause (confirmed by reproduction): an **unfocused** PlayScreen driving `navigation.replace('Play')` via the audio store's `onFinish` callback — not the modal-dismiss sequence originally hypothesised. See PLAY-01. | NEEDS CHANGE | See PLAY-01 | **P0** | High | **MERGED** (PR #1) | Fixed with PLAY-01 (focus guard in `navigateToVerse`). Verified on simulator 2026-08-28; merged 2026-08-28 (`9c51ba1`). |
 | NAV-02 | Modal-over-tabs vs in-tab | [SRC+LIVE] Home→Dashboard→Play hides the tab bar; Library's parallel flow keeps it | NEEDS IMPROVEMENT | One navigation model for browse→play | P1 | High | IDENTIFIED | ref UX-02, UX-06 |
 | NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | IDENTIFIED | ref UX-06 |
 
@@ -248,7 +248,7 @@ _Last updated: 2026-08-28 (batch 1 — PlayScreen navigation fix)_
 
 | # | Change | Tracker refs | Priority | Status |
 |---|---|---|---|---|
-| 1 | Fix the Play-screen `GO_BACK` dead-end | PLAY-01, NAV-01 | P0 | **IMPLEMENTED** (verified on simulator 2026-08-28) |
+| 1 | Fix the Play-screen `GO_BACK` dead-end | PLAY-01, NAV-01 | P0 | **MERGED** (PR #1, 2026-08-28; verified on simulator) |
 | 2 | Home "Today" anchor + fix stale/empty resume card | HOME-01, HOME-02, UX-15 | P1 | IDENTIFIED |
 | 3 | Rebuild onboarding around the practice; fix blank strings | ONB-01, ONB-02, POS-06 | P1 | IDENTIFIED |
 | 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | IDENTIFIED |
