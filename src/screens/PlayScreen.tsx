@@ -492,13 +492,26 @@ export const PlayScreen = () => {
     };
 
     const navigateToVerse = async (targetVerseId: string, forceAutoPlay?: boolean) => {
-        const wasPlaying = forceAutoPlay ?? isPlaying;
-        isNavigatingToVerse.current = true;
-        void syncRemoteProgress('track_change', { force: true });
         if (!targetVerseId || !bookId) {
             logger.warn('Playback navigation missing book context', { targetVerseId, bookId });
             return;
         }
+
+        // Only the focused PlayScreen may drive stack navigation. navigateToVerse is
+        // also invoked from the audio store's onFinish callback when a verse ends: if
+        // the listener has since navigated away (mini-player showing, app backgrounded),
+        // this stale navigation object would dispatch replace('Play') against a stack
+        // that no longer contains Play — collapsing the root to a lone Play route with
+        // no parent, so the "close" chevron fires an unhandled GO_BACK and the listener
+        // is stranded on the player. When unfocused, let playback simply end; the
+        // mini-player and resume state carry the session forward.
+        if (!navigation.isFocused()) {
+            return;
+        }
+
+        const wasPlaying = forceAutoPlay ?? isPlaying;
+        isNavigatingToVerse.current = true;
+        void syncRemoteProgress('track_change', { force: true });
 
         navigation.replace('Play', {
             itemId: targetVerseId,

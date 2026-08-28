@@ -19,23 +19,29 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-27 (baseline)_
+_Last updated: 2026-08-28 (batch 1 — PlayScreen navigation fix)_
 
 | Metric | Count |
 |---|---|
-| Total findings | 74 |
+| Total findings | 76 |
 | — GOOD / KEEP | 11 |
-| — NEEDS IMPROVEMENT | 38 |
-| — NEEDS CHANGE | 12 |
+| — NEEDS IMPROVEMENT | 39 |
+| — NEEDS CHANGE | 13 |
 | — Systemic (UX-0x) | 15 |
-| P0 | 1 |
+| P0 | 1 (implemented) |
 | P1 | 30 |
-| P2 | 32 |
+| P2 | 34 |
 | KEEP | 11 |
-| Implemented | 0 |
-| Verified | 0 |
+| Implemented | 2 (PLAY-01, NAV-01) |
+| Verified | 2 (PLAY-01, NAV-01 — simulator, 2026-08-28) |
 | Deferred / Rejected | 1 (CONTENT-04) |
 | Open | 73 |
+
+### Change log
+
+| Date | Batch | Tracker items | What shipped |
+|---|---|---|---|
+| 2026-08-28 | Batch 1 — PlayScreen navigation | PLAY-01, NAV-01 (+ PLAY-14, PLAY-15 recorded) | `navigateToVerse` in `src/screens/PlayScreen.tsx` now returns early when `!navigation.isFocused()`, so a verse ending while the listener is on another tab / backgrounded no longer drives `navigation.replace('Play')` from a stale unfocused screen — which previously collapsed the nav stack and stranded the user on the player with a dead close chevron. Verified on the running iOS app. |
 
 ---
 
@@ -119,7 +125,7 @@ _Last updated: 2026-08-27 (baseline)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| PLAY-01 | Navigation dead-end | [SRC+LIVE] After dismissing stacked modals + re-opening Play from the mini-player, the down-chevron → `GO_BACK` "not handled by any navigator"; modal swipe-dismiss also fails → **user stuck on the Play screen** | NEEDS CHANGE | Ensure Play always has a valid dismiss target from the mini-player entry | **P0** | High | IDENTIFIED | ref NAV-01. Dev build shows a red toast; prod fails silently |
+| PLAY-01 | Navigation dead-end | [SRC+LIVE] `navigateToVerse` calls `navigation.replace('Play', …)`. It is also invoked from the audio store's `onFinish` callback when a verse ends. If the listener has navigated away (mini-player showing / app on another tab / backgrounded), that stale, unfocused `navigation` dispatches `replace('Play')` against a stack that no longer contains Play — collapsing the root to a lone Play route with no parent. The close chevron then fires an unhandled `GO_BACK` and the listener is stranded on the player (silent no-op in production; red toast in dev). | NEEDS CHANGE | Guard `navigateToVerse` with `navigation.isFocused()` — only the focused PlayScreen drives stack navigation; when unfocused, let playback simply end and the mini-player / resume state carry the session | **P0** | High | **IMPLEMENTED** | ref NAV-01, PLAY-14. Fix: early `return` in `navigateToVerse` (`src/screens/PlayScreen.tsx`) when `!navigation.isFocused()`. Verified on simulator 2026-08-28: verse finishing while on another tab no longer navigates or breaks the chevron; prev/next buttons, mini-player→Play→close, and normal open/close all still work; no `GO_BACK` errors post-fix; `tsc` clean. |
 | PLAY-02 | Silent no-audio state | [SRC] No audio asset → empty player (0:00/0:00), play does nothing, no message | NEEDS IMPROVEMENT | Explicit "audio unavailable" state | P1 | Med | IDENTIFIED | Not reproduced live — all tested verses had audio |
 | PLAY-03 | Swallowed playback errors | [SRC] Audio-engine `status.error` handler is empty | NEEDS IMPROVEMENT | Surface + retry | P1 | High | IDENTIFIED | ref UX-08 |
 | PLAY-04 | Auto-scroll fights reader | [SRC+LIVE] Every position tick calls `scrollTo`; reading ahead/back is undone within ~1s | NEEDS IMPROVEMENT | Pause auto-scroll while user scrolls; resume after idle | P1 | High | IDENTIFIED | |
@@ -132,6 +138,8 @@ _Last updated: 2026-08-27 (baseline)_
 | PLAY-11 | Focus mode | [LIVE] Enlarges text, hides chrome — genuinely good for reading; "expand/contract" icon meaning unclear | KEEP | Relabel / onboard the affordance | KEEP | High | REVIEWED | |
 | PLAY-12 | Core layered experience | [LIVE] Labeled layers, cover art, speed, skip-15, prev/next, auto-advance, bookmark, share — all work; audio reliable for Gita + Ramayan | KEEP | — | KEEP | High | REVIEWED | Product's strongest asset |
 | PLAY-13 | Sanskrit with no context | [LIVE] Sanskrit lands first, large, orange, with no "what this is" for a newcomer | NEEDS IMPROVEMENT | One-line plain-language framing above the Sanskrit | P2 | High | IDENTIFIED | ref POS-04 |
+| PLAY-14 | No background auto-advance | [LIVE] Deliberate consequence of the PLAY-01 fix: when a verse ends while the listener is on another tab or the app is backgrounded, playback now simply stops instead of auto-advancing to the next verse. Aligns with "daily habit over binge consumption" (`CLAUDE.md` §3). If continuous background listening is later wanted, it must be driven by the audio store (loading the next verse's audio) — never by screen navigation. | NEEDS CHANGE | Accept as-is for now; revisit only if product wants background continuous play | P2 | High | REVIEWED | Introduced 2026-08-28 with the PLAY-01 fix |
+| PLAY-15 | Play/pause icon desync | [LIVE] Observed intermittently during testing: the large play/pause button shows the "play" triangle while audio is actually playing (transcript scrolling, timer advancing). `isPlaying` state lags the real player state. Pre-existing; not caused by the PLAY-01 fix. | NEEDS IMPROVEMENT | Drive the button purely from the player's reported status | P2 | Medium | IDENTIFIED | Noticed while verifying PLAY-01 |
 
 ### Mini Player — `MiniPlayer`
 
@@ -207,7 +215,7 @@ _Last updated: 2026-08-27 (baseline)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen from mini-player after modal-dismiss sequence → unhandled `GO_BACK`; swipe-dismiss also fails | NEEDS CHANGE | See PLAY-01 | **P0** | High | IDENTIFIED | Root: swipe-dismiss of stacked `presentation:'modal'` + `navigationRef.navigate('Play')` |
+| NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen shows an unhandled `GO_BACK` on the close chevron; swipe-dismiss also fails. Root cause (confirmed by reproduction): an **unfocused** PlayScreen driving `navigation.replace('Play')` via the audio store's `onFinish` callback — not the modal-dismiss sequence originally hypothesised. See PLAY-01. | NEEDS CHANGE | See PLAY-01 | **P0** | High | **IMPLEMENTED** | Fixed with PLAY-01 (focus guard in `navigateToVerse`). Verified on simulator 2026-08-28. |
 | NAV-02 | Modal-over-tabs vs in-tab | [SRC+LIVE] Home→Dashboard→Play hides the tab bar; Library's parallel flow keeps it | NEEDS IMPROVEMENT | One navigation model for browse→play | P1 | High | IDENTIFIED | ref UX-02, UX-06 |
 | NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | IDENTIFIED | ref UX-06 |
 
@@ -240,7 +248,7 @@ _Last updated: 2026-08-27 (baseline)_
 
 | # | Change | Tracker refs | Priority | Status |
 |---|---|---|---|---|
-| 1 | Fix the Play-screen `GO_BACK` dead-end | PLAY-01, NAV-01 | P0 | IDENTIFIED |
+| 1 | Fix the Play-screen `GO_BACK` dead-end | PLAY-01, NAV-01 | P0 | **IMPLEMENTED** (verified on simulator 2026-08-28) |
 | 2 | Home "Today" anchor + fix stale/empty resume card | HOME-01, HOME-02, UX-15 | P1 | IDENTIFIED |
 | 3 | Rebuild onboarding around the practice; fix blank strings | ONB-01, ONB-02, POS-06 | P1 | IDENTIFIED |
 | 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | IDENTIFIED |
@@ -260,3 +268,4 @@ _Last updated: 2026-08-27 (baseline)_
 | 2026-08-27 | CONTENT-04 | Deferred — no disclosure change to existing "Story" content now | Consistent with `VISION_ALIGNMENT.md` §1.4 / §6 (acknowledged gap, grandfathered). Finding preserved for a future pillar decision. |
 | 2026-08-27 | PLAY-05, POS (paywall) | Recorded as cleanup, not re-enable | App is free forever (`VISION_ALIGNMENT.md` §6). |
 | 2026-08-27 | PLAY-06 / POS-02 | Sign-off stays; only placement + label change proposed | Devotional sign-off is a settled brand decision (`VISION_ALIGNMENT.md` §6). |
+| 2026-08-28 | PLAY-01 / NAV-01 | Fixed by guarding `navigateToVerse` with `navigation.isFocused()` (smallest correct change: only the focused screen drives navigation). Accepted side effect: a verse ending while the app is on another screen / backgrounded now stops rather than auto-advancing (see PLAY-14). | Fixes the P0 at the root — an unfocused screen should never dispatch stack navigation. Background continuous-play, if wanted later, belongs in the audio store, not in navigation. Aligns with "daily habit over binge consumption" (`CLAUDE.md` §3). |
