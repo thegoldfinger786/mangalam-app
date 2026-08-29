@@ -5,7 +5,6 @@ import { useAppStore } from '../store/useAppStore';
 import {
     Alert,
     Dimensions,
-    Platform,
     Pressable,
     StyleSheet,
     Text,
@@ -14,7 +13,6 @@ import {
 } from 'react-native';
 import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchAdjacentVerse } from '../lib/queries';
-import { RootStackParamList } from '../navigation/types';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
 import { getScriptureIcon } from './ScriptureIcons';
@@ -24,7 +22,7 @@ const { width } = Dimensions.get('window');
 
 export const MiniPlayer = () => {
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
-    const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     
     // Performance optimization: Derived boolean selector
     const hasSound = useAudioStore(state => !!state.currentContent);
@@ -169,7 +167,10 @@ export const MiniPlayer = () => {
     );
 };
 
-const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
+const createStyles = (
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography']
+) => StyleSheet.create({
     outerContainer: {
         position: 'absolute',
         width: width,
@@ -206,12 +207,12 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         justifyContent: 'center',
     },
     title: {
-        fontSize: 14,
-        fontFamily: 'Inter-SemiBold',
+        fontSize: typography.sizes.s,
+        fontFamily: typography.fontFamilies.semiBold,
     },
     subtitle: {
-        fontSize: 12,
-        fontFamily: 'Inter-Regular',
+        fontSize: typography.sizes.xs,
+        fontFamily: typography.fontFamilies.regular,
         marginTop: spacing.micro,
     },
     playButton: {
