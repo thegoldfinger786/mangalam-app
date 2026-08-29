@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 3 merged — PR #4)_
+_Last updated: 2026-08-29 (batch 4 — remove Change Path gate; on branch `ux/batch-4`)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 3 merged — PR #4)_
 | P1 | 30 |
 | P2 | 38 |
 | KEEP | 11 |
-| Implemented / Merged | 15 merged (Batch 1 · PR #1; Batch 2 · PR #2; Batch 3 · PR #4 — UX-03, HOME-09, STREAK-01, STREAK-02, STREAK-03, STREAK-04, STREAK-06) |
-| Verified | 15 (Batches 1–3 — simulator, 2026-08-28/29) |
+| Implemented / Merged | 15 merged (Batches 1–3) + Batch 4 on branch (UX-12, HOME-04, POS-03) |
+| Verified | 18 (Batches 1–4 — simulator, 2026-08-28/29) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 64 |
+| Open | 61 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 4 — Remove the "Change Path?" gate | UX-12, HOME-04, POS-03 | Implemented on branch `ux/batch-4` | `src/screens/HomeScreen.tsx`: the blocking "Change Path?" confirmation alert (with "Subtle persistence leads to deeper wisdom") is removed from `handlePathPress` — tapping any book opens its dashboard directly; switching just quietly updates `activeBookId`. Section header "My Current Path" → "Continue". Verified on the running app: non-active book opens with no alert. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 3 — Honest progress & one weekly widget | UX-03, UX-04 (partial), HOME-09, STREAK-01, STREAK-02, STREAK-04 (+ STREAK-03, STREAK-06 resolved; STREAK-08/09/10 recorded) | **Merged** (PR #4 → `main`, merge commit `2d1b679`, 2026-08-29) | `src/components/WeeklyStreak.tsx` reworked into one shared honest widget: takes `activeDates` (real `user_daily_usage.usage_date` values), shows the last 7 calendar days marked from that record, header "Last 7 days" + a calm "N days" (no flame, no score). `HomeScreen.tsx` and `StreaksScreen.tsx` both feed it the same data. Streaks screen: fabricated "Total Time" (`streak × 10m`) removed → "Sessions this week" (measured sum); hero "Day Journey 🔥" → "N days of practice"; inline duplicate tracker deleted. Verified on the running app: Home and Streaks show identical dots/count; no layout breakage; `tsc` + eslint clean. |
 | 2026-08-29 | Batch 2 — Home + Play polish | HOME-02, HOME-03/SYS-01, HOME-05, PLAY-04, PLAY-05 (+ PLAY-16 recorded) | **Merged** (PR #2 → `security/edge-function-authorization`, merge commit `c4d434b`, 2026-08-29) | `src/screens/HomeScreen.tsx`: resume/usage/streak now refresh on every Home focus (was stale within a session); resume-card copy is human ("Continue from M:SS"); dead `getGreeting()` removed. `src/screens/PlayScreen.tsx`: transcript follow-along yields for ~6s after a manual drag then resumes; dead "Daily Limit Reached" paywall branch + its `isAllowed` state + unused `Button` import removed. Verified on the running iOS app: Home card updated 2:36→3:13 without relaunch; manual scroll no longer fought; normal Play nav/audio intact. `tsc` clean, no new lint. |
 | 2026-08-28 | Batch 1 — UX baseline + PlayScreen navigation | PLAY-01, NAV-01 (+ PLAY-14, PLAY-15 recorded); establishes this tracker + `UX_REVIEW.md` + `DESIGN_PRINCIPLES.md` + `TESTING.md` | **Merged** (PR #1 → `security/edge-function-authorization`, merge commit `9c51ba1`, 2026-08-28) | The UX review baseline docs, testing-efficiency guidance, and the P0 fix: `navigateToVerse` in `src/screens/PlayScreen.tsx` now returns early when `!navigation.isFocused()`, so a verse ending while the listener is on another tab / backgrounded no longer drives `navigation.replace('Play')` from a stale unfocused screen — which previously collapsed the nav stack and stranded the user on the player with a dead close chevron. Verified on the running iOS app. |
@@ -62,7 +63,7 @@ _Last updated: 2026-08-29 (batch 3 merged — PR #4)_
 | UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | IDENTIFIED | Community, Streaks |
 | UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | IDENTIFIED | most screens |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
-| UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | IDENTIFIED | Home |
+| UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
 | UX-13 | Scripture-first navigation only; no theme/topic/mood entry | NEEDS IMPROVEMENT | P2 (strategic) | IDENTIFIED | whole app |
 | UX-14 | Generic tab icons + slug-mismatch icon/metadata fallback | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Home, Library, MiniPlayer, Community |
 | UX-15 | No "today" anchor for the daily habit | NEEDS CHANGE | P1 | IDENTIFIED | Home |
@@ -94,7 +95,7 @@ _Last updated: 2026-08-29 (batch 3 merged — PR #4)_
 | HOME-01 | Empty state | [SRC+LIVE] New user: "My Current Path" header over a ~700px void; screen ~50% blank, nothing to do today | NEEDS CHANGE | Design the empty state; add a "Today" pick (UX-15) | P1 | High | IDENTIFIED | ref UX-15 |
 | HOME-02 | Resume card refresh | [SRC+LIVE] Card did not refresh within a session after listening — stale until force-relaunch (`hasLoadedRef` guard blocked the focus reload) | NEEDS CHANGE | Refresh resume state on focus after playback | P1 | High | **MERGED** (Batch 2 · PR #2) | `loadData` in `src/screens/HomeScreen.tsx` now runs on every focus: catalogue + display name still load once, but resume position, today's usage and the streak refresh each time. `hasLoadedRef` is only set after a successful first load (a failed first load now retries instead of sticking). Verified on the running iOS app: played verse 2 to ~3:13, returned to Home without relaunch → card updated from "Continue from 2:36" to "Continue from 3:13". |
 | HOME-03 | Resume card copy | [SRC+LIVE] "Resume at 20s" / "Resume is unavailable until remote progress exists" / "Your current path will appear here after you start a verse" | NEEDS IMPROVEMENT | Human copy | P1 | High | **MERGED** (Batch 2 · PR #2) | ref UX-01, SYS-01. The reachable line "Resume at Ns" is now "Continue from M:SS" (verified live). The `!resumeState` fallbacks became "Ready to begin" / "Choose a path below to start listening." / "Take a few quiet minutes whenever you are ready." — these are currently **not reachable** (when there is no resume state the card is replaced by a spacer `View`); they become live copy if/when HOME-01 designs the empty state. |
-| HOME-04 | "Change Path?" gate | [SRC+LIVE] Blocking alert on tapping any non-active book; for a new user: "…focused on the No recent verse path. Subtle persistence leads to deeper wisdom…" | NEEDS CHANGE | Remove the gate; free movement; keep "Continue" as default | P1 | High | IDENTIFIED | ref UX-12, POS-03 |
+| HOME-04 | "Change Path?" gate | [SRC+LIVE] Blocking alert on tapping any non-active book: "…focused on the {book} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?" | NEEDS CHANGE | Remove the gate; free movement; keep "Continue" as default | P1 | High | **MERGED** (Batch 4 · PR #5) | ref UX-12, POS-03. `handlePathPress` in `src/screens/HomeScreen.tsx` now navigates straight to the tapped book's dashboard; switching books just quietly updates `activeBookId` (with the existing light haptic). No confirmation, no "deeper wisdom" copy. Verified on the running app: tapping a non-active book opens its dashboard with no alert. |
 | HOME-05 | Dead greeting code | [SRC] `getGreeting()` (time-of-day) unused; header always "Namaste, {name}" | NEEDS IMPROVEMENT | Use it or delete it | P2 | High | **MERGED** (Batch 2 · PR #2) | [SRC] Confirmed zero call sites (`grep`), removed `getGreeting()` from `src/screens/HomeScreen.tsx`. Header behaviour unchanged ("Namaste, {name}"). The header wording itself is out of scope for this batch. |
 | HOME-06 | "studying" language | [LIVE] "See what others are studying today" — study framing | NEEDS IMPROVEMENT | "finding meaningful" | P2 | Med | IDENTIFIED | ref POS-07 |
 | HOME-07 | Explore grid redundancy | [LIVE] Same 4 book cards as the Library tab | NEEDS IMPROVEMENT | Differentiate or route both into one browse flow | P2 | High | IDENTIFIED | ref UX-02 |
@@ -231,7 +232,7 @@ _Last updated: 2026-08-29 (batch 3 merged — PR #4)_
 |---|---|---|---|---|---|---|---|---|
 | POS-01 | "Verse/Chapter" everywhere | [LIVE] Primary unit surfaced as "Chapter N · Verse M" even for Ramayan story episodes — reads as scripture study | NEEDS IMPROVEMENT | Friendly secondary label ("Reflection 12"); keep the canonical ref available | P2 | Med | IDENTIFIED | Needs product decision on how far to go |
 | POS-02 | Sign-off unlabeled & at top | [SRC+LIVE] See PLAY-06 | NEEDS IMPROVEMENT | Move to end; label it | P1 | High | IDENTIFIED | Sign-off stays (VISION_ALIGNMENT §6) |
-| POS-03 | "Current Path" / forced path / "deeper wisdom" | [LIVE] Discipline/study framing on discovery | NEEDS CHANGE | Soften language; remove the gate (UX-12) | P1 | High | IDENTIFIED | |
+| POS-03 | "Current Path" / forced path / "deeper wisdom" | [LIVE] Discipline/study framing on discovery | NEEDS CHANGE | Soften language; remove the gate (UX-12) | P1 | High | **MERGED** (Batch 4 · PR #5) | "deeper wisdom" gate copy deleted with the gate (HOME-04). Home section header "My Current Path" → "Continue". "Explore Paths" kept — browsing paths is fine; it was the possessive/gated framing that read as discipline. |
 | POS-04 | Sanskrit with no framing | [LIVE] See PLAY-13 | NEEDS IMPROVEMENT | One-line "what this is" | P2 | High | IDENTIFIED | |
 | POS-05 | "Day Journey 🔥" + Community podium | [LIVE] Habit-app / competition cues | NEEDS CHANGE | De-gamify (UX-09) | P1 | High | IDENTIFIED | |
 | POS-06 | Onboarding lacks practice framing | [LIVE] See ONB-02 | NEEDS CHANGE | Reframe onboarding | P1 | High | IDENTIFIED | |
@@ -261,7 +262,7 @@ _Last updated: 2026-08-29 (batch 3 merged — PR #4)_
 | 5 | Consolidate the two content-browse UIs | UX-02, DASH-01, LIB-01, NAV-02 | P1 | IDENTIFIED |
 | 6 | Honest metrics + one streak widget | UX-03, UX-04, STREAK-01, STREAK-02, STREAK-04 | P1 | **MERGED** (Batch 3 · PR #4, 2026-08-29) — remaining: LIB-06 ("completed" on open), STREAK-08 (30-day cap) |
 | 7 | De-gamify Community Wisdom | UX-09, COMM-01, POS-05 | P1 | IDENTIFIED |
-| 8 | Remove the "Change Path?" gate; free movement between books | UX-12, HOME-04, POS-03 | P1 | IDENTIFIED |
+| 8 | Remove the "Change Path?" gate; free movement between books | UX-12, HOME-04, POS-03 | P1 | **MERGED** (Batch 4 · PR #5) |
 | 9 | Tame the transcript auto-scroll | PLAY-04 | P1 | **MERGED** (Batch 2 · PR #2, 2026-08-29) |
 | 10 | Language at point of use · sleep timer · account deletion · human titles for every unit | UX-11, SET-02, SET-06, PLAY-10, CONTENT-01 | P1 / P2 | IDENTIFIED |
 
