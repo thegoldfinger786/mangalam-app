@@ -4,7 +4,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { VoiceOptionCard } from '../components/VoiceOptionCard';
@@ -16,7 +16,6 @@ import { useAuth } from '../auth/AuthProvider';
 import { useAudioStore } from '../store/useAudioStore';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
-import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -345,13 +344,13 @@ export const SettingsScreen = () => {
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>About Us</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
                 </View>
                 <TouchableOpacity
                     onPress={() => navigation.navigate('About')}
                     style={[styles.optionRow, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}
                 >
-                    <Text style={[styles.optionText, { color: colors.text }]}>About</Text>
+                    <Text style={[styles.optionText, { color: colors.text }]}>About Mangalam</Text>
                     <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.s, marginHorizontal: spacing.m }} />
