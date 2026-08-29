@@ -13,7 +13,7 @@ import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
 import { auditBookIds, assertValidBookId, assertBookIdentityConsistency } from '../lib/bookIdentity';
-import { fetchActiveBooks, fetchBookById, fetchDailyUsage, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
+import { fetchActiveBooks, fetchBookById, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
 import { supabase } from '../lib/supabase';
 import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
@@ -71,8 +71,7 @@ export const HomeScreen = () => {
 
     const [loading, setLoading] = useState(true);
     const [books, setBooks] = useState<any[]>([]);
-    const [usage, setUsage] = useState<any>(null);
-    const [streakCount, setStreakCount] = useState(0);
+    const [activeDates, setActiveDates] = useState<string[]>([]);
     const [resumeLoading, setResumeLoading] = useState(true);
     const [resumeState, setResumeState] = useState<ResumeState | null>(null);
 
@@ -148,10 +147,7 @@ export const HomeScreen = () => {
         try {
             if (isFirstLoad) setLoading(true);
 
-            const [dailyUsage, streakData] = await Promise.all([
-                fetchDailyUsage(userId),
-                fetchStreakData(userId),
-            ]);
+            const streakData = await fetchStreakData(userId);
 
             let activeBooks = booksRef.current;
 
@@ -175,11 +171,11 @@ export const HomeScreen = () => {
             }
 
             await hydrateResumeState(activeBooks);
-            setUsage(dailyUsage);
 
-            // Basic streak calculation for MVP: count unique dates in the last 30 days
-            // (Real logic would check for gaps, but user says "compute streak from user_daily_usage rows")
-            setStreakCount(streakData?.length || 0);
+            // A real per-day record of activity — one ISO date per day the listener
+            // spent time in Mangalam. The weekly widget derives everything it shows
+            // from this, so Home and the Streaks screen always agree.
+            setActiveDates((streakData || []).map((row: any) => row.usage_date));
 
             hasLoadedRef.current = true;
         } catch (error) {
@@ -401,11 +397,8 @@ export const HomeScreen = () => {
                     )}
                 </View>
 
-                {/* Weekly Streak UI - Linked to Supabase */}
-                <WeeklyStreak
-                    currentStreak={streakCount}
-                    sessionsToday={usage?.sessions_used || 0}
-                />
+                {/* Weekly rhythm — same component and data as the Streaks screen */}
+                <WeeklyStreak activeDates={activeDates} />
 
                 {/* Explore Section */}
                 <View style={styles.section}>

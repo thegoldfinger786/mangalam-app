@@ -2,36 +2,49 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
+import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { fetchDailyUsage, fetchStreakData } from '../lib/queries';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
 
+type StreakRow = { usage_date: string; sessions_used: number | null };
+
+const toIsoDay = (d: Date) => d.toISOString().split('T')[0];
+
+// ISO dates for the last seven calendar days (today back six), matching how
+// user_daily_usage.usage_date is stored — used to scope "this week" figures.
+const lastSevenDays = (): Set<string> => {
+    const today = new Date();
+    const out = new Set<string>();
+    for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        out.add(toIsoDay(d));
+    }
+    return out;
+};
+
 export const StreaksScreen = () => {
-    const { colors, spacing, typography, borderRadius, layout } = useTheme();
+    const { colors, spacing, typography, layout } = useTheme();
     const styles = useMemo(() => createStyles(typography), [typography]);
     const { session } = useAppStore();
     const [loading, setLoading] = useState(true);
-    const [streakCount, setStreakCount] = useState(0);
     const [usageToday, setUsageToday] = useState(0);
-    const [historyDates, setHistoryDates] = useState<string[]>([]);
+    const [streakRows, setStreakRows] = useState<StreakRow[]>([]);
 
-    // ... (loadStreakData remains same)
     const loadStreakData = useCallback(async () => {
         if (!session?.user) return;
         try {
             setLoading(true);
             const [streakData, todayUsage] = await Promise.all([
                 fetchStreakData(session.user.id),
-                fetchDailyUsage(session.user.id)
+                fetchDailyUsage(session.user.id),
             ]);
 
-            setStreakCount(streakData?.length || 0);
+            setStreakRows((streakData as StreakRow[]) || []);
             setUsageToday(todayUsage?.sessions_used || 0);
-
-            const dates = streakData?.map((row: any) => row.usage_date) || [];
-            setHistoryDates(dates);
         } catch (error) {
             logger.error('Failed to load streak screen data', { error });
         } finally {
@@ -45,19 +58,17 @@ export const StreaksScreen = () => {
         }, [loadStreakData])
     );
 
-    const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    const today = new Date();
+    // Distinct days the listener has spent time in Mangalam (their most recent 30).
+    const daysOfPractice = streakRows.length;
+    const activeDates = useMemo(() => streakRows.map((r) => r.usage_date), [streakRows]);
 
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(today.getDate() - (6 - i));
-        const iso = d.toISOString().split('T')[0];
-        return {
-            label: days[d.getDay() === 0 ? 6 : d.getDay() - 1],
-            active: historyDates.includes(iso),
-            isToday: iso === today.toISOString().split('T')[0]
-        };
-    });
+    // Sessions across the last seven days — a measured sum, not an estimate.
+    const sessionsThisWeek = useMemo(() => {
+        const week = lastSevenDays();
+        return streakRows
+            .filter((r) => week.has(r.usage_date))
+            .reduce((sum, r) => sum + (r.sessions_used || 0), 0);
+    }, [streakRows]);
 
     if (loading) {
         return (
@@ -69,54 +80,42 @@ export const StreaksScreen = () => {
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView 
-                style={styles.container} 
-                contentContainerStyle={{ 
-                    paddingHorizontal: spacing.l, 
-                    paddingTop: spacing.m, 
-                    paddingBottom: layout.miniPlayerHeight + spacing.m 
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={{
+                    paddingHorizontal: spacing.l,
+                    paddingTop: spacing.m,
+                    paddingBottom: layout.miniPlayerHeight + spacing.m,
                 }}
             >
-            <Text style={[styles.screenTitle, { color: colors.text, marginBottom: spacing.l }]}>Your Journey</Text>
+                <Text style={[styles.screenTitle, { color: colors.text, marginBottom: spacing.l }]}>Your Journey</Text>
 
-            <Card style={[styles.streakCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
-                <View style={[styles.streakHeader, { marginBottom: spacing.xl }]}>
-                    <Text style={[styles.streakNumber, { color: colors.primary }]}>{streakCount}</Text>
-                    <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>Day Journey 🔥</Text>
-                </View>
+                <Card style={[styles.practiceCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
+                    <View style={[styles.practiceHeader, { marginBottom: spacing.xl }]}>
+                        <Text style={[styles.practiceNumber, { color: colors.primary }]}>{daysOfPractice}</Text>
+                        <Text style={[styles.practiceLabel, { color: colors.textSecondary }]}>
+                            {daysOfPractice === 1 ? 'day of practice' : 'days of practice'}
+                        </Text>
+                    </View>
 
-                <View style={[styles.trackerContainer, { marginBottom: spacing.xl, paddingHorizontal: spacing.m }]}>
-                    {last7Days.map((day, i) => (
-                        <View key={i} style={styles.dayContainer}>
-                            <View style={[
-                                styles.dayCircle,
-                                { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, marginBottom: spacing.s },
-                                day.active ? { backgroundColor: colors.primary, borderColor: colors.primary } : null,
-                                day.isToday && !day.active ? { borderColor: colors.primary, borderStyle: 'dashed' } : null
-                            ]}>
-                                {day.active && <Text style={[styles.checkText, { color: colors.textInverse }]}>✓</Text>}
-                            </View>
-                            <Text style={[styles.dayLetter, { color: colors.textSecondary }, day.isToday && { color: colors.primary, fontWeight: 'bold' }]}>{day.label}</Text>
-                        </View>
-                    ))}
-                </View>
-                <Text style={[styles.encouragementText, { color: colors.textSecondary, paddingHorizontal: spacing.m }]}>
-                    Consistency over intensity. Taking 10 minutes a day for reflection builds a resilient mind.
-                </Text>
-            </Card>
-
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: spacing.m }]}>Stats</Text>
-            <View style={[styles.statsRow, { gap: spacing.m }]}>
-                <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
-                    <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{usageToday}</Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions Today</Text>
+                    <Text style={[styles.encouragementText, { color: colors.textSecondary, paddingHorizontal: spacing.m }]}>
+                        Consistency over intensity. Taking ten minutes a day for reflection builds a resilient mind.
+                    </Text>
                 </Card>
-                <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
-                    <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>~{streakCount * 10}m</Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Total Time</Text>
-                </Card>
-            </View>
 
+                <WeeklyStreak activeDates={activeDates} />
+
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: spacing.m }]}>Stats</Text>
+                <View style={[styles.statsRow, { gap: spacing.m }]}>
+                    <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
+                        <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{usageToday}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions today</Text>
+                    </Card>
+                    <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
+                        <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{sessionsThisWeek}</Text>
+                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions this week</Text>
+                    </Card>
+                </View>
             </ScrollView>
         </ScreenContainer>
     );
@@ -131,47 +130,22 @@ const createStyles = (typography: ReturnType<typeof useTheme>['typography']) => 
         justifyContent: 'center',
         alignItems: 'center',
     },
-    content: {
-    },
     screenTitle: {
         fontWeight: 'bold',
         fontSize: typography.sizes.xxl,
     },
-    streakCard: {
+    practiceCard: {
         alignItems: 'center',
     },
-    streakHeader: {
+    practiceHeader: {
         alignItems: 'center',
     },
-    streakNumber: {
+    practiceNumber: {
         fontSize: typography.sizes.hero,
         fontWeight: 'bold',
     },
-    streakLabel: {
+    practiceLabel: {
         fontSize: 18,
-    },
-    trackerContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    dayContainer: {
-        alignItems: 'center',
-    },
-    dayCircle: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-    },
-    checkText: {
-        fontWeight: 'bold',
-        fontSize: 12,
-    },
-    dayLetter: {
-        fontSize: 12,
     },
     encouragementText: {
         fontSize: 14,
@@ -195,5 +169,5 @@ const createStyles = (typography: ReturnType<typeof useTheme>['typography']) => 
     },
     statLabel: {
         fontSize: 12,
-    }
+    },
 });
