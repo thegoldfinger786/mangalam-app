@@ -161,9 +161,6 @@ export const SettingsScreen = () => {
             >
                 <View style={styles.headerRow}>
                     <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
-                    <TouchableOpacity onPress={handleSignOut} style={styles.signOutIcon}>
-                        <Ionicons name="log-out-outline" size={28} color={colors.error} />
-                    </TouchableOpacity>
                 </View>
 
             {/* Account Section */}
@@ -220,11 +217,6 @@ export const SettingsScreen = () => {
                     )}
                 </View>
 
-                <View style={styles.accountStatus}>
-                    <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Plan:</Text>
-                    <Text style={[styles.accountValue, { color: colors.text }]}>Free & Ad-free</Text>
-                </View>
-
                 <Button
                     title="Support Mangalam"
                     variant="primary"
@@ -234,13 +226,19 @@ export const SettingsScreen = () => {
                 <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginTop: -spacing.s, fontStyle: 'italic' }}>
                     Help keep Mangalam free and ad-free.
                 </Text>
+
+                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.m, marginHorizontal: spacing.m }} />
+                <TouchableOpacity onPress={handleSignOut} style={styles.optionRow}>
+                    <Text style={[styles.optionText, { color: colors.error }]}>Sign Out</Text>
+                    <Ionicons name="log-out-outline" size={18} color={colors.error} />
+                </TouchableOpacity>
             </Card>
 
-            {/* Voice Preferences */}
+            {/* Language & Voice */}
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="volume-high-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Voice Preference</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Language &amp; Voice</Text>
                 </View>
                 <View style={styles.voiceGrid}>
                     {/* Row 1: English */}
@@ -379,13 +377,7 @@ const createStyles = (
         fontSize: typography.sizes.xxl,
     },
     headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
         marginBottom: spacing.l,
-    },
-    signOutIcon: {
-        padding: spacing.xs,
     },
     sectionCard: {
         marginBottom: spacing.l,
