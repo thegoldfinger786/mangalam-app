@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 16 merged — PR #17)_
+_Last updated: 2026-08-29 (batch 17 merged — PR #18)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 16 merged — PR #17)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06) |
-| Verified | 40 (Batches 1–16; Batches 12, 15 & 16 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02) |
+| Verified | 41 (Batches 1–17; Batches 12, 15 & 16 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 39 |
+| Open | 38 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 17 — MiniPlayer font | MINI-02 | **Merged** (PR #18 → `main`, 2026-08-29) | `MiniPlayer` asked for `Inter-SemiBold`/`Inter-Regular` (not bundled — app ships Outfit) → silent system-font fallback. Now `typography.fontFamilies.semiBold`/`.regular` + `typography.sizes.s`/`.xs` (same values). Unused `Platform`/`RootStackParamList` imports removed. tsc + eslint clean; no simulator run (token swap, proven fonts). |
 | 2026-08-29 | Batch 16 — Completion means finished | LIB-06 (closes UX-04) | **Merged** (PR #17 → `main`, 2026-08-29) | `PlayScreen.tsx`: `addCompletedVerse(itemId)` moved from load-time to the audio `onFinish` callbacks (fires on `status.didJustFinish` — the same signal that drives auto-advance). Verses no longer show ✓ in the Library / count toward Book Dashboard progress just for being opened. `completedVerses` unchanged (same client-only persisted list). Verified on the running app: opening BG 2.1 without playing keeps Chapter 2 at 0/72. |
 | 2026-08-29 | Batch 15 — PlayScreen highlight & header | PLAY-08, PLAY-09 | **Merged** (PR #16 → `main`, 2026-08-29) | `PlayScreen.tsx`. **PLAY-08**: the Sanskrit `HighlightedText` was passed identical `activeColor`/`inactiveColor` → highlight invisible. Active sentences now use `colors.text` against the saffron rest (same pattern as the other blocks); resting look unchanged. **PLAY-09**: header "NOW PLAYING" → book name + "Chapter N · Verse M" (from data already loaded), shown in focus mode too; header title de-uppercased (matches Batch 11). Cleanup: removed unused `Dimensions`/`width`, `MANGALAM_ICON`, `assertBookIdentityReady`, dead `isVerse`, and 6 orphaned style objects. Verified on the Simulator (QA account): highlight tracks playback on BG 1.1/1.2, header updates on next-verse, playback / follow-along / prev-next / mini-player intact. |
 | 2026-08-29 | Batch 14 — Uncap days of practice | STREAK-08 | **Merged** (PR #15 → `main`, 2026-08-29) | `fetchStreakData` `.limit(30)` → `.limit(366)`. The Streaks screen's "N days of practice" no longer freezes at 30 for a consistent listener. Consumers unaffected by the longer array; `user_daily_usage` is one row per active day so the query stays cheap. Stale "most recent 30" comment updated. |
@@ -73,7 +74,7 @@ _Last updated: 2026-08-29 (batch 16 merged — PR #17)_
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
 | UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5 + Batch 9) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6); the last cue — the "Streaks" tab + flame icon — became "Journey" + leaf (Batch 9 · PR #10) |
-| UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7, 2026-08-29) | most screens — `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section now token-driven; other screens still hard-code |
+| UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7; Batch 17 · PR #18) | `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section (Batch 6); `MiniPlayer` (Batch 17, incl. the invalid `Inter-*` font — MINI-02). Other screens still hard-code fontSize in places. |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
 | UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
 | UX-13 | Scripture-first navigation only; no theme/topic/mood entry | NEEDS IMPROVEMENT | P2 (strategic) | IDENTIFIED | whole app |
@@ -163,7 +164,7 @@ _Last updated: 2026-08-29 (batch 16 merged — PR #17)_
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | MINI-01 | Cryptic title | [SRC+LIVE] "BG 1.2" for books without verse titles; Ramayan (has titles) shows the title | NEEDS IMPROVEMENT | Always show a human title | P2 | High | IDENTIFIED | Depends on CONTENT-01 |
-| MINI-02 | Missing font family | [SRC] References 'Inter-SemiBold'/'Inter-Regular'; app bundles Outfit → silent fallback | NEEDS IMPROVEMENT | Use theme font tokens | P2 | High | IDENTIFIED | ref UX-10 |
+| MINI-02 | Missing font family | [SRC] References 'Inter-SemiBold'/'Inter-Regular'; app bundles Outfit → silent fallback | NEEDS IMPROVEMENT | Use theme font tokens | P2 | High | **MERGED** (Batch 17 · PR #18, 2026-08-29) | ref UX-10. `MiniPlayer` title/subtitle now use `typography.fontFamilies.semiBold`/`.regular` and `typography.sizes.s`/`.xs`; unused `Platform`/`RootStackParamList` imports dropped. |
 | MINI-03 | Dense controls | [LIVE] 6 controls (prev / −15 / play / +15 / next / ✕); persistent; hides correctly on Play; progress line | KEEP | Consider 3 controls + tap-through | KEEP | High | REVIEWED | |
 
 ### Library — `LibraryScreen`
