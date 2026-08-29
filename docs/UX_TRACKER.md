@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 4 merged — PR #5)_
+_Last updated: 2026-08-29 (batch 5 — de-gamify Community Wisdom; on branch `ux/batch-5`)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 4 merged — PR #5)_
 | P1 | 30 |
 | P2 | 38 |
 | KEEP | 11 |
-| Implemented / Merged | 18 merged (Batches 1–3; Batch 4 · PR #5 — UX-12, HOME-04, POS-03) |
-| Verified | 18 (Batches 1–4 — simulator, 2026-08-28/29) |
+| Implemented / Merged | 18 merged (Batches 1–4) + Batch 5 on branch (UX-09, COMM-01, COMM-03, POS-05, HOME-06, POS-07) |
+| Verified | 24 (Batches 1–5 — simulator, 2026-08-28/29) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 61 |
+| Open | 56 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 5 — De-gamify Community Wisdom | UX-09, COMM-01, COMM-03, POS-05, HOME-06/POS-07 (COMM-02 still blocked) | Implemented on branch `ux/batch-5` | `src/screens/CommunityWisdomScreen.tsx`: removed the rank badge, trophy, medals, "#1"–"#5" and medal-tinted borders; sections relabelled "Others are listening to / sharing / keeping" with neutral icons; intro rewritten to "A quiet look at the verses others are finding meaningful."; shouty uppercase section labels softened. `src/screens/HomeScreen.tsx`: discovery bar "…studying today" → "…finding meaningful". Verified on the running app: no podium chrome, calm labels, rows still tappable. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 4 — Remove the "Change Path?" gate | UX-12, HOME-04, POS-03 | **Merged** (PR #5 → `main`, 2026-08-29) | `src/screens/HomeScreen.tsx`: the blocking "Change Path?" confirmation alert (with "Subtle persistence leads to deeper wisdom") is removed from `handlePathPress` — tapping any book opens its dashboard directly; switching just quietly updates `activeBookId`. Section header "My Current Path" → "Continue". Verified on the running app: non-active book opens with no alert. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 3 — Honest progress & one weekly widget | UX-03, UX-04 (partial), HOME-09, STREAK-01, STREAK-02, STREAK-04 (+ STREAK-03, STREAK-06 resolved; STREAK-08/09/10 recorded) | **Merged** (PR #4 → `main`, merge commit `2d1b679`, 2026-08-29) | `src/components/WeeklyStreak.tsx` reworked into one shared honest widget: takes `activeDates` (real `user_daily_usage.usage_date` values), shows the last 7 calendar days marked from that record, header "Last 7 days" + a calm "N days" (no flame, no score). `HomeScreen.tsx` and `StreaksScreen.tsx` both feed it the same data. Streaks screen: fabricated "Total Time" (`streak × 10m`) removed → "Sessions this week" (measured sum); hero "Day Journey 🔥" → "N days of practice"; inline duplicate tracker deleted. Verified on the running app: Home and Streaks show identical dots/count; no layout breakage; `tsc` + eslint clean. |
 | 2026-08-29 | Batch 2 — Home + Play polish | HOME-02, HOME-03/SYS-01, HOME-05, PLAY-04, PLAY-05 (+ PLAY-16 recorded) | **Merged** (PR #2 → `security/edge-function-authorization`, merge commit `c4d434b`, 2026-08-29) | `src/screens/HomeScreen.tsx`: resume/usage/streak now refresh on every Home focus (was stale within a session); resume-card copy is human ("Continue from M:SS"); dead `getGreeting()` removed. `src/screens/PlayScreen.tsx`: transcript follow-along yields for ~6s after a manual drag then resumes; dead "Daily Limit Reached" paywall branch + its `isAllowed` state + unused `Button` import removed. Verified on the running iOS app: Home card updated 2:36→3:13 without relaunch; manual scroll no longer fought; normal Play nav/audio intact. `tsc` clean, no new lint. |
@@ -60,7 +61,7 @@ _Last updated: 2026-08-29 (batch 4 merged — PR #5)_
 | UX-06 | Inconsistent headers & back affordances | NEEDS IMPROVEMENT | P2 | IDENTIFIED | all stack screens |
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
-| UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | IDENTIFIED | Community, Streaks |
+| UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6) |
 | UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | IDENTIFIED | most screens |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
 | UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
@@ -97,7 +98,7 @@ _Last updated: 2026-08-29 (batch 4 merged — PR #5)_
 | HOME-03 | Resume card copy | [SRC+LIVE] "Resume at 20s" / "Resume is unavailable until remote progress exists" / "Your current path will appear here after you start a verse" | NEEDS IMPROVEMENT | Human copy | P1 | High | **MERGED** (Batch 2 · PR #2) | ref UX-01, SYS-01. The reachable line "Resume at Ns" is now "Continue from M:SS" (verified live). The `!resumeState` fallbacks became "Ready to begin" / "Choose a path below to start listening." / "Take a few quiet minutes whenever you are ready." — these are currently **not reachable** (when there is no resume state the card is replaced by a spacer `View`); they become live copy if/when HOME-01 designs the empty state. |
 | HOME-04 | "Change Path?" gate | [SRC+LIVE] Blocking alert on tapping any non-active book: "…focused on the {book} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?" | NEEDS CHANGE | Remove the gate; free movement; keep "Continue" as default | P1 | High | **MERGED** (Batch 4 · PR #5, 2026-08-29) | ref UX-12, POS-03. `handlePathPress` in `src/screens/HomeScreen.tsx` now navigates straight to the tapped book's dashboard; switching books just quietly updates `activeBookId` (with the existing light haptic). No confirmation, no "deeper wisdom" copy. Verified on the running app: tapping a non-active book opens its dashboard with no alert. |
 | HOME-05 | Dead greeting code | [SRC] `getGreeting()` (time-of-day) unused; header always "Namaste, {name}" | NEEDS IMPROVEMENT | Use it or delete it | P2 | High | **MERGED** (Batch 2 · PR #2) | [SRC] Confirmed zero call sites (`grep`), removed `getGreeting()` from `src/screens/HomeScreen.tsx`. Header behaviour unchanged ("Namaste, {name}"). The header wording itself is out of scope for this batch. |
-| HOME-06 | "studying" language | [LIVE] "See what others are studying today" — study framing | NEEDS IMPROVEMENT | "finding meaningful" | P2 | Med | IDENTIFIED | ref POS-07 |
+| HOME-06 | "studying" language | [LIVE] "See what others are studying today" — study framing | NEEDS IMPROVEMENT | "finding meaningful" | P2 | Med | **MERGED** (Batch 5 · PR #6) | Home discovery bar → "See what others are finding meaningful". |
 | HOME-07 | Explore grid redundancy | [LIVE] Same 4 book cards as the Library tab | NEEDS IMPROVEMENT | Differentiate or route both into one browse flow | P2 | High | IDENTIFIED | ref UX-02 |
 | HOME-08 | Animated background | [LIVE] `DynamicBackground` orbs — subtle, calm, works | KEEP | — | KEEP | High | REVIEWED | |
 | HOME-09 | Streak widget divergence | [SRC+LIVE] Home "This Week" differed from Streaks tab in start-day (Mon vs Fri) and logic | NEEDS CHANGE | One shared widget | P1 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | ref UX-03. Both screens now render the same `WeeklyStreak` fed the same `activeDates` (real `user_daily_usage.usage_date` values), rolling last-7-days. Verified on the running app: identical dots/count on Home and Streaks for the QA account (T·F·S active, "3 days"). |
@@ -107,9 +108,9 @@ _Last updated: 2026-08-29 (batch 4 merged — PR #5)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| COMM-01 | Competitive framing | [SRC+LIVE] Gold trophy #1, silver/bronze medals, "#1"–"#5", "TRENDING NOW / MOST INSPIRED / TOP SAVED" | NEEDS CHANGE | Reframe: no ranks/medals/"trending"; "what others found meaningful" | P1 | High | IDENTIFIED | ref UX-09, POS-05 |
-| COMM-02 | Rows convey nothing | [LIVE] Every row is "Bhagavad Gita / Chapter 2, Verse 4" — no title, no snippet, no reason | NEEDS IMPROVEMENT | Show title + one-line why | P1 | High | IDENTIFIED | Depends on CONTENT-01 |
-| COMM-03 | Section labels & subtitle | [LIVE] Engagement-app tone; "Discover what fellow seekers are finding inspired by" is grammatically broken | NEEDS IMPROVEMENT | Rewrite | P2 | High | IDENTIFIED | |
+| COMM-01 | Competitive framing | [SRC+LIVE] Gold trophy #1, silver/bronze medals, "#1"–"#5", "TRENDING NOW / MOST INSPIRED / TOP SAVED" | NEEDS CHANGE | Reframe: no ranks/medals/"trending"; "what others found meaningful" | P1 | High | **MERGED** (Batch 5 · PR #6) | ref UX-09, POS-05. `CommunityWisdomScreen.tsx`: rank badge / trophy / medal / #N / medal-tinted borders all removed. Sections relabelled "Others are listening to / sharing / keeping" with neutral icons; intro line "A quiet look at the verses others are finding meaningful." (also fixes COMM-03's broken sentence). Rows are still ordered by engagement but carry no rank chrome. Verified on the running app. |
+| COMM-02 | Rows convey nothing | [LIVE] Every row is "Bhagavad Gita / Chapter 2, Verse 4" — no title, no snippet, no reason | NEEDS IMPROVEMENT | Show title + one-line why | P1 | High | IDENTIFIED | **Still open** — blocked by CONTENT-01 (Gita verses have no titles). Batch 5 cleaned the chrome but the row text is unchanged. |
+| COMM-03 | Section labels & subtitle | [LIVE] Engagement-app tone; "Discover what fellow seekers are finding inspired by" is grammatically broken | NEEDS IMPROVEMENT | Rewrite | P2 | High | **MERGED** (Batch 5 · PR #6) | Done with COMM-01. Section labels de-shouted (sentence case, no uppercase/letter-spacing); intro sentence rewritten. |
 | COMM-04 | Empty state | [SRC] Empty sections just vanish | NEEDS IMPROVEMENT | Designed empty state | P2 | Med | IDENTIFIED | ref UX-05 |
 | COMM-05 | Production data | [LIVE] Real `activity_log` aggregate; test-account listen/share/bookmark feeds public rankings | — | Behavioural note | — | High | REVIEWED | See TESTING.md |
 
@@ -234,9 +235,9 @@ _Last updated: 2026-08-29 (batch 4 merged — PR #5)_
 | POS-02 | Sign-off unlabeled & at top | [SRC+LIVE] See PLAY-06 | NEEDS IMPROVEMENT | Move to end; label it | P1 | High | IDENTIFIED | Sign-off stays (VISION_ALIGNMENT §6) |
 | POS-03 | "Current Path" / forced path / "deeper wisdom" | [LIVE] Discipline/study framing on discovery | NEEDS CHANGE | Soften language; remove the gate (UX-12) | P1 | High | **MERGED** (Batch 4 · PR #5, 2026-08-29) | "deeper wisdom" gate copy deleted with the gate (HOME-04). Home section header "My Current Path" → "Continue". "Explore Paths" kept — browsing paths is fine; it was the possessive/gated framing that read as discipline. |
 | POS-04 | Sanskrit with no framing | [LIVE] See PLAY-13 | NEEDS IMPROVEMENT | One-line "what this is" | P2 | High | IDENTIFIED | |
-| POS-05 | "Day Journey 🔥" + Community podium | [LIVE] Habit-app / competition cues | NEEDS CHANGE | De-gamify (UX-09) | P1 | High | IDENTIFIED | |
+| POS-05 | "Day Journey 🔥" + Community podium | [LIVE] Habit-app / competition cues | NEEDS CHANGE | De-gamify (UX-09) | P1 | High | **MERGED** (Batch 3 + Batch 5 · PR #6) | Streaks flame (Batch 3); Community trophy/medal/#rank podium (Batch 5). |
 | POS-06 | Onboarding lacks practice framing | [LIVE] See ONB-02 | NEEDS CHANGE | Reframe onboarding | P1 | High | IDENTIFIED | |
-| POS-07 | "studying" on Home | [LIVE] See HOME-06 | NEEDS IMPROVEMENT | "finding meaningful" | P2 | Med | IDENTIFIED | |
+| POS-07 | "studying" on Home | [LIVE] See HOME-06 | NEEDS IMPROVEMENT | "finding meaningful" | P2 | Med | **MERGED** (Batch 5 · PR #6) | |
 | POS-08 | What already works | [LIVE] Palette, type, spacing, ambient audio; About voice; "consistency over intensity"; privacy-first; audio-first; free/no-ads; non-sensational tone | KEEP | Protect deliberately | KEEP | High | REVIEWED | See UX_REVIEW §8 |
 
 ### Content quality / consistency
@@ -261,7 +262,7 @@ _Last updated: 2026-08-29 (batch 4 merged — PR #5)_
 | 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | **PARTIAL** — HOME-03 resume-card copy done (Batch 2); Welcome blanks, error/loading states still open |
 | 5 | Consolidate the two content-browse UIs | UX-02, DASH-01, LIB-01, NAV-02 | P1 | IDENTIFIED |
 | 6 | Honest metrics + one streak widget | UX-03, UX-04, STREAK-01, STREAK-02, STREAK-04 | P1 | **MERGED** (Batch 3 · PR #4, 2026-08-29) — remaining: LIB-06 ("completed" on open), STREAK-08 (30-day cap) |
-| 7 | De-gamify Community Wisdom | UX-09, COMM-01, POS-05 | P1 | IDENTIFIED |
+| 7 | De-gamify Community Wisdom | UX-09, COMM-01, POS-05 | P1 | **MERGED** (Batch 5 · PR #6) |
 | 8 | Remove the "Change Path?" gate; free movement between books | UX-12, HOME-04, POS-03 | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) |
 | 9 | Tame the transcript auto-scroll | PLAY-04 | P1 | **MERGED** (Batch 2 · PR #2, 2026-08-29) |
 | 10 | Language at point of use · sleep timer · account deletion · human titles for every unit | UX-11, SET-02, SET-06, PLAY-10, CONTENT-01 | P1 / P2 | IDENTIFIED |

@@ -326,7 +326,7 @@ export const HomeScreen = () => {
                         <Ionicons name="sparkles" size={16} color={colors.primary} />
                     </View>
                     <Text style={[styles.discoveryText, { color: colors.textSecondary }]}>
-                        See what others are studying today
+                        See what others are finding meaningful
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
                 </TouchableOpacity>

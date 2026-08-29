@@ -22,7 +22,7 @@ import { logger } from '../lib/logger';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const CommunityWisdomScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [loading, setLoading] = useState(true);
@@ -61,9 +61,9 @@ export const CommunityWisdomScreen = () => {
     }
 
     const sections = [
-        { label: 'Trending Now', data: topStats.listened, icon: 'flame-outline', action: 'listens' },
-        { label: 'Most Inspired', data: topStats.shared, icon: 'rocket-outline', action: 'shares' },
-        { label: 'Top Saved', data: topStats.bookmarked, icon: 'heart-outline', action: 'saves' }
+        { label: 'Others are listening to', data: topStats.listened, icon: 'headset-outline' },
+        { label: 'Others are sharing', data: topStats.shared, icon: 'share-social-outline' },
+        { label: 'Others are keeping', data: topStats.bookmarked, icon: 'bookmark-outline' },
     ];
 
     return (
@@ -80,7 +80,7 @@ export const CommunityWisdomScreen = () => {
                 <View style={styles.introSection}>
                     <Text style={[styles.title, { color: colors.text }]}>Ancient Wisdom in Modern Hearts</Text>
                     <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                        Discover what fellow seekers are finding inspired by.
+                        A quiet look at the verses others are finding meaningful.
                     </Text>
                 </View>
 
@@ -92,18 +92,12 @@ export const CommunityWisdomScreen = () => {
                         </View>
 
                         {section.data.map((item, i) => {
-                            const rank = i + 1;
-                            const medalColors: Record<number, string> = { 1: '#FFD700', 2: '#C0C0C0', 3: '#CD7F32' };
-                            const medalColor = medalColors[rank];
-                            const isTopThree = rank <= 3;
-
                             return (
                                 <TouchableOpacity
                                     key={i}
                                     style={[
                                         styles.wisdomCard,
                                         { backgroundColor: colors.surface, borderColor: colors.border },
-                                        isTopThree && { borderColor: (medalColor || colors.border) + '40' }
                                     ]}
                                     onPress={() => {
                                         if (!assertValidBookId(item.book_id, 'CommunityWisdomScreen.onPress')) {
@@ -119,27 +113,6 @@ export const CommunityWisdomScreen = () => {
                                     }}
                                 >
                                     <View style={styles.cardHeader}>
-                                        {/* Rank Badge */}
-                                        <View style={[
-                                            styles.rankBadge,
-                                            { backgroundColor: isTopThree ? medalColor + '20' : colors.surfaceSecondary }
-                                        ]}>
-                                            {isTopThree && (
-                                                <Ionicons
-                                                    name={rank === 1 ? 'trophy' : 'medal'}
-                                                    size={12}
-                                                    color={medalColor}
-                                                    style={{ marginBottom: spacing.micro }}
-                                                />
-                                            )}
-                                            <Text style={[
-                                                styles.rankText,
-                                                { color: isTopThree ? medalColor : colors.textSecondary }
-                                            ]}>
-                                                #{rank}
-                                            </Text>
-                                        </View>
-
                                         <View style={styles.cardInfo}>
                                             <View style={styles.bookTag}>
                                                 <View style={[styles.miniIconBox, { backgroundColor: colors.surfaceSecondary }]}>
@@ -194,8 +167,8 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginBottom: spacing.xl,
     },
     title: {
-        fontSize: 24,
-        fontWeight: '800',
+        fontSize: 22,
+        fontWeight: '700',
         marginBottom: spacing.s,
     },
     subtitle: {
@@ -211,11 +184,9 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginBottom: spacing.m,
     },
     sectionLabel: {
-        fontSize: 16,
-        fontWeight: '700',
+        fontSize: 15,
+        fontWeight: '600',
         marginLeft: spacing.s,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     wisdomCard: {
         padding: spacing.m,
@@ -259,27 +230,5 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     verseTitle: {
         fontSize: 15,
         fontWeight: '600',
-    },
-    badge: {
-        paddingHorizontal: spacing.s,
-        paddingVertical: spacing.xs,
-        borderRadius: 10,
-    },
-    badgeText: {
-        fontSize: 11,
-        fontWeight: '800',
-        textTransform: 'uppercase',
-    },
-    rankBadge: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: spacing.m,
-    },
-    rankText: {
-        fontSize: 12,
-        fontWeight: '800',
     },
 });
