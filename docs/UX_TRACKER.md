@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 14 merged — PR #15)_
+_Last updated: 2026-08-29 (batch 15 merged — PR #16)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 14 merged — PR #15)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08) |
-| Verified | 37 (Batches 1–14; Batch 12 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09) |
+| Verified | 39 (Batches 1–15; Batches 12 & 15 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 42 |
+| Open | 40 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 15 — PlayScreen highlight & header | PLAY-08, PLAY-09 | **Merged** (PR #16 → `main`, 2026-08-29) | `PlayScreen.tsx`. **PLAY-08**: the Sanskrit `HighlightedText` was passed identical `activeColor`/`inactiveColor` → highlight invisible. Active sentences now use `colors.text` against the saffron rest (same pattern as the other blocks); resting look unchanged. **PLAY-09**: header "NOW PLAYING" → book name + "Chapter N · Verse M" (from data already loaded), shown in focus mode too; header title de-uppercased (matches Batch 11). Cleanup: removed unused `Dimensions`/`width`, `MANGALAM_ICON`, `assertBookIdentityReady`, dead `isVerse`, and 6 orphaned style objects. Verified on the Simulator (QA account): highlight tracks playback on BG 1.1/1.2, header updates on next-verse, playback / follow-along / prev-next / mini-player intact. |
 | 2026-08-29 | Batch 14 — Uncap days of practice | STREAK-08 | **Merged** (PR #15 → `main`, 2026-08-29) | `fetchStreakData` `.limit(30)` → `.limit(366)`. The Streaks screen's "N days of practice" no longer freezes at 30 for a consistent listener. Consumers unaffected by the longer array; `user_daily_usage` is one row per active day so the query stays cheap. Stale "most recent 30" comment updated. |
 | 2026-08-29 | Batch 13 — Drop dead nav params | DASH-07 | **Merged** (PR #14 → `main`, 2026-08-29) | `HomeScreen` passed `clickedBookId` / `clickedTitle` to `BookDashboard` that the screen never read. Removed from `RootStackParamList.BookDashboard`, the `navigate` call and the screen; the unused `stats` state + chapter-`Set` computation in the same load function went too. Type-checked; no runtime behaviour change. |
 | 2026-08-29 | Batch 12 — Tidy Settings | SET-01, SET-03 (+ SET-02 partial) | **Merged** (PR #13 → `main`, 2026-08-29) | `SettingsScreen.tsx`. **SET-01**: Sign Out moved from a small red icon by the screen title into a red row at the bottom of the Account card (below a divider) — confirmation alert unchanged. **SET-03**: removed the "Plan: Free & Ad-free" row (implied non-existent tiers; the Support caption already says free/ad-free). **SET-02 partial**: "Voice Preference" section → "Language & Voice"; the player-side language toggle stays open under UX-11. Cleanup: unused `signOutIcon` style removed, `headerRow` collapsed. `tsc` + eslint clean; verified on the running app including the Sign Out → Cancel path (still signed in, no data written). |
@@ -146,8 +147,8 @@ _Last updated: 2026-08-29 (batch 14 merged — PR #15)_
 | PLAY-05 | Dead paywall branch | [SRC] "Daily Limit Reached / Become a Supporter" branch still present (app is free forever) | NEEDS IMPROVEMENT | Delete | P2 | High | **MERGED** (Batch 2 · PR #2) | ref VISION_ALIGNMENT §6; POS. [SRC] Confirmed `isAllowed` was initialised `true` and only ever set back to `true` — no code path set it `false`. Removed the `isAllowed` state, the `setIsAllowed(true)` call, the whole `if (isAllowed === false)` screen, and the now-unused `Button` import from `src/screens/PlayScreen.tsx`. `incrementDailyUsage` is retained — it feeds the streak/usage counters, not any gate. |
 | PLAY-06 | Sign-off placement | [SRC+LIVE] Ramayan/Mahabharat sign-off ("जय श्री राम"/"जय श्री कृष्ण") stored in the source-text field → rendered large, centered, orange, unlabeled, **at the top** of every episode | NEEDS IMPROVEMENT | Move to end; add label ("A traditional closing blessing"). Keep the sign-off | P1 | High | IDENTIFIED | ref POS-02. Sign-off itself is a settled decision |
 | PLAY-07 | Generation artifacts | [SRC+LIVE] "Welcome to today's lesson. We are in Chapter 1 Verse 1" as transcript; "mine ness"; commentary re-stating "Chapter 1 Verse 1" | NEEDS IMPROVEMENT | Strip intro line + numbering from displayed text; content QA | P2 | High | IDENTIFIED | ref CONTENT-03 |
-| PLAY-08 | Sanskrit highlight no-op | [SRC] `HighlightedText` gets `activeColor === inactiveColor` for the Sanskrit block | NEEDS IMPROVEMENT | Give the Sanskrit a real active colour or drop the highlight there | P2 | High | IDENTIFIED | |
-| PLAY-09 | Header context | [SRC+LIVE] Header only ever says "NOW PLAYING"; no book/chapter once the cover scrolls away | NEEDS IMPROVEMENT | Show book · chapter in the header | P2 | High | IDENTIFIED | |
+| PLAY-08 | Sanskrit highlight no-op | [SRC] `HighlightedText` gets `activeColor === inactiveColor` for the Sanskrit block | NEEDS IMPROVEMENT | Give the Sanskrit a real active colour or drop the highlight there | P2 | High | **MERGED** (Batch 15 · PR #16, 2026-08-29) | Active Sanskrit sentences now render in `colors.text` against the saffron `colors.primary` of the rest (same active/inactive pattern as translation/commentary). Resting look unchanged. [LIVE] verified — highlight visibly tracks playback on BG 1.1 / 1.2. |
+| PLAY-09 | Header context | [SRC+LIVE] Header only ever says "NOW PLAYING"; no book/chapter once the cover scrolls away | NEEDS IMPROVEMENT | Show book · chapter in the header | P2 | High | **MERGED** (Batch 15 · PR #16, 2026-08-29) | Header now shows the book name + "Chapter N · Verse M" (from `content.book_title` / `meta.title` / `chapter_no` / `verse_no` — no new fetching), in both normal and focus mode. Header title de-uppercased to match Batch 11. [LIVE] verified — updates on next-verse. |
 | PLAY-10 | No sleep timer | [SRC] Missing, despite About suggesting bedtime listening | NEEDS IMPROVEMENT | Add a sleep timer | P2 | High | IDENTIFIED | |
 | PLAY-11 | Focus mode | [LIVE] Enlarges text, hides chrome — genuinely good for reading; "expand/contract" icon meaning unclear | KEEP | Relabel / onboard the affordance | KEEP | High | REVIEWED | |
 | PLAY-12 | Core layered experience | [LIVE] Labeled layers, cover art, speed, skip-15, prev/next, auto-advance, bookmark, share — all work; audio reliable for Gita + Ramayan | KEEP | — | KEEP | High | REVIEWED | Product's strongest asset |
