@@ -42,8 +42,8 @@ export const BottomTabs = () => {
                         iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'Library') {
                         iconName = focused ? 'book' : 'book-outline';
-                    } else if (route.name === 'Streaks') {
-                        iconName = focused ? 'flame' : 'flame-outline';
+                    } else if (route.name === 'Journey') {
+                        iconName = focused ? 'leaf' : 'leaf-outline';
                     } else if (route.name === 'Settings') {
                         iconName = focused ? 'settings' : 'settings-outline';
                     }
@@ -74,7 +74,7 @@ export const BottomTabs = () => {
                 )}
             </Tab.Screen>
             <Tab.Screen name="Library" component={LibraryScreen} />
-            <Tab.Screen name="Streaks" component={StreaksScreen} />
+            <Tab.Screen name="Journey" component={StreaksScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>
     </View>
