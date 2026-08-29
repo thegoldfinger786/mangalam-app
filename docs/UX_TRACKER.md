@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 13 merged — PR #14)_
+_Last updated: 2026-08-29 (batch 14 merged — PR #15)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 13 merged — PR #14)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07) |
-| Verified | 36 (Batches 1–13; Batch 12 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08) |
+| Verified | 37 (Batches 1–14; Batch 12 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 43 |
+| Open | 42 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 14 — Uncap days of practice | STREAK-08 | **Merged** (PR #15 → `main`, 2026-08-29) | `fetchStreakData` `.limit(30)` → `.limit(366)`. The Streaks screen's "N days of practice" no longer freezes at 30 for a consistent listener. Consumers unaffected by the longer array; `user_daily_usage` is one row per active day so the query stays cheap. Stale "most recent 30" comment updated. |
 | 2026-08-29 | Batch 13 — Drop dead nav params | DASH-07 | **Merged** (PR #14 → `main`, 2026-08-29) | `HomeScreen` passed `clickedBookId` / `clickedTitle` to `BookDashboard` that the screen never read. Removed from `RootStackParamList.BookDashboard`, the `navigate` call and the screen; the unused `stats` state + chapter-`Set` computation in the same load function went too. Type-checked; no runtime behaviour change. |
 | 2026-08-29 | Batch 12 — Tidy Settings | SET-01, SET-03 (+ SET-02 partial) | **Merged** (PR #13 → `main`, 2026-08-29) | `SettingsScreen.tsx`. **SET-01**: Sign Out moved from a small red icon by the screen title into a red row at the bottom of the Account card (below a divider) — confirmation alert unchanged. **SET-03**: removed the "Plan: Free & Ad-free" row (implied non-existent tiers; the Support caption already says free/ad-free). **SET-02 partial**: "Voice Preference" section → "Language & Voice"; the player-side language toggle stays open under UX-11. Cleanup: unused `signOutIcon` style removed, `headerRow` collapsed. `tsc` + eslint clean; verified on the running app including the Sign Out → Cancel path (still signed in, no data written). |
 | 2026-08-29 | Batch 11 — Calm About screen, one name | ABOUT-03, ABOUT-04 | **Merged** (PR #12 → `main`, 2026-08-29) | `AboutScreen.tsx` + `SettingsScreen.tsx`. **ABOUT-03**: removed ALL-CAPS / wide letter-spacing from the About screen header, hero subtitle and section titles; section titles now use `colors.text` not orange, matching the calm section headers on Settings / Journey; "ABOUT MANGALAM" / "PRIVATE INITIATIVE" card titles → sentence case. Copy unchanged. **ABOUT-04**: the destination had three names — now the screen header and the Settings row both say "About Mangalam", the Settings section header says "About". Cleanup: dropped unused `logger` / `Linking` / `Platform` imports and an unused `typography` binding. `tsc` + eslint clean; cosmetic, no simulator run. |
@@ -185,7 +186,7 @@ _Last updated: 2026-08-29 (batch 13 merged — PR #14)_
 | STREAK-05 | Thin tab | [LIVE] One number + 7 dots + 2 tiles | NEEDS IMPROVEMENT | Fold into Home or a "Journey" section | P2 | Med | IDENTIFIED | |
 | STREAK-06 | Gamified cues | [LIVE] Flame + "Day Journey 🔥" vs the gentle "consistency over intensity" copy | NEEDS IMPROVEMENT | Reduce flame/"journey-count" cues; keep the copy | P2 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | ref UX-09, POS-05, STREAK-09. In-screen: flame removed, "Day Journey" → "days of practice", widget shows a calm "N days" (no flame, no "/7", no score animation). Encouragement copy kept. The **Streaks tab** flame + label mismatch recorded as STREAK-09 (resolved Batch 9 · PR #10 — now "Journey" + leaf). |
 | STREAK-07 | Encouragement copy | [LIVE] "Consistency over intensity. Ten minutes a day…" | KEEP | — | KEEP | High | REVIEWED | |
-| STREAK-08 | "Days of practice" caps at 30 | [SRC] `fetchStreakData` uses `.limit(30)`, so the hero count on the Streaks screen silently maxes out at 30 for a very consistent listener. Honest for a new/pre-launch user; would understate a long-term one. | NEEDS IMPROVEMENT | Raise/remove the cap, or reword to "your 30 most recent" — deferred (touches the query; out of Batch 3 scope) | P2 | High | IDENTIFIED | Surfaced during Batch 3 |
+| STREAK-08 | "Days of practice" caps at 30 | [SRC] `fetchStreakData` uses `.limit(30)`, so the hero count on the Streaks screen silently maxes out at 30 for a very consistent listener. Honest for a new/pre-launch user; would understate a long-term one. | NEEDS IMPROVEMENT | Raise/remove the cap, or reword to "your 30 most recent" | P2 | High | **MERGED** (Batch 14 · PR #15, 2026-08-29) | Bound raised 30 → 366. Consumers (WeeklyStreak, Streaks screen) unaffected by the longer array. Residual: still plateaus at a year — fine until an account approaches it. |
 | STREAK-09 | "Streaks" tab name + flame icon | [SRC+LIVE] After Batch 3 the screen is "Your Journey" / "days of practice" / "Last 7 days" with no streak or flame language, but the bottom-tab is still labelled "Streaks" with a `flame` icon. | NEEDS IMPROVEMENT | Rename the tab (e.g. "Journey") and swap the flame icon | P2 | High | **MERGED** (Batch 9 · PR #10, 2026-08-29) | Tab renamed `Streaks` → `Journey`; icon `flame`/`flame-outline` → `leaf`/`leaf-outline`. Route key renamed in `BottomTabParamList` (no call sites / deep links). |
 | STREAK-10 | `RollingNumber` now unreferenced | [SRC] `src/components/RollingNumber.tsx` was only used by the old `WeeklyStreak` badge; nothing imports it after Batch 3. Left in place, not deleted. | NEEDS IMPROVEMENT | Delete in a future cleanup pass if still unused | P2 | High | **MERGED** (Batch 9 · PR #10, 2026-08-29) | Deleted — still zero imports in `src/`. |
 
