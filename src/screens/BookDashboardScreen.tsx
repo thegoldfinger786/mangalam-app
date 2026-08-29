@@ -45,13 +45,9 @@ export const BookDashboardScreen = () => {
         throw new Error("BOOK_ID_REQUIRED");
     }
 
-    const clickedBookId = route?.params?.clickedBookId ?? null;
-    const clickedTitle = route?.params?.clickedTitle ?? null;
-
     const { completedVerses } = useAppStore();
     const [loading, setLoading] = useState(true);
     const [verses, setVerses] = useState<any[]>([]);
-    const [stats, setStats] = useState({ totalChapters: 0, totalVerses: 0 });
     const [nextVerse, setNextVerse] = useState<any>(null);
     const [book, setBook] = useState<any>(null);
 
@@ -83,9 +79,6 @@ export const BookDashboardScreen = () => {
             if (error) throw error;
             setVerses(allVerses || []);
 
-            const chapters = new Set(allVerses?.map(v => v.chapter_no));
-            setStats({ totalChapters: chapters.size, totalVerses: allVerses?.length || 0 });
-
             // Find first uncompleted verse
             const uncompleted = allVerses?.find(v => !completedVerses.includes(v.verse_id));
             if (uncompleted) {
@@ -101,7 +94,7 @@ export const BookDashboardScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, [clickedBookId, completedVerses, navigation, bookId]);
+    }, [completedVerses, navigation, bookId]);
 
     useEffect(() => {
         loadData();
