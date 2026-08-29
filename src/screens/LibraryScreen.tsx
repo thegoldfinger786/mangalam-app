@@ -3,7 +3,6 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
     FlatList,
     ScrollView,
     StyleSheet,
@@ -12,6 +11,7 @@ import {
     View,
 } from 'react-native';
 import { BookCard } from '../components/BookCard';
+import { Skeleton } from '../components/Skeleton';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
@@ -303,8 +303,16 @@ export const LibraryScreen = () => {
                 </View>
 
                 {itemsLoading ? (
-                    <View style={styles.centerPadding}>
-                        <ActivityIndicator size="large" color={colors.primary} />
+                    <View style={styles.chapterGrid}>
+                        {[0, 1, 2, 3, 4, 5].map((i) => (
+                            <Skeleton
+                                key={i}
+                                width="31%"
+                                height={110}
+                                borderRadius={borderRadius.l}
+                                style={{ marginBottom: spacing.m }}
+                            />
+                        ))}
                     </View>
                 ) : (
                     renderVerseChapters()
@@ -313,14 +321,27 @@ export const LibraryScreen = () => {
         );
     };
 
-    // ── Loading state ────────────────────────────────────────────────────────
+    // ── Loading state — skeleton of the book grid ───────────────────────────
     if (loading) {
         return (
             <ScreenContainer
                 edges={['top']}
-                style={[styles.container, styles.center, { backgroundColor: colors.background }]}
+                style={[styles.container, { backgroundColor: colors.background }]}
             >
-                <ActivityIndicator size="large" color={colors.primary} />
+                <View style={[styles.header, { backgroundColor: colors.background }]}>
+                    <Skeleton width={120} height={typography.sizes.xxl} borderRadius={borderRadius.s} />
+                </View>
+                <View style={styles.skeletonGrid}>
+                    {[0, 1, 2, 3].map((i) => (
+                        <Skeleton
+                            key={i}
+                            width="47%"
+                            height={150}
+                            borderRadius={borderRadius.l}
+                            style={{ marginBottom: spacing.m }}
+                        />
+                    ))}
+                </View>
             </ScreenContainer>
         );
     }
@@ -387,19 +408,17 @@ const createStyles = (
         container: {
             flex: 1,
         },
-        center: {
-            justifyContent: 'center',
-            alignItems: 'center',
-        },
-        centerPadding: {
-            padding: spacing.l,
-            alignItems: 'center',
-        },
 
         // ── Library header (used as FlatList ListHeaderComponent) ──
         header: {
             padding: spacing.l,
             paddingTop: spacing.m,
+        },
+        skeletonGrid: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            paddingHorizontal: spacing.l,
         },
         screenTitle: {
             fontSize: typography.sizes.xxl,
