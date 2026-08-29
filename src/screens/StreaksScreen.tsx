@@ -58,7 +58,7 @@ export const StreaksScreen = () => {
         }, [loadStreakData])
     );
 
-    // Distinct days the listener has spent time in Mangalam (their most recent 30).
+    // Distinct days the listener has spent time in Mangalam (their most recent year).
     const daysOfPractice = streakRows.length;
     const activeDates = useMemo(() => streakRows.map((r) => r.usage_date), [streakRows]);
 

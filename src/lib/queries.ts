@@ -150,12 +150,15 @@ export const incrementDailyUsage = async (userId: string) => {
 };
 
 export const fetchStreakData = async (userId: string) => {
+    // Up to a year of active days. Consumers need the last 7 (WeeklyStreak) and
+    // a distinct-day count (Streaks screen) — the old limit of 30 silently
+    // capped "days of practice" at 30 for a consistent listener.
     const { data, error } = await supabase
         .from('user_daily_usage')
         .select('usage_date, sessions_used')
         .eq('user_id', userId)
         .order('usage_date', { ascending: false })
-        .limit(30);
+        .limit(366);
 
     if (error) throw error;
     return data;
