@@ -3,7 +3,6 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-    ActivityIndicator,
     Alert,
     ScrollView,
     StyleSheet,
@@ -12,6 +11,7 @@ import {
     View
 } from 'react-native';
 import { getScriptureIcon } from '../components/ScriptureIcons';
+import { Skeleton } from '../components/Skeleton';
 import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchTopContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
@@ -54,8 +54,20 @@ export const CommunityWisdomScreen = () => {
 
     if (loading) {
         return (
-            <ScreenContainer edges={['top']} style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
+            <ScreenContainer
+                edges={['top']}
+                style={[styles.container, { backgroundColor: colors.background, paddingHorizontal: spacing.l, paddingTop: spacing.xl }]}
+            >
+                <Skeleton width="70%" height={26} borderRadius={6} style={{ marginBottom: spacing.s }} />
+                <Skeleton width="90%" height={16} borderRadius={4} style={{ marginBottom: spacing.xl }} />
+                {[0, 1].map((s) => (
+                    <View key={s} style={{ marginBottom: spacing.xl }}>
+                        <Skeleton width={160} height={20} borderRadius={4} style={{ marginBottom: spacing.m }} />
+                        {[0, 1, 2].map((r) => (
+                            <Skeleton key={r} width="100%" height={64} borderRadius={12} style={{ marginBottom: spacing.s }} />
+                        ))}
+                    </View>
+                ))}
             </ScreenContainer>
         );
     }
@@ -140,10 +152,6 @@ export const CommunityWisdomScreen = () => {
 const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
-    },
-    center: {
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     header: {
         flexDirection: 'row',

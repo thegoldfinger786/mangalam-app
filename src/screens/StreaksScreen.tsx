@@ -1,7 +1,8 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
+import { Skeleton } from '../components/Skeleton';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { fetchDailyUsage, fetchStreakData } from '../lib/queries';
@@ -27,7 +28,7 @@ const lastSevenDays = (): Set<string> => {
 };
 
 export const StreaksScreen = () => {
-    const { colors, spacing, typography, layout } = useTheme();
+    const { colors, spacing, typography, borderRadius, layout } = useTheme();
     const styles = useMemo(() => createStyles(typography), [typography]);
     const { session } = useAppStore();
     const [loading, setLoading] = useState(true);
@@ -72,8 +73,17 @@ export const StreaksScreen = () => {
 
     if (loading) {
         return (
-            <ScreenContainer edges={['top']} style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
+            <ScreenContainer
+                edges={['top']}
+                style={[styles.container, { backgroundColor: colors.background, paddingHorizontal: spacing.l, paddingTop: spacing.m }]}
+            >
+                <Skeleton width={150} height={32} borderRadius={borderRadius.s} style={{ marginBottom: spacing.l }} />
+                <Skeleton width="100%" height={180} borderRadius={borderRadius.l} style={{ marginBottom: spacing.xl }} />
+                <Skeleton width="100%" height={130} borderRadius={borderRadius.l} style={{ marginBottom: spacing.xl }} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Skeleton width="48%" height={90} borderRadius={borderRadius.l} />
+                    <Skeleton width="48%" height={90} borderRadius={borderRadius.l} />
+                </View>
             </ScreenContainer>
         );
     }
@@ -124,11 +134,6 @@ export const StreaksScreen = () => {
 const createStyles = (typography: ReturnType<typeof useTheme>['typography']) => StyleSheet.create({
     container: {
         flex: 1,
-    },
-    center: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     screenTitle: {
         fontWeight: 'bold',
