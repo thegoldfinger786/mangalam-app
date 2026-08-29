@@ -39,7 +39,7 @@ export const AppleAuthButton = ({ onPress, disabled, loading }: { onPress: () =>
 };
 
 export const GoogleAuthButton = ({ onPress, disabled, loading }: { onPress: () => void; disabled?: boolean; loading?: boolean }) => {
-    const { colors, typography, borderRadius } = useTheme();
+    const { typography, borderRadius } = useTheme();
     return (
         <Pressable
             disabled={disabled || loading}
