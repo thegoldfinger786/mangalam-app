@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -18,9 +18,7 @@ import { supabase } from '../lib/supabase';
 import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
-import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
-import { useRef } from 'react';
 import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
@@ -52,7 +50,7 @@ const EXPLORE_PATH_DISPLAY: Record<string, { title: string; color: string }> = {
 };
 
 export const HomeScreen = () => {
-    const { colors, spacing, typography, borderRadius, layout } = useTheme();
+    const { colors, spacing, typography, layout } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     
     // Strict selector-based subscriptions to prevent unnecessary re-renders
@@ -61,9 +59,6 @@ export const HomeScreen = () => {
     const setActiveBookId = useAppStore(state => state.setActiveBookId);
     const userName = useAppStore(state => state.userName);
     const setUserName = useAppStore(state => state.setUserName);
-
-    // Decoupled from playback ticks (position, isPlaying)
-    const currentPlayingBookId = useAudioStore(state => state.currentContent?.bookId);
 
     const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const hasLoadedRef = useRef(false);
