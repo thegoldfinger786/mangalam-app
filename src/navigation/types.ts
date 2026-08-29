@@ -3,7 +3,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type BottomTabParamList = {
     Home: undefined;
     Library: undefined;
-    Streaks: undefined;
+    Journey: undefined;
     Settings: undefined;
 };
 
