@@ -19,28 +19,29 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 9 merged — PR #10)_
+_Last updated: 2026-08-29 (batch 10 merged — PR #11)_
 
 | Metric | Count |
 |---|---|
-| Total findings | 80 |
+| Total findings | 81 |
 | — GOOD / KEEP | 11 |
-| — NEEDS IMPROVEMENT | 43 |
+| — NEEDS IMPROVEMENT | 44 |
 | — NEEDS CHANGE | 13 |
 | — Systemic (UX-0x) | 15 |
 | P0 | 1 (merged — PR #1) |
 | P1 | 30 |
-| P2 | 38 |
+| P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10) |
-| Verified | 30 (Batches 1–9; Batches 7–9 static checks — tsc/eslint) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05) |
+| Verified | 31 (Batches 1–10; Batches 7–10 static checks — tsc/eslint) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 50 |
+| Open | 48 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 10 — Book Dashboard polish | DASH-03, DASH-04, DASH-05 (+ DASH-07 recorded) | **Merged** (PR #11 → `main`, 2026-08-29) | `src/screens/BookDashboardScreen.tsx` only. **DASH-04**: wired the Ramayan hero cover (`ramayan-cover.jpg`, already bundled + used by `PlayScreen`); Ramayan now shows its own header title / Sanskrit title (रामायण) / subtitle ("The Journey of Rama") instead of falling through to a generic "Wisdom" icon card. **DASH-03**: added a local `pluralize` helper — "across 1 chapter", "1 verse listened", "0 / 1 verse". **DASH-05**: removed the decorative sparkle + book-divider row and its orphaned styles. Cleanup: replaced hardcoded slug string-literal checks with the `isGita`/`isRamayan`/`isMahabharat` identity helpers (`CLAUDE.md` §2), dropped unused `Dimensions`/`width` and `layout`. `tsc` + eslint clean; no simulator run — the Ramayan cover reuses `PlayScreen`'s exact established pattern. DASH-07 (dead `clickedBookId`/`clickedTitle` param chain from `HomeScreen`) recorded, left for a dedicated cleanup. |
 | 2026-08-29 | Batch 9 — "Journey" tab, no flame | STREAK-09, STREAK-10 | **Merged** (PR #10 → `main`, 2026-08-29) | Completes the de-gamification from Batches 3 & 5 — the bottom tab was the last flame/streak cue left. `src/navigation/BottomTabs.tsx` + `types.ts`: the `Streaks` tab (flame icon) is now `Journey` with a calm `leaf` icon, matching the screen's own "Your Journey" / "days of practice" language. Route key renamed in `BottomTabParamList`; no `navigate('Streaks')` call sites or deep-link config exist, so the rename is 3 lines. Deleted `src/components/RollingNumber.tsx` (only the pre-Batch-3 streak badge used it). No screen logic/data/nav-model change. `tsc` + eslint clean; `leaf`/`leaf-outline` confirmed in the bundled Ionicons glyphmap — no simulator run needed for a tab label + icon swap. |
 | 2026-08-29 | Batch 8 — Calm first-run copy | ONB-01; ONB-03 (partial); ONB-02 / POS-06 (partial) | **Merged** (PR #9 → `main`, 2026-08-29) | `WelcomeScreen` (shown once after Google/Apple sign-in) had two blank whitespace-only `<Text>` strings where the tagline and the name label used to be — a large empty void that looked unfinished (ONB-01). Filled with real copy: tagline "A calm space to pause, listen and reflect — a few minutes at a time." (a minimal practice framing — the full multi-screen intro of ONB-02/POS-06 is still deferred), label "What should we call you?". CTA "Begin Your Journey" → "Begin"; placeholder "Enter your name" → "Your name" (ONB-03 — the label now acts as helper text; the disabled-until-typed button state is unchanged). Removed an unused `logger` import. Copy-only, no logic/nav/data change; verified `tsc` + eslint clean. Terms/Privacy pages from Batch 7 re-checked live (HTTP 200, substantive) — not a launch blocker. |
 | 2026-08-29 | Batch 7 — Honest privacy & terms copy | AUTH-01, AUTH-02, WEB-03 | **Merged** (PR #8 → `main`, 2026-08-29) | The app told users "We do not collect any of your personal data" on three screens — false (email via auth, progress, activity, bookmarks are all stored; the Privacy Policy itself lists email/usage/payment). `LoginScreen` + `AuthScreen`: → "No ads, and we never sell your data." `AboutScreen` "Your trust matters to us" card: honest sentence that names what is kept and points to the Privacy Policy. `LoginScreen` footer: "Terms of Service" and "Privacy Policy" are now tappable (open `mangalamapp.com` externally). Copy + one trivial `Linking.openURL` interaction; verified by `tsc` + eslint (0 errors) — no simulator run needed. |
@@ -70,7 +71,7 @@ _Last updated: 2026-08-29 (batch 9 merged — PR #10)_
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
 | UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
 | UX-13 | Scripture-first navigation only; no theme/topic/mood entry | NEEDS IMPROVEMENT | P2 (strategic) | IDENTIFIED | whole app |
-| UX-14 | Generic tab icons + slug-mismatch icon/metadata fallback | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Home, Library, MiniPlayer, Community |
+| UX-14 | Generic tab icons + slug-mismatch icon/metadata fallback | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Home, Library, MiniPlayer, Community. Batch 10 removed the slug-mismatch fallback for Ramayan on the Book Dashboard specifically (DASH-04); the systemic slug/metadata issue elsewhere is unchanged. |
 | UX-15 | No "today" anchor for the daily habit | NEEDS CHANGE | P1 | IDENTIFIED | Home |
 
 ---
@@ -124,10 +125,11 @@ _Last updated: 2026-08-29 (batch 9 merged — PR #10)_
 |---|---|---|---|---|---|---|---|---|
 | DASH-01 | Duplicate browse UI | [SRC+LIVE] Duplicates Library book-detail with a different layout (list vs grid) and presentation (modal vs in-tab) | NEEDS CHANGE | Merge into one browse flow | P1 | High | IDENTIFIED | ref UX-02 |
 | DASH-02 | No verse browsing | [SRC+LIVE] Tapping a chapter jumps straight into playback; can't see a chapter's verse list from here | NEEDS IMPROVEMENT | Expand chapter → verse list | P2 | High | IDENTIFIED | |
-| DASH-03 | Grammar | [LIVE] "across 1 chapters" | NEEDS IMPROVEMENT | Pluralise | P2 | High | IDENTIFIED | |
-| DASH-04 | Cover art coverage | [SRC] Only Gita + Mahabharat wired; Ramayan/others use a generic icon though `ramayan-cover.jpg` exists | NEEDS IMPROVEMENT | Wire all covers | P2 | High | IDENTIFIED | ref UX-14 |
-| DASH-05 | Decorative filler | [LIVE] Sparkle + book divider at the bottom | NEEDS IMPROVEMENT | Remove | P2 | Med | IDENTIFIED | |
+| DASH-03 | Grammar | [LIVE] "across 1 chapters" | NEEDS IMPROVEMENT | Pluralise | P2 | High | **MERGED** (Batch 10 · PR #11, 2026-08-29) | Local `pluralize` helper: "across 1 chapter", "1 verse listened", "0 / 1 verse" (also drops the stray capital "Verses"). |
+| DASH-04 | Cover art coverage | [SRC] Only Gita + Mahabharat wired; Ramayan/others use a generic icon though `ramayan-cover.jpg` exists | NEEDS IMPROVEMENT | Wire all covers | P2 | High | **MERGED** (Batch 10 · PR #11, 2026-08-29) | ref UX-14. Ramayan hero cover wired (same asset `PlayScreen` uses); Ramayan now gets its own header title / Sanskrit title (रामायण) / subtitle ("The Journey of Rama") instead of falling through to "Wisdom". Books beyond Gita/Ramayan/Mahabharat still use the `getScriptureIcon` fallback (no cover assets for them yet). |
+| DASH-05 | Decorative filler | [LIVE] Sparkle + book divider at the bottom | NEEDS IMPROVEMENT | Remove | P2 | Med | **MERGED** (Batch 10 · PR #11, 2026-08-29) | Removed the sparkle/divider row and its orphaned styles. |
 | DASH-06 | Hero + calm copy | [LIVE] Hero art, Sanskrit title, "The Song of God", "Your journey begins here" — works | KEEP | — | KEEP | High | REVIEWED | |
+| DASH-07 | Dead `clickedBookId` / `clickedTitle` params | [SRC] `HomeScreen` computes and passes `clickedBookId` + `clickedTitle` when navigating here (`HomeScreen.tsx:242`), but `BookDashboardScreen` never reads them — only a stale `useCallback` dep references one. `navigation/types.ts` still declares both optional params. | NEEDS IMPROVEMENT | Drop the param chain across the 3 files | P2 | High | IDENTIFIED | Surfaced during Batch 10; left alone as an unrelated cross-file cleanup. |
 
 ### Play — `PlayScreen`
 
