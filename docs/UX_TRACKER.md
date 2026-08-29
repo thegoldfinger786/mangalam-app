@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 22 merged — PR #23)_
+_Last updated: 2026-08-29 (batch 23 merged — PR #24)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 22 merged — PR #23)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial); Batch 21 (PR #22 — LIB-05, UX-05 partial); Batch 22 (PR #23 — UX-05 BookDashboard) |
-| Verified | 46 (Batches 1–22; Batches 12, 15, 16, 18, 19, 21 & 22 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial); Batch 21 (PR #22 — LIB-05, UX-05 partial); Batch 22 (PR #23 — UX-05 BookDashboard); Batch 23 (PR #24 — UX-05 complete, LIB-05) |
+| Verified | 47 (Batches 1–23; Batches 12, 15, 16, 18, 19, 21 & 22 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 34 (UX-05 & CONTENT-02 PARTIAL) |
+| Open | 33 (CONTENT-02 PARTIAL) |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 23 — Play screen skeleton (UX-05 done) | UX-05 | **Merged** (PR #24 → `main`, 2026-08-29) | Play screen's bare full-screen `ActivityIndicator` → a player-layout skeleton in a `ScreenContainer`. Every data-loading screen now uses the shared `Skeleton`; UX-05 fully resolved. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 22 — Book Dashboard skeleton | UX-05 (partial) | **Merged** (PR #23 → `main`, 2026-08-29) | Book Dashboard showed its real layout with empty values while loading (a "0 verses / journey begins here" flash). Now a `Skeleton` layout during load; header bar hoisted into a shared `headerBar` const. Verified loaded state on the running app. Play screen's spinner still open under UX-05. |
 | 2026-08-29 | Batch 21 — Loading skeletons | LIB-05; UX-05 (partial) | **Merged** (PR #22 → `main`, 2026-08-29) | Library, Community Wisdom and Your Journey replaced their bare centred `ActivityIndicator` with a layout skeleton (shared `Skeleton`, matching Home). Removed the now-unused `ActivityIndicator` imports + orphaned `center`/`centerPadding` styles. `tsc` + eslint clean; loaded states verified on the running app. BookDashboard (empty-hero flash) and Play (full-screen spinner) still open under UX-05. |
 | 2026-08-29 | Batch 20 — One name per book | CONTENT-02 (partial) | **Merged** (PR #21 → `main`, 2026-08-29) | `COLLECTION_METADATA`: "Ramayana"/"Mahabharata" → "Ramayan"/"Mahabharat" (matches DB titles + Play/Dashboard headers; fixed the Play header/subtitle disagreeing for Ramayan). Not-yet-live pillars left alone. Slug casing + a proper identity-cache name helper remain open. |
@@ -74,7 +75,7 @@ _Last updated: 2026-08-29 (batch 22 merged — PR #23)_
 | UX-02 | Two parallel content-browse implementations (Library detail vs Book Dashboard) | NEEDS CHANGE | P1 | IDENTIFIED | Library, BookDashboard, Home |
 | UX-03 | Two streak widgets with different logic & week-start | NEEDS CHANGE | P1 | **MERGED** (Batch 3 · PR #4, 2026-08-29) | Home, Streaks — now one `WeeklyStreak` component + one data source |
 | UX-04 | Metrics not measured / mislabeled (Total Time, "streak", "completed") | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 14 + Batch 16) — Total Time + "streak" label + weekly widgets (Batch 3); 30-day cap (Batch 14 · STREAK-08); "completed"-on-open now fires on audio finish (Batch 16 · LIB-06) | Streaks, Home, Library, BookDashboard |
-| UX-05 | Inconsistent loading states (skeleton vs bare spinner) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 21 · PR #22; Batch 22 · PR #23) | Library, Streaks, Community, BookDashboard now use layout skeletons (shared `Skeleton`, matching Home). Still open: Play (full-screen spinner). |
+| UX-05 | Inconsistent loading states (skeleton vs bare spinner) | NEEDS IMPROVEMENT | P2 | **MERGED** (Batches 21–23 · PRs #22–#24, 2026-08-29) | Every data-loading screen — Home, Library, Community, Journey, Book Dashboard, Play — now shows a layout skeleton via the shared `Skeleton` component. Bare `ActivityIndicator`s removed. |
 | UX-06 | Inconsistent headers & back affordances | NEEDS IMPROVEMENT | P2 | IDENTIFIED | all stack screens |
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
@@ -148,7 +149,7 @@ _Last updated: 2026-08-29 (batch 22 merged — PR #23)_
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | PLAY-01 | Navigation dead-end | [SRC+LIVE] `navigateToVerse` calls `navigation.replace('Play', …)`. It is also invoked from the audio store's `onFinish` callback when a verse ends. If the listener has navigated away (mini-player showing / app on another tab / backgrounded), that stale, unfocused `navigation` dispatches `replace('Play')` against a stack that no longer contains Play — collapsing the root to a lone Play route with no parent. The close chevron then fires an unhandled `GO_BACK` and the listener is stranded on the player (silent no-op in production; red toast in dev). | NEEDS CHANGE | Guard `navigateToVerse` with `navigation.isFocused()` — only the focused PlayScreen drives stack navigation; when unfocused, let playback simply end and the mini-player / resume state carry the session | **P0** | High | **MERGED** (PR #1) | ref NAV-01, PLAY-14. Fix: early `return` in `navigateToVerse` (`src/screens/PlayScreen.tsx`) when `!navigation.isFocused()`. Verified on simulator 2026-08-28: verse finishing while on another tab no longer navigates or breaks the chevron; prev/next buttons, mini-player→Play→close, and normal open/close all still work; no `GO_BACK` errors post-fix; `tsc` clean. Merged to `security/edge-function-authorization` 2026-08-28 (`9c51ba1`). |
-| PLAY-02 | Silent no-audio state | [SRC] No audio asset → empty player (0:00/0:00), play does nothing, no message | NEEDS IMPROVEMENT | Explicit "audio unavailable" state | P1 | Med | IDENTIFIED | Not reproduced live — all tested verses had audio |
+| PLAY-02 | Silent no-audio state | [SRC] No audio asset → empty player (0:00/0:00), play does nothing, no message | NEEDS IMPROVEMENT | Explicit "audio unavailable" state | P1 | Med | IDENTIFIED | Not reproduced live — all tested verses had audio. (Loading state itself now has a skeleton — Batch 23; this finding is the *no audio after load* case.) |
 | PLAY-03 | Swallowed playback errors | [SRC] Audio-engine `status.error` handler is empty | NEEDS IMPROVEMENT | Surface + retry | P1 | High | IDENTIFIED | ref UX-08 |
 | PLAY-04 | Auto-scroll fights reader | [SRC+LIVE] Every position tick calls `scrollTo`; reading ahead/back is undone within ~1s | NEEDS IMPROVEMENT | Pause auto-scroll while user scrolls; resume after idle | P1 | High | **MERGED** (Batch 2 · PR #2) | ref PLAY-16. `src/screens/PlayScreen.tsx`: `onScrollBeginDrag` / `onScrollEndDrag` set `autoScrollPausedUntilRef = now + 6000ms`; the follow-along effect returns early while that window is open, then resumes on its own. Verified on the running iOS app (via temporary instrumentation): a manual drag suppresses the follow-along for ~6s of position ticks, then it catches up. Normal following behaviour (no manual scroll) is unchanged. |
 | PLAY-05 | Dead paywall branch | [SRC] "Daily Limit Reached / Become a Supporter" branch still present (app is free forever) | NEEDS IMPROVEMENT | Delete | P2 | High | **MERGED** (Batch 2 · PR #2) | ref VISION_ALIGNMENT §6; POS. [SRC] Confirmed `isAllowed` was initialised `true` and only ever set back to `true` — no code path set it `false`. Removed the `isAllowed` state, the `setIsAllowed(true)` call, the whole `if (isAllowed === false)` screen, and the now-unused `Button` import from `src/screens/PlayScreen.tsx`. `incrementDailyUsage` is retained — it feeds the streak/usage counters, not any gate. |
@@ -277,7 +278,7 @@ _Last updated: 2026-08-29 (batch 22 merged — PR #23)_
 | 1 | Fix the Play-screen `GO_BACK` dead-end | PLAY-01, NAV-01 | P0 | **MERGED** (PR #1, 2026-08-28; verified on simulator) |
 | 2 | Home "Today" anchor + fix stale/empty resume card | HOME-01, HOME-02, UX-15 | P1 | **PARTIAL** — HOME-02 done (Batch 2); HOME-01 / UX-15 ("Today" anchor + empty state) still open |
 | 3 | Rebuild onboarding around the practice; fix blank strings | ONB-01, ONB-02, POS-06 | P1 | IDENTIFIED |
-| 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | **PARTIAL** — HOME-03 resume-card copy done (Batch 2); Welcome blanks, error/loading states still open |
+| 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | **PARTIAL** — HOME-03 (Batch 2), Welcome blanks (Batch 8), **loading states all done (Batches 21–23)**. Remaining: UX-08 error/retry affordances; UX-01 residual error microcopy; designed *empty* states (HOME-01, COMM-04). |
 | 5 | Consolidate the two content-browse UIs | UX-02, DASH-01, LIB-01, NAV-02 | P1 | IDENTIFIED |
 | 6 | Honest metrics + one streak widget | UX-03, UX-04, STREAK-01, STREAK-02, STREAK-04 | P1 | **MERGED** — Batch 3 (PR #4); STREAK-08 30-day cap (Batch 14 · PR #15); LIB-06 "completed" on open (Batch 16 · PR #17). Fully resolved. |
 | 7 | De-gamify Community Wisdom | UX-09, COMM-01, POS-05 | P1 | **MERGED** (Batch 5 · PR #6, 2026-08-29) |
