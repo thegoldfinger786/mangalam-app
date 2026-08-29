@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 7 merged — PR #8)_
+_Last updated: 2026-08-29 (batch 9 merged — PR #10)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 7 merged — PR #8)_
 | P1 | 30 |
 | P2 | 38 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01) |
-| Verified | 29 (Batches 1–8; Batches 7–8 copy-only — tsc/eslint) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10) |
+| Verified | 30 (Batches 1–9; Batches 7–9 static checks — tsc/eslint) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 52 |
+| Open | 50 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 9 — "Journey" tab, no flame | STREAK-09, STREAK-10 | **Merged** (PR #10 → `main`, 2026-08-29) | Completes the de-gamification from Batches 3 & 5 — the bottom tab was the last flame/streak cue left. `src/navigation/BottomTabs.tsx` + `types.ts`: the `Streaks` tab (flame icon) is now `Journey` with a calm `leaf` icon, matching the screen's own "Your Journey" / "days of practice" language. Route key renamed in `BottomTabParamList`; no `navigate('Streaks')` call sites or deep-link config exist, so the rename is 3 lines. Deleted `src/components/RollingNumber.tsx` (only the pre-Batch-3 streak badge used it). No screen logic/data/nav-model change. `tsc` + eslint clean; `leaf`/`leaf-outline` confirmed in the bundled Ionicons glyphmap — no simulator run needed for a tab label + icon swap. |
 | 2026-08-29 | Batch 8 — Calm first-run copy | ONB-01; ONB-03 (partial); ONB-02 / POS-06 (partial) | **Merged** (PR #9 → `main`, 2026-08-29) | `WelcomeScreen` (shown once after Google/Apple sign-in) had two blank whitespace-only `<Text>` strings where the tagline and the name label used to be — a large empty void that looked unfinished (ONB-01). Filled with real copy: tagline "A calm space to pause, listen and reflect — a few minutes at a time." (a minimal practice framing — the full multi-screen intro of ONB-02/POS-06 is still deferred), label "What should we call you?". CTA "Begin Your Journey" → "Begin"; placeholder "Enter your name" → "Your name" (ONB-03 — the label now acts as helper text; the disabled-until-typed button state is unchanged). Removed an unused `logger` import. Copy-only, no logic/nav/data change; verified `tsc` + eslint clean. Terms/Privacy pages from Batch 7 re-checked live (HTTP 200, substantive) — not a launch blocker. |
 | 2026-08-29 | Batch 7 — Honest privacy & terms copy | AUTH-01, AUTH-02, WEB-03 | **Merged** (PR #8 → `main`, 2026-08-29) | The app told users "We do not collect any of your personal data" on three screens — false (email via auth, progress, activity, bookmarks are all stored; the Privacy Policy itself lists email/usage/payment). `LoginScreen` + `AuthScreen`: → "No ads, and we never sell your data." `AboutScreen` "Your trust matters to us" card: honest sentence that names what is kept and points to the Privacy Policy. `LoginScreen` footer: "Terms of Service" and "Privacy Policy" are now tappable (open `mangalamapp.com` externally). Copy + one trivial `Linking.openURL` interaction; verified by `tsc` + eslint (0 errors) — no simulator run needed. |
 | 2026-08-29 | Batch 6 — Shared card components & token styling (absorbed WIP) | UX-10 (partial); SET-08 / HOME-07 notes | **Merged** (PR #7 → `main`, 2026-08-29) | Took ownership of the long-parked working-tree changes, which had been the app's actual running state for the whole review engagement. New shared components `BookCard` and `VoiceOptionCard` (fully theme-token driven). `LibraryScreen`: book list → 2-column `FlatList` grid of `BookCard`, matching Home's "Explore Paths"; style block rewritten onto tokens; dead `renderEpisodes`/`renderCollectionList` removed. `SettingsScreen`: Voice Preference section → 2×2 grid of `VoiceOptionCard`. `Card`: hard-coded `borderRadius: 16` → `borderRadius.l` token (identical value). `BookDashboardScreen`: the "Continue" CTA moved into the progress box so it's visible without scrolling. No logic, data, navigation-model or product change. `tsc` clean; eslint warnings reduced vs before. Library grid verified rendering on the running app. |
@@ -64,7 +65,7 @@ _Last updated: 2026-08-29 (batch 7 merged — PR #8)_
 | UX-06 | Inconsistent headers & back affordances | NEEDS IMPROVEMENT | P2 | IDENTIFIED | all stack screens |
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
-| UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6) |
+| UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5 + Batch 9) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6); the last cue — the "Streaks" tab + flame icon — became "Journey" + leaf (Batch 9 · PR #10) |
 | UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7, 2026-08-29) | most screens — `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section now token-driven; other screens still hard-code |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
 | UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
@@ -177,11 +178,11 @@ _Last updated: 2026-08-29 (batch 7 merged — PR #8)_
 | STREAK-03 | Broken emoji glyph | [LIVE] 🔥 in "Day Journey 🔥" renders as a missing-glyph box on the test device | NEEDS IMPROVEMENT | Use an icon component, not a raw emoji | P2 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | Resolved by removing the flame entirely (STREAK-06) — no raw emoji remains in the streak experience. |
 | STREAK-04 | Duplicate week widget | [SRC+LIVE] Different from Home's; different week start ("F S S M T W T"), no dates | NEEDS CHANGE | One shared widget | P1 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | ref UX-03. The inline 7-dot tracker in `StreaksScreen` was deleted; the screen now renders `<WeeklyStreak activeDates={…} />`, the same component Home uses. |
 | STREAK-05 | Thin tab | [LIVE] One number + 7 dots + 2 tiles | NEEDS IMPROVEMENT | Fold into Home or a "Journey" section | P2 | Med | IDENTIFIED | |
-| STREAK-06 | Gamified cues | [LIVE] Flame + "Day Journey 🔥" vs the gentle "consistency over intensity" copy | NEEDS IMPROVEMENT | Reduce flame/"journey-count" cues; keep the copy | P2 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | ref UX-09, POS-05, STREAK-09. In-screen: flame removed, "Day Journey" → "days of practice", widget shows a calm "N days" (no flame, no "/7", no score animation). Encouragement copy kept. The **Streaks tab** still uses a flame icon + "Streaks" label — now mismatched with the screen's language; recorded as STREAK-09. |
+| STREAK-06 | Gamified cues | [LIVE] Flame + "Day Journey 🔥" vs the gentle "consistency over intensity" copy | NEEDS IMPROVEMENT | Reduce flame/"journey-count" cues; keep the copy | P2 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | ref UX-09, POS-05, STREAK-09. In-screen: flame removed, "Day Journey" → "days of practice", widget shows a calm "N days" (no flame, no "/7", no score animation). Encouragement copy kept. The **Streaks tab** flame + label mismatch recorded as STREAK-09 (resolved Batch 9 · PR #10 — now "Journey" + leaf). |
 | STREAK-07 | Encouragement copy | [LIVE] "Consistency over intensity. Ten minutes a day…" | KEEP | — | KEEP | High | REVIEWED | |
 | STREAK-08 | "Days of practice" caps at 30 | [SRC] `fetchStreakData` uses `.limit(30)`, so the hero count on the Streaks screen silently maxes out at 30 for a very consistent listener. Honest for a new/pre-launch user; would understate a long-term one. | NEEDS IMPROVEMENT | Raise/remove the cap, or reword to "your 30 most recent" — deferred (touches the query; out of Batch 3 scope) | P2 | High | IDENTIFIED | Surfaced during Batch 3 |
-| STREAK-09 | "Streaks" tab name + flame icon | [SRC+LIVE] After Batch 3 the screen is "Your Journey" / "days of practice" / "Last 7 days" with no streak or flame language, but the bottom-tab is still labelled "Streaks" with a `flame` icon. | NEEDS IMPROVEMENT | Rename the tab (e.g. "Journey") and swap the flame icon | P2 | High | IDENTIFIED | `src/navigation/BottomTabs.tsx`; deferred — out of Batch 3's file scope |
-| STREAK-10 | `RollingNumber` now unreferenced | [SRC] `src/components/RollingNumber.tsx` was only used by the old `WeeklyStreak` badge; nothing imports it after Batch 3. Left in place, not deleted. | NEEDS IMPROVEMENT | Delete in a future cleanup pass if still unused | P2 | High | IDENTIFIED | Surfaced during Batch 3 |
+| STREAK-09 | "Streaks" tab name + flame icon | [SRC+LIVE] After Batch 3 the screen is "Your Journey" / "days of practice" / "Last 7 days" with no streak or flame language, but the bottom-tab is still labelled "Streaks" with a `flame` icon. | NEEDS IMPROVEMENT | Rename the tab (e.g. "Journey") and swap the flame icon | P2 | High | **MERGED** (Batch 9 · PR #10, 2026-08-29) | Tab renamed `Streaks` → `Journey`; icon `flame`/`flame-outline` → `leaf`/`leaf-outline`. Route key renamed in `BottomTabParamList` (no call sites / deep links). |
+| STREAK-10 | `RollingNumber` now unreferenced | [SRC] `src/components/RollingNumber.tsx` was only used by the old `WeeklyStreak` badge; nothing imports it after Batch 3. Left in place, not deleted. | NEEDS IMPROVEMENT | Delete in a future cleanup pass if still unused | P2 | High | **MERGED** (Batch 9 · PR #10, 2026-08-29) | Deleted — still zero imports in `src/`. |
 
 ### Settings — `SettingsScreen`
 
