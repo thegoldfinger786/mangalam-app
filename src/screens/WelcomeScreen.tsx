@@ -5,7 +5,6 @@ import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
-import { logger } from '../lib/logger';
 
 export const WelcomeScreen = () => {
     const { colors, spacing, typography, borderRadius } = useTheme();
@@ -52,15 +51,17 @@ export const WelcomeScreen = () => {
                         <View style={styles.brandingContainer}>
                             <View style={[styles.sunCircle, { backgroundColor: colors.primaryLight, marginBottom: spacing.l }]} />
                             <Text style={[styles.appName, { color: colors.text, marginBottom: spacing.s }]}>Mangalam</Text>
-                            <Text style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>  </Text>
+                            <Text style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>
+                                A calm space to pause, listen and reflect — a few minutes at a time.
+                            </Text>
                         </View>
 
                         {/* Input Area */}
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>    </Text>
+                            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>What should we call you?</Text>
                             <TextInput
                                 style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.m, padding: spacing.l, color: colors.text, marginBottom: spacing.xl }]}
-                                placeholder="Enter your name"
+                                placeholder="Your name"
                                 placeholderTextColor={colors.textSecondary}
                                 value={name}
                                 onChangeText={setName}
@@ -69,7 +70,7 @@ export const WelcomeScreen = () => {
                                 onSubmitEditing={handleStart}
                             />
                             <Button
-                                title="Begin Your Journey"
+                                title="Begin"
                                 onPress={handleStart}
                                 style={[styles.startButton, !name.trim() && styles.disabledButton]}
                             />
