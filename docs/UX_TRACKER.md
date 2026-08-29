@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 19 merged — PR #20)_
+_Last updated: 2026-08-29 (batch 20 merged — PR #21)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 19 merged — PR #20)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02) |
-| Verified | 44 (Batches 1–19; Batches 12, 15, 16, 18 & 19 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial) |
+| Verified | 44 (Batches 1–20; Batches 12, 15, 16, 18 & 19 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 35 |
+| Open | 35 (CONTENT-02 now PARTIAL) |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 20 — One name per book | CONTENT-02 (partial) | **Merged** (PR #21 → `main`, 2026-08-29) | `COLLECTION_METADATA`: "Ramayana"/"Mahabharata" → "Ramayan"/"Mahabharat" (matches DB titles + Play/Dashboard headers; fixed the Play header/subtitle disagreeing for Ramayan). Not-yet-live pillars left alone. Slug casing + a proper identity-cache name helper remain open. |
 | 2026-08-29 | Batch 19 — Legal links to the browser | WEB-01, WEB-02 | **Merged** (PR #20 → `main`, 2026-08-29) | `AboutScreen.openLink` now always `Linking.openURL` (matches the Login screen); the in-app `WebViewScreen` — its only caller — is deleted along with the `WebView` route (`navigation/index.tsx` / `types.ts`). Legal pages open in Safari with the iOS return affordance. `react-native-webview` is left in `package.json` as an unused dep (removal needs a prebuild). Verified on the running app: About → Terms → `mangalamapp.com/terms` in Safari, no crash. |
 | 2026-08-29 | Batch 18 — Library chapter tiles | LIB-02 | **Merged** (PR #19 → `main`, 2026-08-29) | `LibraryScreen.tsx`: chapter tile "N / Chapter" → single "Chapter N"; removed the nested play-`<TouchableOpacity>` (duplicated the tile long-press). One tap target — tap opens the verse list, long-press plays the first verse. Verse rows: "Chapter 1, Verse 1" → "Verse N" (chapter already in the header). Verified on the running app. |
 | 2026-08-29 | Batch 17 — MiniPlayer font | MINI-02 | **Merged** (PR #18 → `main`, 2026-08-29) | `MiniPlayer` asked for `Inter-SemiBold`/`Inter-Regular` (not bundled — app ships Outfit) → silent system-font fallback. Now `typography.fontFamilies.semiBold`/`.regular` + `typography.sizes.s`/`.xs` (same values). Unused `Platform`/`RootStackParamList` imports removed. tsc + eslint clean; no simulator run (token swap, proven fonts). |
@@ -260,7 +261,7 @@ _Last updated: 2026-08-29 (batch 19 merged — PR #20)_
 | ID | Area | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | CONTENT-01 | Missing verse titles (Gita) | [LIVE] Gita verses lack descriptive titles (list shows Sanskrit); Ramayan verses have them | NEEDS IMPROVEMENT | A human title for every content unit, every book | P1 | High | IDENTIFIED | Unblocks LIB-03, COMM-02, MINI-01 |
-| CONTENT-02 | Book-name inconsistency | [LIVE] "Ramayan" vs "Ramayana"; "Mahabharat" vs "Mahabharata"; slug `AntarKathaye` | NEEDS IMPROVEMENT | One canonical display name per book, resolved via identity cache | P2 | High | IDENTIFIED | ref UX-14 |
+| CONTENT-02 | Book-name inconsistency | [LIVE] "Ramayan" vs "Ramayana"; "Mahabharat" vs "Mahabharata"; slug `AntarKathaye` | NEEDS IMPROVEMENT | One canonical display name per book, resolved via identity cache | P2 | High | **PARTIAL** (Batch 20 · PR #21, 2026-08-29) | ref UX-14. `COLLECTION_METADATA` "Ramayana"/"Mahabharata" → "Ramayan"/"Mahabharat", matching the DB titles and the Play/Dashboard headers (fixed the Play-screen header/subtitle disagreeing for Ramayan). Still open: the `AntarKathaye` slug casing (schema/migration) and a proper identity-cache-resolved name helper. |
 | CONTENT-03 | Generation artifacts in body text | [LIVE] "Welcome to today's lesson…" as transcript; "mine ness"; "Chapter 1 Verse 1" in commentary | NEEDS IMPROVEMENT | Strip on display; content QA pass | P2 | High | IDENTIFIED | ref PLAY-07 |
 | CONTENT-04 | "Story" = undisclosed LLM retelling | [SRC+LIVE] Ramayan/Mahabharat "Story" is a "recreate and expand" dramatisation with invented detail, shown under a plain "Story" label | NEEDS IMPROVEMENT | (Disclosure decision) | P2 | High | **DEFERRED** | Acknowledged & deferred in VISION_ALIGNMENT §1.4 / §6. Finding preserved; no action now |
 | CONTENT-05 | Catalogue depth varies | [LIVE] Ramayan has 2 chapters (48 + 52 episodes); Gita ~18 chapters | — | Product/content-strategy note | — | High | REVIEWED | Not a UX defect |
