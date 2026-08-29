@@ -132,11 +132,8 @@ export const LibraryScreen = () => {
                                     if (firstVerse) handlePlayItem(firstVerse.verse_id);
                                 }}
                             >
-                                <Text style={[styles.chapterTileNumber, { color: colors.primary }]}>
-                                    {chNo}
-                                </Text>
-                                <Text style={[styles.chapterTileLabel, { color: colors.textSecondary }]}>
-                                    Chapter
+                                <Text style={[styles.chapterTileTitle, { color: colors.text }]}>
+                                    Chapter {chNo}
                                 </Text>
                                 <View
                                     style={[
@@ -157,17 +154,6 @@ export const LibraryScreen = () => {
                                 <Text style={[styles.tileProgressText, { color: colors.textSecondary }]}>
                                     {completedInChapter}/{totalInChapter}
                                 </Text>
-                                <TouchableOpacity
-                                    style={{ marginTop: spacing.s }}
-                                    onPress={() => {
-                                        const firstVerse = chapterVerses.sort(
-                                            (a, b) => a.verse_no - b.verse_no,
-                                        )[0];
-                                        if (firstVerse) handlePlayItem(firstVerse.verse_id);
-                                    }}
-                                >
-                                    <Ionicons name="play-circle" size={24} color={colors.primary} />
-                                </TouchableOpacity>
                             </TouchableOpacity>
                         );
                     })}
@@ -244,7 +230,7 @@ export const LibraryScreen = () => {
                                         {verse.title || verse.sanskrit || verse.reference || 'Verse'}
                                     </Text>
                                     <Text style={[styles.verseChapterRef, { color: colors.textSecondary }]}>
-                                        Chapter {verse.chapter_no}, Verse {verse.verse_no}
+                                        Verse {verse.verse_no}
                                     </Text>
                                 </View>
                                 {isCompleted && (
@@ -538,13 +524,10 @@ const createStyles = (
             shadowRadius: 4,
             elevation: 2,
         },
-        chapterTileNumber: {
-            fontSize: typography.sizes.xl,
+        chapterTileTitle: {
+            fontSize: typography.sizes.m,
             fontWeight: '600',
-        },
-        chapterTileLabel: {
-            fontSize: typography.sizes.s,
-            fontWeight: '500',
+            textAlign: 'center',
             marginBottom: spacing.s,
         },
         tileProgressContainer: {
