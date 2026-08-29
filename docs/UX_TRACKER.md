@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 12 merged — PR #13)_
+_Last updated: 2026-08-29 (batch 13 merged — PR #14)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 12 merged — PR #13)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03) |
-| Verified | 35 (Batches 1–12; Batch 12 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07) |
+| Verified | 36 (Batches 1–13; Batch 12 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 44 |
+| Open | 43 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 13 — Drop dead nav params | DASH-07 | **Merged** (PR #14 → `main`, 2026-08-29) | `HomeScreen` passed `clickedBookId` / `clickedTitle` to `BookDashboard` that the screen never read. Removed from `RootStackParamList.BookDashboard`, the `navigate` call and the screen; the unused `stats` state + chapter-`Set` computation in the same load function went too. Type-checked; no runtime behaviour change. |
 | 2026-08-29 | Batch 12 — Tidy Settings | SET-01, SET-03 (+ SET-02 partial) | **Merged** (PR #13 → `main`, 2026-08-29) | `SettingsScreen.tsx`. **SET-01**: Sign Out moved from a small red icon by the screen title into a red row at the bottom of the Account card (below a divider) — confirmation alert unchanged. **SET-03**: removed the "Plan: Free & Ad-free" row (implied non-existent tiers; the Support caption already says free/ad-free). **SET-02 partial**: "Voice Preference" section → "Language & Voice"; the player-side language toggle stays open under UX-11. Cleanup: unused `signOutIcon` style removed, `headerRow` collapsed. `tsc` + eslint clean; verified on the running app including the Sign Out → Cancel path (still signed in, no data written). |
 | 2026-08-29 | Batch 11 — Calm About screen, one name | ABOUT-03, ABOUT-04 | **Merged** (PR #12 → `main`, 2026-08-29) | `AboutScreen.tsx` + `SettingsScreen.tsx`. **ABOUT-03**: removed ALL-CAPS / wide letter-spacing from the About screen header, hero subtitle and section titles; section titles now use `colors.text` not orange, matching the calm section headers on Settings / Journey; "ABOUT MANGALAM" / "PRIVATE INITIATIVE" card titles → sentence case. Copy unchanged. **ABOUT-04**: the destination had three names — now the screen header and the Settings row both say "About Mangalam", the Settings section header says "About". Cleanup: dropped unused `logger` / `Linking` / `Platform` imports and an unused `typography` binding. `tsc` + eslint clean; cosmetic, no simulator run. |
 | 2026-08-29 | Batch 10 — Book Dashboard polish | DASH-03, DASH-04, DASH-05 (+ DASH-07 recorded) | **Merged** (PR #11 → `main`, 2026-08-29) | `src/screens/BookDashboardScreen.tsx` only. **DASH-04**: wired the Ramayan hero cover (`ramayan-cover.jpg`, already bundled + used by `PlayScreen`); Ramayan now shows its own header title / Sanskrit title (रामायण) / subtitle ("The Journey of Rama") instead of falling through to a generic "Wisdom" icon card. **DASH-03**: added a local `pluralize` helper — "across 1 chapter", "1 verse listened", "0 / 1 verse". **DASH-05**: removed the decorative sparkle + book-divider row and its orphaned styles. Cleanup: replaced hardcoded slug string-literal checks with the `isGita`/`isRamayan`/`isMahabharat` identity helpers (`CLAUDE.md` §2), dropped unused `Dimensions`/`width` and `layout`. `tsc` + eslint clean; no simulator run — the Ramayan cover reuses `PlayScreen`'s exact established pattern. DASH-07 (dead `clickedBookId`/`clickedTitle` param chain from `HomeScreen`) recorded, left for a dedicated cleanup. |
@@ -131,7 +132,7 @@ _Last updated: 2026-08-29 (batch 12 merged — PR #13)_
 | DASH-04 | Cover art coverage | [SRC] Only Gita + Mahabharat wired; Ramayan/others use a generic icon though `ramayan-cover.jpg` exists | NEEDS IMPROVEMENT | Wire all covers | P2 | High | **MERGED** (Batch 10 · PR #11, 2026-08-29) | ref UX-14. Ramayan hero cover wired (same asset `PlayScreen` uses); Ramayan now gets its own header title / Sanskrit title (रामायण) / subtitle ("The Journey of Rama") instead of falling through to "Wisdom". Books beyond Gita/Ramayan/Mahabharat still use the `getScriptureIcon` fallback (no cover assets for them yet). |
 | DASH-05 | Decorative filler | [LIVE] Sparkle + book divider at the bottom | NEEDS IMPROVEMENT | Remove | P2 | Med | **MERGED** (Batch 10 · PR #11, 2026-08-29) | Removed the sparkle/divider row and its orphaned styles. |
 | DASH-06 | Hero + calm copy | [LIVE] Hero art, Sanskrit title, "The Song of God", "Your journey begins here" — works | KEEP | — | KEEP | High | REVIEWED | |
-| DASH-07 | Dead `clickedBookId` / `clickedTitle` params | [SRC] `HomeScreen` computes and passes `clickedBookId` + `clickedTitle` when navigating here (`HomeScreen.tsx:242`), but `BookDashboardScreen` never reads them — only a stale `useCallback` dep references one. `navigation/types.ts` still declares both optional params. | NEEDS IMPROVEMENT | Drop the param chain across the 3 files | P2 | High | IDENTIFIED | Surfaced during Batch 10; left alone as an unrelated cross-file cleanup. |
+| DASH-07 | Dead `clickedBookId` / `clickedTitle` params | [SRC] `HomeScreen` computes and passes `clickedBookId` + `clickedTitle` when navigating here, but `BookDashboardScreen` never reads them — only a stale `useCallback` dep references one. `navigation/types.ts` still declares both optional params. | NEEDS IMPROVEMENT | Drop the param chain across the 3 files | P2 | High | **MERGED** (Batch 13 · PR #14, 2026-08-29) | Params removed from the route type, the `navigate` call and the screen; the unused `stats` state + chapter-`Set` computation in the same load function went with it. No behaviour change. |
 
 ### Play — `PlayScreen`
 
