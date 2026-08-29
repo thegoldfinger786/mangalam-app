@@ -11,6 +11,7 @@ import {
     View,
 } from 'react-native';
 import { BookCard } from '../components/BookCard';
+import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
@@ -37,6 +38,8 @@ export const LibraryScreen = () => {
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [itemsLoading, setItemsLoading] = useState(false);
+    const [booksError, setBooksError] = useState(false);
+    const [itemsError, setItemsError] = useState(false);
 
     const { completedVerses, voicePreference } = useAppStore();
     const lang = voicePreference.startsWith('hindi') ? 'hi' : 'en';
@@ -48,10 +51,12 @@ export const LibraryScreen = () => {
     const loadBooks = async () => {
         try {
             setLoading(true);
+            setBooksError(false);
             const data = await fetchActiveBooks();
             setBooks(data);
         } catch (error) {
             logger.error('Failed to load books', { error });
+            setBooksError(true);
         } finally {
             setLoading(false);
         }
@@ -60,10 +65,12 @@ export const LibraryScreen = () => {
     const loadItems = async (book: any) => {
         try {
             setItemsLoading(true);
+            setItemsError(false);
             const data = await fetchVersesWithContent(book.book_id, lang);
             setItems(data);
         } catch (error) {
             logger.error('Failed to load items', { error });
+            setItemsError(true);
         } finally {
             setItemsLoading(false);
         }
@@ -314,6 +321,11 @@ export const LibraryScreen = () => {
                             />
                         ))}
                     </View>
+                ) : itemsError ? (
+                    <LoadError
+                        style={{ paddingVertical: spacing.xxxl }}
+                        onRetry={() => selectedBook && loadItems(selectedBook)}
+                    />
                 ) : (
                     renderVerseChapters()
                 )}
@@ -342,6 +354,17 @@ export const LibraryScreen = () => {
                         />
                     ))}
                 </View>
+            </ScreenContainer>
+        );
+    }
+
+    if (booksError) {
+        return (
+            <ScreenContainer
+                edges={['top']}
+                style={[styles.container, { backgroundColor: colors.background }]}
+            >
+                <LoadError onRetry={loadBooks} />
             </ScreenContainer>
         );
     }
