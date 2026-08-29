@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 23 merged — PR #24)_
+_Last updated: 2026-08-29 (batch 24 merged — PR #25)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 23 merged — PR #24)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial); Batch 21 (PR #22 — LIB-05, UX-05 partial); Batch 22 (PR #23 — UX-05 BookDashboard); Batch 23 (PR #24 — UX-05 complete, LIB-05) |
-| Verified | 47 (Batches 1–23; Batches 12, 15, 16, 18, 19, 21 & 22 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial); Batch 21 (PR #22 — LIB-05, UX-05 partial); Batch 22 (PR #23 — UX-05 BookDashboard); Batch 23 (PR #24 — UX-05 complete, LIB-05); Batch 24 (PR #25 — SUP-01/SUP-03 partial) |
+| Verified | 48 (Batches 1–24; Batches 12, 15, 16, 18, 19, 21 & 22 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 33 (CONTENT-02 PARTIAL) |
+| Open | 33 (CONTENT-02, SUP-01, SUP-03 PARTIAL) |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 24 — Calm the Support screen | SUP-01 (partial), SUP-03 (partial) | **Merged** (PR #25 → `main`, 2026-08-29) | Applied Batch 11's About-screen treatment to the Support screen (near-clone): no ALL-CAPS / wide letter-spacing on headers, section titles → text colour + sentence case. Removed the `transform: scale(1.02)` on the contribution button (SUP-01 clip). Dead `buttonGrid` style + unused theme bindings removed. The hard-coded "€5" CTA and the mission-text duplication with About still need product/editorial calls. |
 | 2026-08-29 | Batch 23 — Play screen skeleton (UX-05 done) | UX-05 | **Merged** (PR #24 → `main`, 2026-08-29) | Play screen's bare full-screen `ActivityIndicator` → a player-layout skeleton in a `ScreenContainer`. Every data-loading screen now uses the shared `Skeleton`; UX-05 fully resolved. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 22 — Book Dashboard skeleton | UX-05 (partial) | **Merged** (PR #23 → `main`, 2026-08-29) | Book Dashboard showed its real layout with empty values while loading (a "0 verses / journey begins here" flash). Now a `Skeleton` layout during load; header bar hoisted into a shared `headerBar` const. Verified loaded state on the running app. Play screen's spinner still open under UX-05. |
 | 2026-08-29 | Batch 21 — Loading skeletons | LIB-05; UX-05 (partial) | **Merged** (PR #22 → `main`, 2026-08-29) | Library, Community Wisdom and Your Journey replaced their bare centred `ActivityIndicator` with a layout skeleton (shared `Skeleton`, matching Home). Removed the now-unused `ActivityIndicator` imports + orphaned `center`/`centerPadding` styles. `tsc` + eslint clean; loaded states verified on the running app. BookDashboard (empty-hero flash) and Play (full-screen spinner) still open under UX-05. |
@@ -226,9 +227,9 @@ _Last updated: 2026-08-29 (batch 23 merged — PR #24)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| SUP-01 | Currency & clipped button | [SRC+LIVE] "Support with €5 / Custom Amount" — euro hard-coded; label wraps and is clipped by the card top | NEEDS IMPROVEMENT | Localise/drop currency; fix button layout | P2 | High | IDENTIFIED | `highlightedButton` scale(1.02) overflows its container |
+| SUP-01 | Currency & clipped button | [SRC+LIVE] "Support with €5 / Custom Amount" — euro hard-coded; label wraps and is clipped by the card top | NEEDS IMPROVEMENT | Localise/drop currency; fix button layout | P2 | High | **PARTIAL** (Batch 24 · PR #25, 2026-08-29) | Clipping fixed — removed the `transform: scale(1.02)` on the contribution button (its only cause). The hard-coded "€5" in the label still needs a product call on the donation CTA. |
 | SUP-02 | External hand-off, no return | [SRC] Opens Stripe in Safari; no in-app return / acknowledgement; `accountStatus` never updates | NEEDS IMPROVEMENT | Gentle "thank you" state on return | P2 | High | IDENTIFIED | `accountStatus` non-wiring is intentional (VISION_ALIGNMENT §6) |
-| SUP-03 | Duplicates About | [LIVE] Same "PRIVATE INITIATIVE" / mission text as About | NEEDS IMPROVEMENT | De-duplicate | P2 | High | IDENTIFIED | ref ABOUT-02, UX-07 |
+| SUP-03 | Duplicates About | [LIVE] Same "PRIVATE INITIATIVE" / mission text as About | NEEDS IMPROVEMENT | De-duplicate | P2 | High | **PARTIAL** (Batch 24 · PR #25, 2026-08-29) | ref ABOUT-02, UX-07. Applied Batch 11's calm-header treatment here too (no ALL-CAPS/orange section titles; sentence case). The *content* duplication (mission text shared verbatim with About) still needs an editorial decision on what each screen keeps. |
 
 ### WebView — `WebViewScreen`
 
