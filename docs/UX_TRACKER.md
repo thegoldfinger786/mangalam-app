@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 6 — shared card components; on branch `ux/batch-6`)_
+_Last updated: 2026-08-29 (batch 6 merged — PR #7)_
 
 | Metric | Count |
 |---|---|
@@ -32,7 +32,7 @@ _Last updated: 2026-08-29 (batch 6 — shared card components; on branch `ux/bat
 | P1 | 30 |
 | P2 | 38 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5) + Batch 6 on branch (absorbs parked WIP: shared card components + token styling; partial UX-10) |
+| Implemented / Merged | 24 merged (Batches 1–5) + Batch 6 (PR #7 — absorbed parked WIP: shared card components + token styling; partial UX-10) |
 | Verified | 25 (Batches 1–6 — simulator, 2026-08-28/29) |
 | Deferred / Rejected | 1 (CONTENT-04) |
 | Open | 56 |
@@ -41,7 +41,7 @@ _Last updated: 2026-08-29 (batch 6 — shared card components; on branch `ux/bat
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
-| 2026-08-29 | Batch 6 — Shared card components & token styling (absorbed WIP) | UX-10 (partial); SET-08 / HOME-07 notes | Implemented on branch `ux/batch-6` | Took ownership of the long-parked working-tree changes, which had been the app's actual running state for the whole review engagement. New shared components `BookCard` and `VoiceOptionCard` (fully theme-token driven). `LibraryScreen`: book list → 2-column `FlatList` grid of `BookCard`, matching Home's "Explore Paths"; style block rewritten onto tokens; dead `renderEpisodes`/`renderCollectionList` removed. `SettingsScreen`: Voice Preference section → 2×2 grid of `VoiceOptionCard`. `Card`: hard-coded `borderRadius: 16` → `borderRadius.l` token (identical value). `BookDashboardScreen`: the "Continue" CTA moved into the progress box so it's visible without scrolling. No logic, data, navigation-model or product change. `tsc` clean; eslint warnings reduced vs before. Library grid verified rendering on the running app. |
+| 2026-08-29 | Batch 6 — Shared card components & token styling (absorbed WIP) | UX-10 (partial); SET-08 / HOME-07 notes | **Merged** (PR #7 → `main`, 2026-08-29) | Took ownership of the long-parked working-tree changes, which had been the app's actual running state for the whole review engagement. New shared components `BookCard` and `VoiceOptionCard` (fully theme-token driven). `LibraryScreen`: book list → 2-column `FlatList` grid of `BookCard`, matching Home's "Explore Paths"; style block rewritten onto tokens; dead `renderEpisodes`/`renderCollectionList` removed. `SettingsScreen`: Voice Preference section → 2×2 grid of `VoiceOptionCard`. `Card`: hard-coded `borderRadius: 16` → `borderRadius.l` token (identical value). `BookDashboardScreen`: the "Continue" CTA moved into the progress box so it's visible without scrolling. No logic, data, navigation-model or product change. `tsc` clean; eslint warnings reduced vs before. Library grid verified rendering on the running app. |
 | 2026-08-29 | Batch 5 — De-gamify Community Wisdom | UX-09, COMM-01, COMM-03, POS-05, HOME-06/POS-07 (COMM-02 still blocked) | **Merged** (PR #6 → `main`, 2026-08-29) | `src/screens/CommunityWisdomScreen.tsx`: removed the rank badge, trophy, medals, "#1"–"#5" and medal-tinted borders; sections relabelled "Others are listening to / sharing / keeping" with neutral icons; intro rewritten to "A quiet look at the verses others are finding meaningful."; shouty uppercase section labels softened. `src/screens/HomeScreen.tsx`: discovery bar "…studying today" → "…finding meaningful". Verified on the running app: no podium chrome, calm labels, rows still tappable. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 4 — Remove the "Change Path?" gate | UX-12, HOME-04, POS-03 | **Merged** (PR #5 → `main`, 2026-08-29) | `src/screens/HomeScreen.tsx`: the blocking "Change Path?" confirmation alert (with "Subtle persistence leads to deeper wisdom") is removed from `handlePathPress` — tapping any book opens its dashboard directly; switching just quietly updates `activeBookId`. Section header "My Current Path" → "Continue". Verified on the running app: non-active book opens with no alert. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 3 — Honest progress & one weekly widget | UX-03, UX-04 (partial), HOME-09, STREAK-01, STREAK-02, STREAK-04 (+ STREAK-03, STREAK-06 resolved; STREAK-08/09/10 recorded) | **Merged** (PR #4 → `main`, merge commit `2d1b679`, 2026-08-29) | `src/components/WeeklyStreak.tsx` reworked into one shared honest widget: takes `activeDates` (real `user_daily_usage.usage_date` values), shows the last 7 calendar days marked from that record, header "Last 7 days" + a calm "N days" (no flame, no score). `HomeScreen.tsx` and `StreaksScreen.tsx` both feed it the same data. Streaks screen: fabricated "Total Time" (`streak × 10m`) removed → "Sessions this week" (measured sum); hero "Day Journey 🔥" → "N days of practice"; inline duplicate tracker deleted. Verified on the running app: Home and Streaks show identical dots/count; no layout breakage; `tsc` + eslint clean. |
@@ -63,7 +63,7 @@ _Last updated: 2026-08-29 (batch 6 — shared card components; on branch `ux/bat
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
 | UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6) |
-| UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7) | most screens — `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section now token-driven; other screens still hard-code |
+| UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7, 2026-08-29) | most screens — `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section now token-driven; other screens still hard-code |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
 | UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
 | UX-13 | Scripture-first navigation only; no theme/topic/mood entry | NEEDS IMPROVEMENT | P2 (strategic) | IDENTIFIED | whole app |
