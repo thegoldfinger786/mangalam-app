@@ -236,12 +236,7 @@ export const HomeScreen = () => {
             setActiveBookId(book.book_id);
         }
 
-        const clickedTitle = book?.title_en || book?.title_hi || book?.title || book?.name || 'Unknown';
-        navigation.navigate(ROUTES.BOOK_DASHBOARD, {
-            bookId: book.book_id,
-            clickedBookId: book.book_id,
-            clickedTitle,
-        });
+        navigation.navigate(ROUTES.BOOK_DASHBOARD, { bookId: book.book_id });
     };
 
     // Memoize derived UI values to improve stability
