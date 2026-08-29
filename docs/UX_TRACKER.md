@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 10 merged — PR #11)_
+_Last updated: 2026-08-29 (batch 11 merged — PR #12)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 10 merged — PR #11)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05) |
-| Verified | 31 (Batches 1–10; Batches 7–10 static checks — tsc/eslint) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04) |
+| Verified | 33 (Batches 1–11; Batches 7–11 static checks — tsc/eslint) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 48 |
+| Open | 46 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 11 — Calm About screen, one name | ABOUT-03, ABOUT-04 | **Merged** (PR #12 → `main`, 2026-08-29) | `AboutScreen.tsx` + `SettingsScreen.tsx`. **ABOUT-03**: removed ALL-CAPS / wide letter-spacing from the About screen header, hero subtitle and section titles; section titles now use `colors.text` not orange, matching the calm section headers on Settings / Journey; "ABOUT MANGALAM" / "PRIVATE INITIATIVE" card titles → sentence case. Copy unchanged. **ABOUT-04**: the destination had three names — now the screen header and the Settings row both say "About Mangalam", the Settings section header says "About". Cleanup: dropped unused `logger` / `Linking` / `Platform` imports and an unused `typography` binding. `tsc` + eslint clean; cosmetic, no simulator run. |
 | 2026-08-29 | Batch 10 — Book Dashboard polish | DASH-03, DASH-04, DASH-05 (+ DASH-07 recorded) | **Merged** (PR #11 → `main`, 2026-08-29) | `src/screens/BookDashboardScreen.tsx` only. **DASH-04**: wired the Ramayan hero cover (`ramayan-cover.jpg`, already bundled + used by `PlayScreen`); Ramayan now shows its own header title / Sanskrit title (रामायण) / subtitle ("The Journey of Rama") instead of falling through to a generic "Wisdom" icon card. **DASH-03**: added a local `pluralize` helper — "across 1 chapter", "1 verse listened", "0 / 1 verse". **DASH-05**: removed the decorative sparkle + book-divider row and its orphaned styles. Cleanup: replaced hardcoded slug string-literal checks with the `isGita`/`isRamayan`/`isMahabharat` identity helpers (`CLAUDE.md` §2), dropped unused `Dimensions`/`width` and `layout`. `tsc` + eslint clean; no simulator run — the Ramayan cover reuses `PlayScreen`'s exact established pattern. DASH-07 (dead `clickedBookId`/`clickedTitle` param chain from `HomeScreen`) recorded, left for a dedicated cleanup. |
 | 2026-08-29 | Batch 9 — "Journey" tab, no flame | STREAK-09, STREAK-10 | **Merged** (PR #10 → `main`, 2026-08-29) | Completes the de-gamification from Batches 3 & 5 — the bottom tab was the last flame/streak cue left. `src/navigation/BottomTabs.tsx` + `types.ts`: the `Streaks` tab (flame icon) is now `Journey` with a calm `leaf` icon, matching the screen's own "Your Journey" / "days of practice" language. Route key renamed in `BottomTabParamList`; no `navigate('Streaks')` call sites or deep-link config exist, so the rename is 3 lines. Deleted `src/components/RollingNumber.tsx` (only the pre-Batch-3 streak badge used it). No screen logic/data/nav-model change. `tsc` + eslint clean; `leaf`/`leaf-outline` confirmed in the bundled Ionicons glyphmap — no simulator run needed for a tab label + icon swap. |
 | 2026-08-29 | Batch 8 — Calm first-run copy | ONB-01; ONB-03 (partial); ONB-02 / POS-06 (partial) | **Merged** (PR #9 → `main`, 2026-08-29) | `WelcomeScreen` (shown once after Google/Apple sign-in) had two blank whitespace-only `<Text>` strings where the tagline and the name label used to be — a large empty void that looked unfinished (ONB-01). Filled with real copy: tagline "A calm space to pause, listen and reflect — a few minutes at a time." (a minimal practice framing — the full multi-screen intro of ONB-02/POS-06 is still deferred), label "What should we call you?". CTA "Begin Your Journey" → "Begin"; placeholder "Enter your name" → "Your name" (ONB-03 — the label now acts as helper text; the disabled-until-typed button state is unchanged). Removed an unused `logger` import. Copy-only, no logic/nav/data change; verified `tsc` + eslint clean. Terms/Privacy pages from Batch 7 re-checked live (HTTP 200, substantive) — not a launch blocker. |
@@ -200,14 +201,14 @@ _Last updated: 2026-08-29 (batch 10 merged — PR #11)_
 | SET-08 | Structure & controls | [LIVE] Clear sections, voice cards, sliders, inline name edit | KEEP | — | KEEP | High | REVIEWED | The voice cards are now the shared `VoiceOptionCard` (Batch 6). SET-02 (rename "Voice Preference" → "Language & Voice"; player-side toggle) is still open. |
 | SET-09 | Dark theme | [LIVE] Toggled live — warm charcoal, consistent accents, readable | KEEP | — | KEEP | High | REVIEWED | |
 
-### About / "Our Philosophy" — `AboutScreen`
+### About — `AboutScreen`
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | ABOUT-01 | Copy quality | [LIVE] Excellent, precisely on-positioning; honest disclaimer | KEEP | Surface a short version in onboarding | KEEP | High | REVIEWED | ref ONB-02 |
 | ABOUT-02 | Length & duplication | [SRC+LIVE] ~14 stacked cards; Support section duplicated verbatim on the Support screen | NEEDS IMPROVEMENT | Trim; de-duplicate | P2 | High | IDENTIFIED | ref UX-07, SUP-03 |
-| ABOUT-03 | Loud headers | [LIVE] ALL-CAPS orange section headers for a "quiet space" | NEEDS IMPROVEMENT | Soften | P2 | Med | IDENTIFIED | |
-| ABOUT-04 | Three names for one destination | [SRC+LIVE] "Our Philosophy" / "About Us" / "About" | NEEDS IMPROVEMENT | Pick one | P2 | High | IDENTIFIED | ref UX-06 |
+| ABOUT-03 | Loud headers | [LIVE] ALL-CAPS orange section headers for a "quiet space" | NEEDS IMPROVEMENT | Soften | P2 | Med | **MERGED** (Batch 11 · PR #12, 2026-08-29) | Dropped `textTransform: uppercase` + wide `letterSpacing` from the header, hero subtitle and section titles; section titles moved from `colors.primary` to `colors.text` (matches Settings / Journey). Shouted card titles "ABOUT MANGALAM" / "PRIVATE INITIATIVE" → sentence case. Copy unchanged. |
+| ABOUT-04 | Three names for one destination | [SRC+LIVE] "Our Philosophy" / "About Us" / "About" | NEEDS IMPROVEMENT | Pick one | P2 | High | **MERGED** (Batch 11 · PR #12, 2026-08-29) | ref UX-06. Screen header + Settings row both read "About Mangalam"; Settings section header is "About". Route key stays `About` (internal). |
 
 ### Support — `SupportMangalamScreen`
 
@@ -231,7 +232,7 @@ _Last updated: 2026-08-29 (batch 10 merged — PR #11)_
 |---|---|---|---|---|---|---|---|---|
 | NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen shows an unhandled `GO_BACK` on the close chevron; swipe-dismiss also fails. Root cause (confirmed by reproduction): an **unfocused** PlayScreen driving `navigation.replace('Play')` via the audio store's `onFinish` callback — not the modal-dismiss sequence originally hypothesised. See PLAY-01. | NEEDS CHANGE | See PLAY-01 | **P0** | High | **MERGED** (PR #1) | Fixed with PLAY-01 (focus guard in `navigateToVerse`). Verified on simulator 2026-08-28; merged 2026-08-28 (`9c51ba1`). |
 | NAV-02 | Modal-over-tabs vs in-tab | [SRC+LIVE] Home→Dashboard→Play hides the tab bar; Library's parallel flow keeps it | NEEDS IMPROVEMENT | One navigation model for browse→play | P1 | High | IDENTIFIED | ref UX-02, UX-06 |
-| NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | IDENTIFIED | ref UX-06 |
+| NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | IDENTIFIED | ref UX-06. Batch 11 removed the ALL-CAPS styling from the About header specifically; the structural five-header inconsistency is unchanged. |
 
 ### Positioning (spiritual wellness vs religious)
 
