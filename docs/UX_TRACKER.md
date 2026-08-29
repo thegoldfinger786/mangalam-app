@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 11 merged — PR #12)_
+_Last updated: 2026-08-29 (batch 12 merged — PR #13)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 11 merged — PR #12)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04) |
-| Verified | 33 (Batches 1–11; Batches 7–11 static checks — tsc/eslint) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03) |
+| Verified | 35 (Batches 1–12; Batch 12 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 46 |
+| Open | 44 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 12 — Tidy Settings | SET-01, SET-03 (+ SET-02 partial) | **Merged** (PR #13 → `main`, 2026-08-29) | `SettingsScreen.tsx`. **SET-01**: Sign Out moved from a small red icon by the screen title into a red row at the bottom of the Account card (below a divider) — confirmation alert unchanged. **SET-03**: removed the "Plan: Free & Ad-free" row (implied non-existent tiers; the Support caption already says free/ad-free). **SET-02 partial**: "Voice Preference" section → "Language & Voice"; the player-side language toggle stays open under UX-11. Cleanup: unused `signOutIcon` style removed, `headerRow` collapsed. `tsc` + eslint clean; verified on the running app including the Sign Out → Cancel path (still signed in, no data written). |
 | 2026-08-29 | Batch 11 — Calm About screen, one name | ABOUT-03, ABOUT-04 | **Merged** (PR #12 → `main`, 2026-08-29) | `AboutScreen.tsx` + `SettingsScreen.tsx`. **ABOUT-03**: removed ALL-CAPS / wide letter-spacing from the About screen header, hero subtitle and section titles; section titles now use `colors.text` not orange, matching the calm section headers on Settings / Journey; "ABOUT MANGALAM" / "PRIVATE INITIATIVE" card titles → sentence case. Copy unchanged. **ABOUT-04**: the destination had three names — now the screen header and the Settings row both say "About Mangalam", the Settings section header says "About". Cleanup: dropped unused `logger` / `Linking` / `Platform` imports and an unused `typography` binding. `tsc` + eslint clean; cosmetic, no simulator run. |
 | 2026-08-29 | Batch 10 — Book Dashboard polish | DASH-03, DASH-04, DASH-05 (+ DASH-07 recorded) | **Merged** (PR #11 → `main`, 2026-08-29) | `src/screens/BookDashboardScreen.tsx` only. **DASH-04**: wired the Ramayan hero cover (`ramayan-cover.jpg`, already bundled + used by `PlayScreen`); Ramayan now shows its own header title / Sanskrit title (रामायण) / subtitle ("The Journey of Rama") instead of falling through to a generic "Wisdom" icon card. **DASH-03**: added a local `pluralize` helper — "across 1 chapter", "1 verse listened", "0 / 1 verse". **DASH-05**: removed the decorative sparkle + book-divider row and its orphaned styles. Cleanup: replaced hardcoded slug string-literal checks with the `isGita`/`isRamayan`/`isMahabharat` identity helpers (`CLAUDE.md` §2), dropped unused `Dimensions`/`width` and `layout`. `tsc` + eslint clean; no simulator run — the Ramayan cover reuses `PlayScreen`'s exact established pattern. DASH-07 (dead `clickedBookId`/`clickedTitle` param chain from `HomeScreen`) recorded, left for a dedicated cleanup. |
 | 2026-08-29 | Batch 9 — "Journey" tab, no flame | STREAK-09, STREAK-10 | **Merged** (PR #10 → `main`, 2026-08-29) | Completes the de-gamification from Batches 3 & 5 — the bottom tab was the last flame/streak cue left. `src/navigation/BottomTabs.tsx` + `types.ts`: the `Streaks` tab (flame icon) is now `Journey` with a calm `leaf` icon, matching the screen's own "Your Journey" / "days of practice" language. Route key renamed in `BottomTabParamList`; no `navigate('Streaks')` call sites or deep-link config exist, so the rename is 3 lines. Deleted `src/components/RollingNumber.tsx` (only the pre-Batch-3 streak badge used it). No screen logic/data/nav-model change. `tsc` + eslint clean; `leaf`/`leaf-outline` confirmed in the bundled Ionicons glyphmap — no simulator run needed for a tab label + icon swap. |
@@ -191,14 +192,14 @@ _Last updated: 2026-08-29 (batch 11 merged — PR #12)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| SET-01 | Sign-out placement | [SRC+LIVE] Small red door icon right of the "Settings" title; jarring, mis-tap risk (confirmation alert mitigates) | NEEDS IMPROVEMENT | Move into the Account card as a normal row | P2 | High | IDENTIFIED | |
-| SET-02 | Language buried & mislabeled | [SRC+LIVE] Only via "Voice Preference"; no switch at point of use | NEEDS IMPROVEMENT | Rename "Language & Voice"; expose a language toggle in the player | P1 | High | IDENTIFIED | ref UX-11 |
-| SET-03 | Filler row | [SRC+LIVE] "Plan: Free & Ad-free" | NEEDS IMPROVEMENT | Remove or make meaningful | P2 | High | IDENTIFIED | |
+| SET-01 | Sign-out placement | [SRC+LIVE] Small red door icon right of the "Settings" title; jarring, mis-tap risk (confirmation alert mitigates) | NEEDS IMPROVEMENT | Move into the Account card as a normal row | P2 | High | **MERGED** (Batch 12 · PR #13, 2026-08-29) | Now a red "Sign Out" row at the bottom of the Account card (below a divider), same row pattern as "About Mangalam". Confirmation alert unchanged. Verified on the running app incl. the Cancel path. |
+| SET-02 | Language buried & mislabeled | [SRC+LIVE] Only via "Voice Preference"; no switch at point of use | NEEDS IMPROVEMENT | Rename "Language & Voice"; expose a language toggle in the player | P1 | High | **PARTIAL** (Batch 12 · PR #13, 2026-08-29) | ref UX-11. Section renamed "Voice Preference" → "Language & Voice". The player-side language toggle is still open. |
+| SET-03 | Filler row | [SRC+LIVE] "Plan: Free & Ad-free" | NEEDS IMPROVEMENT | Remove or make meaningful | P2 | High | **MERGED** (Batch 12 · PR #13, 2026-08-29) | Row removed — it implied non-existent plan tiers; the Support button + "Help keep Mangalam free and ad-free" caption already carry the message. |
 | SET-04 | Support entry sprawl | [SRC+LIVE] Here + About (×2) + dedicated screen; "Support Mangalam" vs "Become a Supporter" | NEEDS IMPROVEMENT | One entry + one contextual mention; consistent label | P2 | High | IDENTIFIED | ref UX-07 |
 | SET-05 | Narration floor 0.7 | [SRC] Narration can't go below 70% | NEEDS IMPROVEMENT | Widen the range | P2 | High | IDENTIFIED | |
 | SET-06 | No account deletion | [SRC+LIVE] Missing; App Store Guideline 5.1.1(v) requires in-app account deletion | NEEDS CHANGE | Add account deletion | P1 | High | IDENTIFIED | Compliance risk |
 | SET-07 | No bookmarks / downloads / notification settings | [SRC] Missing | NEEDS IMPROVEMENT | Add bookmarks management at least | P2 | Med | IDENTIFIED | |
-| SET-08 | Structure & controls | [LIVE] Clear sections, voice cards, sliders, inline name edit | KEEP | — | KEEP | High | REVIEWED | The voice cards are now the shared `VoiceOptionCard` (Batch 6). SET-02 (rename "Voice Preference" → "Language & Voice"; player-side toggle) is still open. |
+| SET-08 | Structure & controls | [LIVE] Clear sections, voice cards, sliders, inline name edit | KEEP | — | KEEP | High | REVIEWED | The voice cards are now the shared `VoiceOptionCard` (Batch 6). Section renamed "Language & Voice" (Batch 12); the player-side language toggle (SET-02 / UX-11) is still open. |
 | SET-09 | Dark theme | [LIVE] Toggled live — warm charcoal, consistent accents, readable | KEEP | — | KEEP | High | REVIEWED | |
 
 ### About — `AboutScreen`
