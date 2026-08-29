@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
+import { Skeleton } from '../components/Skeleton';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { assertValidBookId, assertBookIdentityConsistency, isGita, isRamayan, isMahabharat } from '../lib/bookIdentity';
@@ -167,17 +168,37 @@ export const BookDashboardScreen = () => {
     const BOOK_SLUG = gitaCheck ? 'bhagavad-gita' : resolvedType as string;
     const meta = COLLECTION_METADATA[BOOK_SLUG] || { title: 'Wisdom', icon: 'book', color: colors.primary };
 
+    const headerBar = (
+        <View style={[styles.header, { backgroundColor: colors.background }]}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                <Ionicons name="chevron-down" size={28} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.text, fontFamily: typography.fontFamilies.medium }]}>
+                {gitaCheck ? 'Bhagavad Gita' : ramayanCheck ? 'Ramayan' : mahabharatCheck ? 'Mahabharat' : meta.title}
+            </Text>
+            <View style={{ width: 28 }} />
+        </View>
+    );
+
+    if (loading) {
+        return (
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                {headerBar}
+                <View style={styles.skeletonBody}>
+                    <Skeleton width={180} height={180} borderRadius={borderRadius.xl} style={{ marginBottom: spacing.xl }} />
+                    <Skeleton width="60%" height={28} borderRadius={borderRadius.s} style={{ marginBottom: spacing.s }} />
+                    <Skeleton width="40%" height={16} borderRadius={borderRadius.s} style={{ marginBottom: spacing.xl }} />
+                    <Skeleton width="100%" height={140} borderRadius={borderRadius.l} style={{ marginBottom: spacing.l }} />
+                    <Skeleton width="100%" height={70} borderRadius={borderRadius.m} style={{ marginBottom: spacing.m }} />
+                    <Skeleton width="100%" height={70} borderRadius={borderRadius.m} />
+                </View>
+            </ScreenContainer>
+        );
+    }
+
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { backgroundColor: colors.background }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                    <Ionicons name="chevron-down" size={28} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text, fontFamily: typography.fontFamilies.medium }]}>
-                    {gitaCheck ? 'Bhagavad Gita' : ramayanCheck ? 'Ramayan' : mahabharatCheck ? 'Mahabharat' : meta.title}
-                </Text>
-                <View style={{ width: 28 }} />
-            </View>
+            {headerBar}
 
             <ScrollView 
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + spacing.xl }]} 
@@ -268,6 +289,11 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     scrollContent: {
         // Dynamic paddingBottom added inline to respect safe area + MiniPlayer height
+    },
+    skeletonBody: {
+        alignItems: 'center',
+        paddingHorizontal: spacing.xl,
+        marginTop: spacing.l,
     },
     heroSection: {
         alignItems: 'center',
