@@ -215,6 +215,13 @@ export const BookDashboardScreen = () => {
                                 {completedVersesInBook.length} <Text style={[styles.progressSubtext, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>verses listened</Text>
                             </Text>
                             <Text style={[styles.progressDesc, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>{progressText}</Text>
+                            {/* CTA moved here so it's immediately visible without scrolling */}
+                            <Button
+                                title={handleContinueLabel()}
+                                onPress={handleContinue}
+                                style={styles.continueButton}
+                                disabled={loading || !nextVerse}
+                            />
                         </View>
 
                         {/* ── Chapter Progress Section ── */}
@@ -238,13 +245,6 @@ export const BookDashboardScreen = () => {
                                 ))}
                             </View>
                         )}
-
-                        <Button
-                            title={handleContinueLabel()}
-                            onPress={handleContinue}
-                            style={styles.continueButton}
-                            disabled={loading || !nextVerse}
-                        />
                     </View>
                 </View>
 
@@ -364,6 +364,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     continueButton: {
         width: '100%',
+        marginTop: spacing.m,
     },
     decorationContainer: {
         flexDirection: 'row',
