@@ -948,6 +948,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 }, 500);
             }
             sound.pause();
+            // Reflect the tap immediately; the playbackStatusUpdate listener
+            // remains the source of truth and reconciles on the next packet.
+            set({ isPlaying: false });
             return;
         }
 
@@ -966,6 +969,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
             try { bgSound?.play(); } catch { }
         }
         sound.play();
+        set({ isPlaying: true });
 
         if (bgSound && bgEnabled) {
             get()._fadeBgAudio(targetBgVolume, 1000);
