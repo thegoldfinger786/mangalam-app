@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
+import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
@@ -48,6 +49,7 @@ export const BookDashboardScreen = () => {
 
     const { completedVerses } = useAppStore();
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [verses, setVerses] = useState<any[]>([]);
     const [nextVerse, setNextVerse] = useState<any>(null);
     const [book, setBook] = useState<any>(null);
@@ -59,6 +61,7 @@ export const BookDashboardScreen = () => {
         }
         try {
             setLoading(true);
+            setLoadError(false);
             const activeBooks = await fetchActiveBooks();
             const resolvedBook = activeBooks.find(b => b.book_id === bookId);
 
@@ -91,7 +94,7 @@ export const BookDashboardScreen = () => {
 
         } catch (e) {
             logger.error('Failed to load book dashboard', { error: e });
-            Alert.alert('Error', 'Unable to load dashboard data.');
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -192,6 +195,15 @@ export const BookDashboardScreen = () => {
                     <Skeleton width="100%" height={70} borderRadius={borderRadius.m} style={{ marginBottom: spacing.m }} />
                     <Skeleton width="100%" height={70} borderRadius={borderRadius.m} />
                 </View>
+            </ScreenContainer>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                {headerBar}
+                <LoadError onRetry={loadData} />
             </ScreenContainer>
         );
     }

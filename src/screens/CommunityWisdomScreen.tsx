@@ -11,6 +11,7 @@ import {
     View
 } from 'react-native';
 import { getScriptureIcon } from '../components/ScriptureIcons';
+import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
 import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchTopContent } from '../lib/queries';
@@ -26,6 +27,7 @@ export const CommunityWisdomScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [topStats, setTopStats] = useState<{
         listened: any[],
         shared: any[],
@@ -35,6 +37,7 @@ export const CommunityWisdomScreen = () => {
     const loadData = useCallback(async () => {
         try {
             setLoading(true);
+            setLoadError(false);
             const [listened, shared, bookmarked] = await Promise.all([
                 fetchTopContent('listen', 5),
                 fetchTopContent('share', 5),
@@ -43,6 +46,7 @@ export const CommunityWisdomScreen = () => {
             setTopStats({ listened, shared, bookmarked });
         } catch (error) {
             logger.error('Failed to load wisdom data', { error });
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -68,6 +72,14 @@ export const CommunityWisdomScreen = () => {
                         ))}
                     </View>
                 ))}
+            </ScreenContainer>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <LoadError onRetry={loadData} />
             </ScreenContainer>
         );
     }

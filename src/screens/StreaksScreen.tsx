@@ -2,6 +2,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Card } from '../components/Card';
+import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -32,6 +33,7 @@ export const StreaksScreen = () => {
     const styles = useMemo(() => createStyles(typography), [typography]);
     const { session } = useAppStore();
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [usageToday, setUsageToday] = useState(0);
     const [streakRows, setStreakRows] = useState<StreakRow[]>([]);
 
@@ -39,6 +41,7 @@ export const StreaksScreen = () => {
         if (!session?.user) return;
         try {
             setLoading(true);
+            setLoadError(false);
             const [streakData, todayUsage] = await Promise.all([
                 fetchStreakData(session.user.id),
                 fetchDailyUsage(session.user.id),
@@ -48,6 +51,7 @@ export const StreaksScreen = () => {
             setUsageToday(todayUsage?.sessions_used || 0);
         } catch (error) {
             logger.error('Failed to load streak screen data', { error });
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -84,6 +88,14 @@ export const StreaksScreen = () => {
                     <Skeleton width="48%" height={90} borderRadius={borderRadius.l} />
                     <Skeleton width="48%" height={90} borderRadius={borderRadius.l} />
                 </View>
+            </ScreenContainer>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <LoadError onRetry={loadStreakData} />
             </ScreenContainer>
         );
     }
