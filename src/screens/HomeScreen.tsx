@@ -223,40 +223,25 @@ export const HomeScreen = () => {
     };
 
     const handlePathPress = (book: any) => {
-        const clickedTitle = book?.title_en || book?.title_hi || book?.title || book?.name || 'Unknown';
-
-        const navigateToBookDashboard = () => {
-            if (!assertValidBookId(book?.book_id, 'HomeScreen.handlePathPress')) {
-                Alert.alert('Unavailable', 'This book is not available right now.');
-                return;
-            }
-            assertBookIdentityConsistency({ source: 'HomeScreen.handlePathPress', bookId: book.book_id });
-            navigation.navigate(ROUTES.BOOK_DASHBOARD, {
-                bookId: book.book_id,
-                clickedBookId: book.book_id,
-                clickedTitle: clickedTitle,
-            });
-        };
-
-        if (book.book_id === activeBookId) {
-            navigateToBookDashboard();
-        } else {
-            Alert.alert(
-                'Change Path?',
-                `You are currently focused on the ${currentPathTitle} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?`,
-                [
-                    { text: 'Stay Focused', style: 'cancel' },
-                    {
-                        text: 'Change Path',
-                        onPress: () => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                            setActiveBookId(book.book_id);
-                            navigateToBookDashboard();
-                        }
-                    }
-                ]
-            );
+        if (!assertValidBookId(book?.book_id, 'HomeScreen.handlePathPress')) {
+            Alert.alert('Unavailable', 'This book is not available right now.');
+            return;
         }
+        assertBookIdentityConsistency({ source: 'HomeScreen.handlePathPress', bookId: book.book_id });
+
+        // Opening any book is free — no confirmation gate. Switching just quietly
+        // makes it the book the "Continue" card resumes from.
+        if (book.book_id !== activeBookId) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setActiveBookId(book.book_id);
+        }
+
+        const clickedTitle = book?.title_en || book?.title_hi || book?.title || book?.name || 'Unknown';
+        navigation.navigate(ROUTES.BOOK_DASHBOARD, {
+            bookId: book.book_id,
+            clickedBookId: book.book_id,
+            clickedTitle,
+        });
     };
 
     // Memoize derived UI values to improve stability
@@ -348,7 +333,7 @@ export const HomeScreen = () => {
 
                 {/* Current Path Section */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>My Current Path</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Continue</Text>
                     {resumeState || resumeLoading ? (
                         <TouchableOpacity activeOpacity={0.85} onPress={() => handleOpenPath?.()} disabled={resumeLoading}>
                             <Card style={[
