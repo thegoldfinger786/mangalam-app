@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 6 merged — PR #7)_
+_Last updated: 2026-08-29 (batch 7 — honest privacy claims; on branch `ux/batch-7`)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 6 merged — PR #7)_
 | P1 | 30 |
 | P2 | 38 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5) + Batch 6 (PR #7 — absorbed parked WIP: shared card components + token styling; partial UX-10) |
-| Verified | 25 (Batches 1–6 — simulator, 2026-08-28/29) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 on branch (AUTH-01, AUTH-02, WEB-03) |
+| Verified | 28 (Batches 1–7; Batch 7 copy-only — tsc/eslint) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 56 |
+| Open | 53 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 7 — Honest privacy & terms copy | AUTH-01, AUTH-02, WEB-03 | Implemented on branch `ux/batch-7` | The app told users "We do not collect any of your personal data" on three screens — false (email via auth, progress, activity, bookmarks are all stored; the Privacy Policy itself lists email/usage/payment). `LoginScreen` + `AuthScreen`: → "No ads, and we never sell your data." `AboutScreen` "Your trust matters to us" card: honest sentence that names what is kept and points to the Privacy Policy. `LoginScreen` footer: "Terms of Service" and "Privacy Policy" are now tappable (open `mangalamapp.com` externally). Copy + one trivial `Linking.openURL` interaction; verified by `tsc` + eslint (0 errors) — no simulator run needed. |
 | 2026-08-29 | Batch 6 — Shared card components & token styling (absorbed WIP) | UX-10 (partial); SET-08 / HOME-07 notes | **Merged** (PR #7 → `main`, 2026-08-29) | Took ownership of the long-parked working-tree changes, which had been the app's actual running state for the whole review engagement. New shared components `BookCard` and `VoiceOptionCard` (fully theme-token driven). `LibraryScreen`: book list → 2-column `FlatList` grid of `BookCard`, matching Home's "Explore Paths"; style block rewritten onto tokens; dead `renderEpisodes`/`renderCollectionList` removed. `SettingsScreen`: Voice Preference section → 2×2 grid of `VoiceOptionCard`. `Card`: hard-coded `borderRadius: 16` → `borderRadius.l` token (identical value). `BookDashboardScreen`: the "Continue" CTA moved into the progress box so it's visible without scrolling. No logic, data, navigation-model or product change. `tsc` clean; eslint warnings reduced vs before. Library grid verified rendering on the running app. |
 | 2026-08-29 | Batch 5 — De-gamify Community Wisdom | UX-09, COMM-01, COMM-03, POS-05, HOME-06/POS-07 (COMM-02 still blocked) | **Merged** (PR #6 → `main`, 2026-08-29) | `src/screens/CommunityWisdomScreen.tsx`: removed the rank badge, trophy, medals, "#1"–"#5" and medal-tinted borders; sections relabelled "Others are listening to / sharing / keeping" with neutral icons; intro rewritten to "A quiet look at the verses others are finding meaningful."; shouty uppercase section labels softened. `src/screens/HomeScreen.tsx`: discovery bar "…studying today" → "…finding meaningful". Verified on the running app: no podium chrome, calm labels, rows still tappable. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 4 — Remove the "Change Path?" gate | UX-12, HOME-04, POS-03 | **Merged** (PR #5 → `main`, 2026-08-29) | `src/screens/HomeScreen.tsx`: the blocking "Change Path?" confirmation alert (with "Subtle persistence leads to deeper wisdom") is removed from `handlePathPress` — tapping any book opens its dashboard directly; switching just quietly updates `activeBookId`. Section header "My Current Path" → "Continue". Verified on the running app: non-active book opens with no alert. `tsc` + eslint clean. |
@@ -86,8 +87,8 @@ _Last updated: 2026-08-29 (batch 6 merged — PR #7)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| AUTH-01 | Terms link | [SRC+LIVE] "By signing in, you agree to our Terms of Service" — not tappable; no Terms/Privacy link on login | NEEDS IMPROVEMENT | Make Terms & Privacy tappable | P2 | High | IDENTIFIED | |
-| AUTH-02 | Privacy claim | [SRC+LIVE] "We do not collect any of your personal data" (Login + Welcome-back) contradicts the Privacy Policy (email, usage, payment) and the implementation (email, progress, activity_log, bookmarks stored) | NEEDS CHANGE | Replace with an accurate, still-reassuring line | P1 | High | IDENTIFIED | Trust risk. Also WEB-03, POS |
+| AUTH-01 | Terms link | [SRC+LIVE] "By signing in, you agree to our Terms of Service" — not tappable; no Terms/Privacy link on login | NEEDS IMPROVEMENT | Make Terms & Privacy tappable | P2 | High | **MERGED** (Batch 7 · PR #8) | `LoginScreen.tsx` footer now reads "By continuing you agree to our Terms of Service and Privacy Policy" with both as tappable inline links opening `mangalamapp.com/terms` and `/privacy` (`Linking.openURL`; LoginScreen is pre-auth so it can't reach the in-app WebView). |
+| AUTH-02 | Privacy claim | [SRC+LIVE] "We do not collect any of your personal data" (Login + Welcome-back) contradicts the Privacy Policy (email, usage, payment) and the implementation (email, progress, activity_log, bookmarks stored) | NEEDS CHANGE | Replace with an accurate, still-reassuring line | P1 | High | **MERGED** (Batch 7 · PR #8) | The false "collect nothing" claim replaced everywhere it appeared: `LoginScreen` + `AuthScreen` → "No ads, and we never sell your data."; `AboutScreen` "Your trust matters to us" card → "We show no ads and never sell your data. We keep only what Mangalam needs to work — your name, your progress and your preferences. See the Privacy Policy below for the details." Both new claims are true; the calm privacy-forward tone is kept. |
 | AUTH-03 | Email/password screen | [SRC] `AuthScreen` implemented but intentionally unrouted (CLAUDE.md §2) | KEEP | — | KEEP | High | REVIEWED | Temporarily exposed for this review, reverted |
 
 ### Home — `HomeScreen`
@@ -218,7 +219,7 @@ _Last updated: 2026-08-29 (batch 6 merged — PR #7)_
 |---|---|---|---|---|---|---|---|---|
 | WEB-01 | Bare chrome | [SRC+LIVE] Back arrow only — no title, no loading indicator, no error state, no "open in browser" | NEEDS IMPROVEMENT | Titled header + loading/error + open-in-browser | P2 | High | IDENTIFIED | |
 | WEB-02 | Embedded site chrome & type clash | [LIVE] Page's own "← Back to Home" link is confusing in-app; serif site type vs app's Outfit | NEEDS IMPROVEMENT | Hide site chrome, or open legal pages in the browser | P2 | High | IDENTIFIED | |
-| WEB-03 | Privacy page contradicts "no data" claim | [LIVE] Policy states email/usage/payment collected | NEEDS CHANGE | Align app copy with the policy | P1 | High | IDENTIFIED | ref AUTH-02 |
+| WEB-03 | Privacy page contradicts "no data" claim | [LIVE] Policy states email/usage/payment collected | NEEDS CHANGE | Align app copy with the policy | P1 | High | **MERGED** (Batch 7 · PR #8) | Resolved with AUTH-02 — the in-app copy no longer contradicts the Privacy Policy; the About card now points readers to it. |
 
 ### Navigation (cross-cutting)
 

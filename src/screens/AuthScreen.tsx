@@ -155,7 +155,7 @@ export const AuthScreen = () => {
                         </TouchableOpacity>
                         
                         <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
-                            Mangalam is a quiet space for reflection. We do not collect any of your personal data.
+                            Mangalam is a quiet space for reflection. No ads, and we never sell your data.
                         </Text>
                     </Card>
 

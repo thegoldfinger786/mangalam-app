@@ -156,8 +156,8 @@ export const AboutScreen = () => {
                 />
 
                 <SectionCard 
-                    title="Your Trust is important for us"
-                    content="We do not collect or sell personal data. This app is built simply to make timeless wisdom accessible to everyone."
+                    title="Your trust matters to us"
+                    content="We show no ads and never sell your data. We keep only what Mangalam needs to work — your name, your progress and your preferences. See the Privacy Policy below for the details."
                 />
 
                 <SectionCard 

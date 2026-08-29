@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
     Alert,
     Image,
+    Linking,
     ScrollView,
     StyleSheet,
     Text,
@@ -13,6 +14,9 @@ import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { useAuth } from '../auth/AuthProvider';
 import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
+
+const TERMS_URL = 'https://www.mangalamapp.com/terms';
+const PRIVACY_URL = 'https://www.mangalamapp.com/privacy';
 
 export const LoginScreen = () => {
     const { colors, spacing, typography } = useTheme();
@@ -78,13 +82,27 @@ export const LoginScreen = () => {
                     </AuthButtonWrapper>
 
                     <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
-                        Mangalam is a quiet space for reflection.{'\n'}We do not collect any of your personal data.
+                        Mangalam is a quiet space for reflection.{'\n'}No ads, and we never sell your data.
                     </Text>
                 </Card>
 
                 <View style={[styles.footer, { paddingVertical: spacing.xl }]}>
                     <Text style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
-                        By signing in, you agree to our Terms of Service.
+                        By continuing you agree to our{' '}
+                        <Text
+                            style={{ color: colors.primary }}
+                            onPress={() => Linking.openURL(TERMS_URL).catch(() => {})}
+                        >
+                            Terms of Service
+                        </Text>
+                        {' '}and{' '}
+                        <Text
+                            style={{ color: colors.primary }}
+                            onPress={() => Linking.openURL(PRIVACY_URL).catch(() => {})}
+                        >
+                            Privacy Policy
+                        </Text>
+                        .
                     </Text>
                 </View>
             </ScrollView>
