@@ -8,7 +8,6 @@ import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { logger } from '../lib/logger';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -21,7 +20,7 @@ const LEGAL_LINKS = [
 ];
 
 export const AboutScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, borderRadius } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
@@ -39,7 +38,7 @@ export const AboutScreen = () => {
 
     const SectionCard = ({ title, content, bulletPoints, quote }: { title?: string, content?: string, bulletPoints?: string[], quote?: string }) => (
         <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
-            {title && <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: spacing.m }]}>{title}</Text>}
+            {title && <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.m }]}>{title}</Text>}
             {content && <Text style={[styles.contentBody, { color: colors.text }]}>{content}</Text>}
             {bulletPoints && (
                 <View style={{ marginTop: spacing.m }}>
@@ -67,7 +66,7 @@ export const AboutScreen = () => {
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Our Philosophy</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>About Mangalam</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -86,8 +85,8 @@ export const AboutScreen = () => {
                 </View>
 
                 {/* Introduction Section */}
-                <SectionCard 
-                    title="ABOUT MANGALAM"
+                <SectionCard
+                    title="About Mangalam"
                     content="Mangalam is a quiet space to reconnect with the timeless wisdom of India’s sacred traditions. For thousands of years, texts such as the Bhagavad Gita, Ramayan, and Mahabharat have guided people through questions of purpose, duty, resilience, and inner peace. Mangalam brings this wisdom into a simple daily practice; one reflection at a time."
                 />
 
@@ -165,8 +164,8 @@ export const AboutScreen = () => {
                     content="The content in this app is intended for spiritual learning and personal reflection. Texts are drawn from traditional sources and publicly available translations, and in some cases supported by modern tools to improve accessibility and narration. Interpretations may vary across traditions and scholars. This app does not claim to represent any single authoritative interpretation of these sacred texts."
                 />
 
-                <SectionCard 
-                    title="PRIVATE INITIATIVE"
+                <SectionCard
+                    title="A private initiative"
                     content="Mangalam is a private initiative created to share ancient wisdom. Contributions are optional and help support the development and hosting of the platform. The app will remain free for everyone."
                 />
 
@@ -200,7 +199,7 @@ export const AboutScreen = () => {
                 </View>
 
                 <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: spacing.m }]}>Legal &amp; Support</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.m }]}>Legal &amp; Support</Text>
                     <View style={[styles.linkGroup, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.l }]}>
                         {LEGAL_LINKS.map((item, index) => (
                             <View key={item.label}>
@@ -244,8 +243,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     headerTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     heroSection: {
         alignItems: 'center',
@@ -270,8 +267,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     heroSubtitle: {
         fontSize: 14,
-        textTransform: 'uppercase',
-        letterSpacing: 2,
+        letterSpacing: 0.5,
         marginTop: spacing.xs,
     },
     sectionCard: {
@@ -281,8 +277,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     contentBody: {
         fontSize: 16,
