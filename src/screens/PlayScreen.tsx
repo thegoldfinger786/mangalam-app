@@ -5,7 +5,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
     Image,
     Platform,
     ScrollView,
@@ -23,6 +22,7 @@ import Animated, {
     withTiming
 } from 'react-native-reanimated';
 import { HighlightedText } from '../components/HighlightedText';
+import { Skeleton } from '../components/Skeleton';
 import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
@@ -588,9 +588,16 @@ export const PlayScreen = () => {
 
     if (loading) {
         return (
-            <View style={[styles.center, { flex: 1, backgroundColor: colors.background }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={styles.skeletonBody}>
+                    <Skeleton width={160} height={160} borderRadius={borderRadius.xl} style={{ marginBottom: spacing.l }} />
+                    <Skeleton width="55%" height={22} borderRadius={borderRadius.s} style={{ marginBottom: spacing.s }} />
+                    <Skeleton width="35%" height={16} borderRadius={borderRadius.s} style={{ marginBottom: spacing.xxl }} />
+                    {(['90%', '80%', '85%', '70%', '82%'] as const).map((w, i) => (
+                        <Skeleton key={i} width={w} height={16} borderRadius={borderRadius.s} style={{ marginBottom: spacing.m }} />
+                    ))}
+                </View>
+            </ScreenContainer>
         );
     }
 
@@ -928,6 +935,11 @@ const createStyles = (
     center: {
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    skeletonBody: {
+        alignItems: 'center',
+        paddingHorizontal: spacing.xl,
+        paddingTop: spacing.xxl,
     },
     header: {
         flexDirection: 'row',
