@@ -4,7 +4,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     Alert,
-    Dimensions,
     Image,
     ScrollView,
     StyleSheet,
@@ -16,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
-import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '../lib/bookIdentity';
+import { assertValidBookId, assertBookIdentityConsistency, isGita, isRamayan, isMahabharat } from '../lib/bookIdentity';
 import { fetchActiveBooks, supabase } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
@@ -24,15 +23,17 @@ import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { logger } from '../lib/logger';
 
-const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
+const RAMAYAN_COVER = require('../../assets/images/ramayan-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
+
+const pluralize = (count: number, noun: string) => `${count} ${count === 1 ? noun : `${noun}s`}`;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type BookDashboardRouteProp = RouteProp<RootStackParamList, 'BookDashboard'>;
 
 export const BookDashboardScreen = () => {
-    const { colors, spacing, typography, borderRadius, layout } = useTheme();
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const navigation = useNavigation<NavigationProp>();
     const route = useRoute<BookDashboardRouteProp>();
@@ -129,7 +130,7 @@ export const BookDashboardScreen = () => {
     const completedVersesInBook = verses.filter(v => completedVerses.includes(v.verse_id));
     const chaptersStarted = new Set(completedVersesInBook.map(v => v.chapter_no)).size;
     const progressText = completedVersesInBook.length > 0
-        ? `You have listened to ${completedVersesInBook.length} verses across ${chaptersStarted} chapters.`
+        ? `You have listened to ${pluralize(completedVersesInBook.length, 'verse')} across ${pluralize(chaptersStarted, 'chapter')}.`
         : 'Your journey begins here. Tap continue to start listening.';
 
     // Group verses by chapter to show progress bars
@@ -166,9 +167,9 @@ export const BookDashboardScreen = () => {
         });
     };
 
-    const bookCode = getBookCode(bookId);
-    const gitaCheck = bookCode === 'gita' || bookCode === 'bhagavad_gita';
-    const mahabharatCheck = bookCode === 'mahabharat';
+    const gitaCheck = isGita(bookId);
+    const ramayanCheck = isRamayan(bookId);
+    const mahabharatCheck = isMahabharat(bookId);
     const resolvedType = (book?.slug ?? '') as string;
     const BOOK_SLUG = gitaCheck ? 'bhagavad-gita' : resolvedType as string;
     const meta = COLLECTION_METADATA[BOOK_SLUG] || { title: 'Wisdom', icon: 'book', color: colors.primary };
@@ -180,7 +181,7 @@ export const BookDashboardScreen = () => {
                     <Ionicons name="chevron-down" size={28} color={colors.text} />
                 </TouchableOpacity>
                 <Text style={[styles.headerTitle, { color: colors.text, fontFamily: typography.fontFamilies.medium }]}>
-                    {gitaCheck ? 'Bhagavad Gita' : (mahabharatCheck ? 'Mahabharat' : meta.title)}
+                    {gitaCheck ? 'Bhagavad Gita' : ramayanCheck ? 'Ramayan' : mahabharatCheck ? 'Mahabharat' : meta.title}
                 </Text>
                 <View style={{ width: 28 }} />
             </View>
@@ -193,6 +194,8 @@ export const BookDashboardScreen = () => {
                     <View style={[styles.heroGlow, { backgroundColor: mahabharatCheck ? '#D6A621' : colors.primary }]} />
                     {gitaCheck ? (
                         <Image source={GITA_COVER} style={[styles.heroImage, { borderRadius: borderRadius.xl, shadowColor: colors.primary }]} />
+                    ) : ramayanCheck ? (
+                        <Image source={RAMAYAN_COVER} style={[styles.heroImage, { borderRadius: borderRadius.xl, shadowColor: colors.primary }]} />
                     ) : mahabharatCheck ? (
                         <Image source={MAHABHARAT_COVER} style={[styles.heroImage, { borderRadius: borderRadius.xl, shadowColor: '#D6A621' }]} />
                     ) : (
@@ -203,16 +206,16 @@ export const BookDashboardScreen = () => {
 
                     <View style={[styles.heroGlassPanel, { backgroundColor: colors.surface, borderRadius: borderRadius.xl, borderColor: colors.border }]}>
                         <Text style={[styles.bookTitle, { color: colors.text, fontFamily: typography.fontFamilies.semiBold }]}>
-                            {gitaCheck ? 'श्रीमद्भगवद्गीता' : (mahabharatCheck ? 'महाभारत' : meta.title)}
+                            {gitaCheck ? 'श्रीमद्भगवद्गीता' : ramayanCheck ? 'रामायण' : mahabharatCheck ? 'महाभारत' : meta.title}
                         </Text>
                         <Text style={[styles.bookSubtitle, { color: mahabharatCheck ? '#D6A621' : colors.primary, fontFamily: typography.fontFamilies.medium }]}>
-                            {gitaCheck ? 'The Song of God' : (mahabharatCheck ? 'The Great Epic' : 'Timeless Wisdom')}
+                            {gitaCheck ? 'The Song of God' : ramayanCheck ? 'The Journey of Rama' : mahabharatCheck ? 'The Great Epic' : 'Timeless Wisdom'}
                         </Text>
 
                         <View style={[styles.progressBox, { backgroundColor: colors.background, borderRadius: borderRadius.l, padding: spacing.l, marginBottom: spacing.xl, borderColor: colors.border }]}>
                             <Text style={[styles.progressLabel, { color: colors.textSecondary, marginBottom: spacing.xs, fontFamily: typography.fontFamilies.medium }]}>Your Progress</Text>
                             <Text style={[styles.progressStats, { color: colors.text, marginBottom: spacing.s, fontFamily: typography.fontFamilies.semiBold }]}>
-                                {completedVersesInBook.length} <Text style={[styles.progressSubtext, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>verses listened</Text>
+                                {completedVersesInBook.length} <Text style={[styles.progressSubtext, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>{completedVersesInBook.length === 1 ? 'verse listened' : 'verses listened'}</Text>
                             </Text>
                             <Text style={[styles.progressDesc, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>{progressText}</Text>
                             {/* CTA moved here so it's immediately visible without scrolling */}
@@ -236,7 +239,7 @@ export const BookDashboardScreen = () => {
                                     >
                                         <View style={[styles.chapterHeader, { marginBottom: spacing.s }]}>
                                             <Text style={[styles.chapterTitle, { color: colors.text, fontFamily: typography.fontFamilies.medium }]}>Chapter {ch.chapter_no}</Text>
-                                            <Text style={[styles.chapterStats, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>{ch.completed} / {ch.total} Verses</Text>
+                                            <Text style={[styles.chapterStats, { color: colors.textSecondary, fontFamily: typography.fontFamilies.regular }]}>{ch.completed} / {ch.total} {ch.total === 1 ? 'verse' : 'verses'}</Text>
                                         </View>
                                         <View style={[styles.progressBarContainer, { backgroundColor: colors.surfaceSecondary }]}>
                                             <View style={[styles.progressBarFill, { backgroundColor: mahabharatCheck ? '#D6A621' : colors.primary, width: `${ch.progress * 100}%` }]} />
@@ -247,14 +250,6 @@ export const BookDashboardScreen = () => {
                         )}
                     </View>
                 </View>
-
-                {/* ── Aesthetic Decorative Element ── */}
-                <View style={[styles.decorationContainer, { marginTop: spacing.xxxl }]}>
-                    <Ionicons name="sparkles" size={20} color={mahabharatCheck ? '#D6A621' : colors.primary} style={{ opacity: 0.5 }} />
-                    <View style={[styles.decorationLine, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
-                    <Ionicons name="book" size={20} color={mahabharatCheck ? '#D6A621' : colors.primary} style={{ opacity: 0.5 }} />
-                </View>
-
             </ScrollView>
         </ScreenContainer>
     );
@@ -365,15 +360,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     continueButton: {
         width: '100%',
         marginTop: spacing.m,
-    },
-    decorationContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    decorationLine: {
-        width: 60,
-        height: 1,
     },
     chaptersSection: {
         width: '100%',
