@@ -12,7 +12,7 @@ import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
 
 export const SupportMangalamScreen = () => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing } = useTheme();
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
@@ -25,7 +25,7 @@ export const SupportMangalamScreen = () => {
 
     const SectionCard = ({ title, content, children }: { title?: string, content?: string, children?: React.ReactNode }) => (
         <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
-            {title && <Text style={[styles.sectionTitle, { color: colors.primary, marginBottom: spacing.m }]}>{title}</Text>}
+            {title && <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.m }]}>{title}</Text>}
             {content && <Text style={[styles.contentBody, { color: colors.text }]}>{content}</Text>}
             {children}
         </Card>
@@ -57,7 +57,7 @@ export const SupportMangalamScreen = () => {
 
                 {/* Mission Section */}
                 <SectionCard 
-                    title="OUR MISSION"
+                    title="Our mission"
                     content="Mangalam is built to make the wisdom of ancient Indian scriptures accessible to everyone. The app will always remain free and ad-free so that anyone can listen, learn, and reflect."
                 >
                     <Text style={[styles.contentBody, { color: colors.text, marginTop: spacing.m }]}>
@@ -67,11 +67,11 @@ export const SupportMangalamScreen = () => {
 
                 {/* Private Initiative Note */}
                 <SectionCard 
-                    title="PRIVATE INITIATIVE"
+                    title="A private initiative"
                     content="Mangalam is a private initiative created to share ancient wisdom. Contributions are optional and help support the development and hosting of the platform. The app will remain free for everyone."
                 />
 
-                <SectionCard title="MAKE A CONTRIBUTION">
+                <SectionCard title="Make a contribution">
                     <Button 
                         title="Support with €5 / Custom Amount" 
                         variant="primary" 
@@ -84,7 +84,7 @@ export const SupportMangalamScreen = () => {
                 </SectionCard>
 
                 {/* Transparency Section */}
-                <SectionCard title="WHAT YOUR SUPPORT ENABLES">
+                <SectionCard title="What your support enables">
                     <View>
                         <View style={styles.bulletRow}>
                             <View style={[styles.bulletPoint, { backgroundColor: colors.primaryLight }]}>
@@ -147,8 +147,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     headerTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     heroSection: {
         alignItems: 'center',
@@ -174,8 +172,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     heroSubtitle: {
         fontSize: 14,
-        textTransform: 'uppercase',
-        letterSpacing: 2,
+        letterSpacing: 0.5,
         marginTop: spacing.xs,
         textAlign: 'center',
         paddingHorizontal: spacing.xl,
@@ -187,21 +184,15 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
     },
     contentBody: {
         fontSize: 16,
         lineHeight: 24,
     },
-    buttonGrid: {
-        gap: spacing.m,
-    },
     gridButton: {
         width: '100%',
     },
     highlightedButton: {
-        transform: [{ scale: 1.02 }],
         shadowOpacity: 0.1,
         elevation: 4,
     },
