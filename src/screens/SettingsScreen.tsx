@@ -7,6 +7,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { VoiceOptionCard } from '../components/VoiceOptionCard';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { RootStackParamList } from '../navigation/types';
 import { VoicePreference } from '../data/types';
@@ -38,6 +39,14 @@ const getDisplayEmail = (email?: string | null) => {
     if (isPrivateEmail(email)) return '🔒 Private Email';
     return email;
 };
+
+// ── Voice option data ────────────────────────────────────────────────────────
+const VOICE_OPTIONS = [
+    { value: 'english-male'   as const, language: 'English', voice: 'Male',   icon: 'male-outline'   as const },
+    { value: 'english-female' as const, language: 'English', voice: 'Female', icon: 'female-outline' as const },
+    { value: 'hindi-male'     as const, language: 'Hindi',   voice: 'Male',   icon: 'male-outline'   as const },
+    { value: 'hindi-female'   as const, language: 'Hindi',   voice: 'Female', icon: 'female-outline' as const },
+];
 
 export const SettingsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
@@ -140,24 +149,6 @@ export const SettingsScreen = () => {
         );
     };
 
-    const VoiceOption = ({ label, value }: { label: string, value: VoicePreference }) => (
-        <TouchableOpacity
-            style={styles.optionRow}
-            onPress={() => handleVoiceSelect(value)}
-        >
-            <Text style={[
-                styles.optionText,
-                { color: colors.text },
-                voicePreference === value && styles.optionTextActive,
-                voicePreference === value && { color: colors.primary }
-            ]}>
-                {label}
-            </Text>
-            {voicePreference === value && (
-                <Ionicons name="checkmark" size={24} color={colors.primary} />
-            )}
-        </TouchableOpacity>
-    );
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
@@ -252,14 +243,33 @@ export const SettingsScreen = () => {
                     <Ionicons name="volume-high-outline" size={24} color={colors.primary} />
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>Voice Preference</Text>
                 </View>
-                <View style={[styles.optionsContainer, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}>
-                    <VoiceOption label="English - Male" value="english-male" />
-                    <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
-                    <VoiceOption label="English - Female" value="english-female" />
-                    <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
-                    <VoiceOption label="Hindi - Male" value="hindi-male" />
-                    <View style={[styles.divider, { backgroundColor: colors.border, marginHorizontal: spacing.m }]} />
-                    <VoiceOption label="Hindi - Female" value="hindi-female" />
+                <View style={styles.voiceGrid}>
+                    {/* Row 1: English */}
+                    <View style={styles.voiceRow}>
+                        {VOICE_OPTIONS.slice(0, 2).map((opt) => (
+                            <VoiceOptionCard
+                                key={opt.value}
+                                language={opt.language}
+                                voice={opt.voice}
+                                icon={opt.icon}
+                                isSelected={voicePreference === opt.value}
+                                onPress={() => handleVoiceSelect(opt.value)}
+                            />
+                        ))}
+                    </View>
+                    {/* Row 2: Hindi */}
+                    <View style={styles.voiceRow}>
+                        {VOICE_OPTIONS.slice(2).map((opt) => (
+                            <VoiceOptionCard
+                                key={opt.value}
+                                language={opt.language}
+                                voice={opt.voice}
+                                icon={opt.icon}
+                                isSelected={voicePreference === opt.value}
+                                onPress={() => handleVoiceSelect(opt.value)}
+                            />
+                        ))}
+                    </View>
                 </View>
             </Card>
 
@@ -438,7 +448,14 @@ const createStyles = (
     sliderRow: {
         marginBottom: spacing.m,
     },
-    optionsContainer: {
+    // 2-column grid for voice preference cards
+    // Two explicit rows — guarantees 2 columns on every screen size (Android + iOS)
+    voiceGrid: {
+        gap: spacing.m,
+    },
+    voiceRow: {
+        flexDirection: 'row',
+        gap: spacing.m,
     },
     optionRow: {
         flexDirection: 'row',
@@ -447,13 +464,7 @@ const createStyles = (
         padding: spacing.m,
     },
     optionText: {
-        fontSize: 16, // typography.sizes.m
-    },
-    optionTextActive: {
-        fontWeight: '500',
-    },
-    divider: {
-        height: 1,
+        fontSize: typography.sizes.m,
     },
     toggleRow: {
         flexDirection: 'row',

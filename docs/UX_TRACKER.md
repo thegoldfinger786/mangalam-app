@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 5 merged — PR #6)_
+_Last updated: 2026-08-29 (batch 6 — shared card components; on branch `ux/batch-6`)_
 
 | Metric | Count |
 |---|---|
@@ -32,8 +32,8 @@ _Last updated: 2026-08-29 (batch 5 merged — PR #6)_
 | P1 | 30 |
 | P2 | 38 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5 · PRs #1–#6) |
-| Verified | 24 (Batches 1–5 — simulator, 2026-08-28/29) |
+| Implemented / Merged | 24 merged (Batches 1–5) + Batch 6 on branch (absorbs parked WIP: shared card components + token styling; partial UX-10) |
+| Verified | 25 (Batches 1–6 — simulator, 2026-08-28/29) |
 | Deferred / Rejected | 1 (CONTENT-04) |
 | Open | 56 |
 
@@ -41,6 +41,7 @@ _Last updated: 2026-08-29 (batch 5 merged — PR #6)_
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 6 — Shared card components & token styling (absorbed WIP) | UX-10 (partial); SET-08 / HOME-07 notes | Implemented on branch `ux/batch-6` | Took ownership of the long-parked working-tree changes, which had been the app's actual running state for the whole review engagement. New shared components `BookCard` and `VoiceOptionCard` (fully theme-token driven). `LibraryScreen`: book list → 2-column `FlatList` grid of `BookCard`, matching Home's "Explore Paths"; style block rewritten onto tokens; dead `renderEpisodes`/`renderCollectionList` removed. `SettingsScreen`: Voice Preference section → 2×2 grid of `VoiceOptionCard`. `Card`: hard-coded `borderRadius: 16` → `borderRadius.l` token (identical value). `BookDashboardScreen`: the "Continue" CTA moved into the progress box so it's visible without scrolling. No logic, data, navigation-model or product change. `tsc` clean; eslint warnings reduced vs before. Library grid verified rendering on the running app. |
 | 2026-08-29 | Batch 5 — De-gamify Community Wisdom | UX-09, COMM-01, COMM-03, POS-05, HOME-06/POS-07 (COMM-02 still blocked) | **Merged** (PR #6 → `main`, 2026-08-29) | `src/screens/CommunityWisdomScreen.tsx`: removed the rank badge, trophy, medals, "#1"–"#5" and medal-tinted borders; sections relabelled "Others are listening to / sharing / keeping" with neutral icons; intro rewritten to "A quiet look at the verses others are finding meaningful."; shouty uppercase section labels softened. `src/screens/HomeScreen.tsx`: discovery bar "…studying today" → "…finding meaningful". Verified on the running app: no podium chrome, calm labels, rows still tappable. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 4 — Remove the "Change Path?" gate | UX-12, HOME-04, POS-03 | **Merged** (PR #5 → `main`, 2026-08-29) | `src/screens/HomeScreen.tsx`: the blocking "Change Path?" confirmation alert (with "Subtle persistence leads to deeper wisdom") is removed from `handlePathPress` — tapping any book opens its dashboard directly; switching just quietly updates `activeBookId`. Section header "My Current Path" → "Continue". Verified on the running app: non-active book opens with no alert. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 3 — Honest progress & one weekly widget | UX-03, UX-04 (partial), HOME-09, STREAK-01, STREAK-02, STREAK-04 (+ STREAK-03, STREAK-06 resolved; STREAK-08/09/10 recorded) | **Merged** (PR #4 → `main`, merge commit `2d1b679`, 2026-08-29) | `src/components/WeeklyStreak.tsx` reworked into one shared honest widget: takes `activeDates` (real `user_daily_usage.usage_date` values), shows the last 7 calendar days marked from that record, header "Last 7 days" + a calm "N days" (no flame, no score). `HomeScreen.tsx` and `StreaksScreen.tsx` both feed it the same data. Streaks screen: fabricated "Total Time" (`streak × 10m`) removed → "Sessions this week" (measured sum); hero "Day Journey 🔥" → "N days of practice"; inline duplicate tracker deleted. Verified on the running app: Home and Streaks show identical dots/count; no layout breakage; `tsc` + eslint clean. |
@@ -62,7 +63,7 @@ _Last updated: 2026-08-29 (batch 5 merged — PR #6)_
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
 | UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6) |
-| UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | IDENTIFIED | most screens |
+| UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7) | most screens — `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section now token-driven; other screens still hard-code |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
 | UX-12 | "Path" exclusivity model + "Change Path?" gate | NEEDS CHANGE | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) | Home — gate removed; `activeBookId` kept as quiet bookkeeping for the "Continue" card |
 | UX-13 | Scripture-first navigation only; no theme/topic/mood entry | NEEDS IMPROVEMENT | P2 (strategic) | IDENTIFIED | whole app |
@@ -99,7 +100,7 @@ _Last updated: 2026-08-29 (batch 5 merged — PR #6)_
 | HOME-04 | "Change Path?" gate | [SRC+LIVE] Blocking alert on tapping any non-active book: "…focused on the {book} path. Subtle persistence leads to deeper wisdom. Are you sure you want to change paths?" | NEEDS CHANGE | Remove the gate; free movement; keep "Continue" as default | P1 | High | **MERGED** (Batch 4 · PR #5, 2026-08-29) | ref UX-12, POS-03. `handlePathPress` in `src/screens/HomeScreen.tsx` now navigates straight to the tapped book's dashboard; switching books just quietly updates `activeBookId` (with the existing light haptic). No confirmation, no "deeper wisdom" copy. Verified on the running app: tapping a non-active book opens its dashboard with no alert. |
 | HOME-05 | Dead greeting code | [SRC] `getGreeting()` (time-of-day) unused; header always "Namaste, {name}" | NEEDS IMPROVEMENT | Use it or delete it | P2 | High | **MERGED** (Batch 2 · PR #2) | [SRC] Confirmed zero call sites (`grep`), removed `getGreeting()` from `src/screens/HomeScreen.tsx`. Header behaviour unchanged ("Namaste, {name}"). The header wording itself is out of scope for this batch. |
 | HOME-06 | "studying" language | [LIVE] "See what others are studying today" — study framing | NEEDS IMPROVEMENT | "finding meaningful" | P2 | Med | **MERGED** (Batch 5 · PR #6, 2026-08-29) | Home discovery bar → "See what others are finding meaningful". |
-| HOME-07 | Explore grid redundancy | [LIVE] Same 4 book cards as the Library tab | NEEDS IMPROVEMENT | Differentiate or route both into one browse flow | P2 | High | IDENTIFIED | ref UX-02 |
+| HOME-07 | Explore grid redundancy | [LIVE] Same 4 book cards as the Library tab | NEEDS IMPROVEMENT | Differentiate or route both into one browse flow | P2 | High | IDENTIFIED | ref UX-02. Batch 6 made the two grids visually identical (shared `BookCard`); they are still two lists of the same books — full dedup needs UX-02. |
 | HOME-08 | Animated background | [LIVE] `DynamicBackground` orbs — subtle, calm, works | KEEP | — | KEEP | High | REVIEWED | |
 | HOME-09 | Streak widget divergence | [SRC+LIVE] Home "This Week" differed from Streaks tab in start-day (Mon vs Fri) and logic | NEEDS CHANGE | One shared widget | P1 | High | **MERGED** (Batch 3 · PR #4, 2026-08-29) | ref UX-03. Both screens now render the same `WeeklyStreak` fed the same `activeDates` (real `user_daily_usage.usage_date` values), rolling last-7-days. Verified on the running app: identical dots/count on Home and Streaks for the QA account (T·F·S active, "3 days"). |
 | HOME-10 | Populated resume card | [LIVE] When populated: gradient fill, book accent colour, clear "Continue" — good | KEEP | Minor: copy (HOME-03) | KEEP | High | REVIEWED | |
@@ -159,7 +160,7 @@ _Last updated: 2026-08-29 (batch 5 merged — PR #6)_
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | LIB-01 | Three-level in-tab drilldown | [SRC+LIVE] Books → Chapters → Verses with custom "Books"/"Back" pills, no native headers | NEEDS IMPROVEMENT | One browse flow; consistent header | P2 | High | IDENTIFIED | ref UX-02, UX-06 |
-| LIB-02 | Chapter tile layout | [SRC+LIVE] Number above the word "Chapter" ("1 / Chapter"); nested play button inside the tappable tile | NEEDS IMPROVEMENT | "Chapter 1"; one tap target or clearly separated | P2 | High | IDENTIFIED | |
+| LIB-02 | Chapter tile layout | [SRC+LIVE] Number above the word "Chapter" ("1 / Chapter"); nested play button inside the tappable tile | NEEDS IMPROVEMENT | "Chapter 1"; one tap target or clearly separated | P2 | High | IDENTIFIED | Not addressed by Batch 6 (which only restyled with tokens; the tile structure is unchanged). |
 | LIB-03 | Gita verse list unscannable | [LIVE] Raw Sanskrit as the primary line (some with "।।1.3।।"); no English hint. Ramayan list (descriptive titles) is the model that works | NEEDS IMPROVEMENT | Human title for every unit | P1 | High | IDENTIFIED | ref CONTENT-01; positioning |
 | LIB-04 | No search / filter | [SRC+LIVE] Nothing, for ~700 Gita verses | NEEDS IMPROVEMENT | Add search + filter | P1 | High | IDENTIFIED | |
 | LIB-05 | Bare spinner | [SRC+LIVE] No skeleton | NEEDS IMPROVEMENT | Skeleton | P2 | High | IDENTIFIED | ref UX-05 |
@@ -191,7 +192,7 @@ _Last updated: 2026-08-29 (batch 5 merged — PR #6)_
 | SET-05 | Narration floor 0.7 | [SRC] Narration can't go below 70% | NEEDS IMPROVEMENT | Widen the range | P2 | High | IDENTIFIED | |
 | SET-06 | No account deletion | [SRC+LIVE] Missing; App Store Guideline 5.1.1(v) requires in-app account deletion | NEEDS CHANGE | Add account deletion | P1 | High | IDENTIFIED | Compliance risk |
 | SET-07 | No bookmarks / downloads / notification settings | [SRC] Missing | NEEDS IMPROVEMENT | Add bookmarks management at least | P2 | Med | IDENTIFIED | |
-| SET-08 | Structure & controls | [LIVE] Clear sections, voice cards, sliders, inline name edit | KEEP | — | KEEP | High | REVIEWED | |
+| SET-08 | Structure & controls | [LIVE] Clear sections, voice cards, sliders, inline name edit | KEEP | — | KEEP | High | REVIEWED | The voice cards are now the shared `VoiceOptionCard` (Batch 6). SET-02 (rename "Voice Preference" → "Language & Voice"; player-side toggle) is still open. |
 | SET-09 | Dark theme | [LIVE] Toggled live — warm charcoal, consistent accents, readable | KEEP | — | KEEP | High | REVIEWED | |
 
 ### About / "Our Philosophy" — `AboutScreen`

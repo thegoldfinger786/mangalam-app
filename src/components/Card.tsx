@@ -8,7 +8,7 @@ interface CardProps {
 }
 
 export const Card = ({ children, style }: CardProps) => {
-    const { colors } = useTheme();
+    const { colors, borderRadius } = useTheme();
 
     return (
         <View style={[
@@ -17,6 +17,7 @@ export const Card = ({ children, style }: CardProps) => {
                 backgroundColor: colors.surface,
                 borderColor: colors.border,
                 shadowColor: colors.cardShadow,
+                borderRadius: borderRadius.l,
             },
             style
         ]}>
@@ -27,7 +28,7 @@ export const Card = ({ children, style }: CardProps) => {
 
 const styles = StyleSheet.create({
     card: {
-        borderRadius: 16,
+        // borderRadius is applied dynamically from theme token
         borderWidth: 1,
         // iOS Shadow
         shadowOffset: { width: 0, height: 2 },
