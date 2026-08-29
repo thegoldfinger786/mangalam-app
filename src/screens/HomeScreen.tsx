@@ -67,6 +67,7 @@ export const HomeScreen = () => {
 
     const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const hasLoadedRef = useRef(false);
+    const booksRef = useRef<any[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [books, setBooks] = useState<any[]>([]);
@@ -131,42 +132,62 @@ export const HomeScreen = () => {
     }, [session?.user?.id, setActiveBookId]);
 
     const loadData = useCallback(async () => {
-        if (!session?.user || hasLoadedRef.current) return;
-        hasLoadedRef.current = true;
+        // Read the name at call time rather than closing over it, so setting it
+        // below doesn't change this callback's identity and re-trigger the focus effect.
+        const { session: currentSession, userName: currentUserName } = useAppStore.getState();
+        const userId = currentSession?.user?.id;
+        if (!userId) return;
+
+        // The catalogue and the display name are stable for the session, so they are
+        // fetched once. Resume position, today's usage and the streak all change as
+        // soon as the listener plays something — those are refreshed on every focus,
+        // otherwise the "continue" card keeps showing where they were before the
+        // session they just finished.
+        const isFirstLoad = !hasLoadedRef.current;
+
         try {
-            setLoading(true);
-            const [activeBooks, dailyUsage, streakData] = await Promise.all([
-                fetchActiveBooks(),
-                fetchDailyUsage(session.user.id),
-                fetchStreakData(session.user.id)
+            if (isFirstLoad) setLoading(true);
+
+            const [dailyUsage, streakData] = await Promise.all([
+                fetchDailyUsage(userId),
+                fetchStreakData(userId),
             ]);
-            auditBookIds(activeBooks);
 
-            if (!userName) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('display_name')
-                    .eq('id', session.user.id)
-                    .maybeSingle();
+            let activeBooks = booksRef.current;
 
-                if (profile?.display_name) {
-                    setUserName(profile.display_name);
+            if (isFirstLoad) {
+                activeBooks = await fetchActiveBooks();
+                auditBookIds(activeBooks);
+                booksRef.current = activeBooks;
+                setBooks(activeBooks);
+
+                if (!currentUserName) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('display_name')
+                        .eq('id', userId)
+                        .maybeSingle();
+
+                    if (profile?.display_name) {
+                        setUserName(profile.display_name);
+                    }
                 }
             }
 
-            setBooks(activeBooks);
             await hydrateResumeState(activeBooks);
             setUsage(dailyUsage);
 
             // Basic streak calculation for MVP: count unique dates in the last 30 days
             // (Real logic would check for gaps, but user says "compute streak from user_daily_usage rows")
             setStreakCount(streakData?.length || 0);
+
+            hasLoadedRef.current = true;
         } catch (error) {
             logger.error('Failed to load home data', { error });
         } finally {
-            setLoading(false);
+            if (isFirstLoad) setLoading(false);
         }
-    }, [hydrateResumeState, session, setUserName, userName]);
+    }, [hydrateResumeState, setUserName]);
 
     useFocusEffect(
         useCallback(() => {
@@ -242,30 +263,25 @@ export const HomeScreen = () => {
         }
     };
 
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        let timeGreeting = 'Good morning';
-        if (hour >= 12 && hour < 17) timeGreeting = 'Good afternoon';
-        else if (hour >= 17) timeGreeting = 'Good evening';
-
-        const displayFirstName = session?.user?.user_metadata?.first_name || userName;
-        return displayFirstName ? `${timeGreeting}, ${displayFirstName}.` : `${timeGreeting}.`;
-    };
-
     // Memoize derived UI values to improve stability
     const currentPathColor = useMemo(() => resumeState
         ? (EXPLORE_PATH_DISPLAY[resumeState.book_slug]?.color || colors.primary)
         : colors.primary, [resumeState, colors.primary]);
 
-    const currentPathTitle = useMemo(() => resumeState?.book_title || 'No recent verse', [resumeState]);
+    const currentPathTitle = useMemo(() => resumeState?.book_title || 'Ready to begin', [resumeState]);
 
     const currentPathDesc = useMemo(() => resumeState
         ? `Chapter ${resumeState.chapter_no} · Verse ${resumeState.verse_no}`
-        : 'Your current path will appear here after you start a verse.', [resumeState]);
+        : 'Choose a path below to start listening.', [resumeState]);
 
-    const currentPathMeta = useMemo(() => resumeState
-        ? `Resume at ${Math.max(0, Math.floor(resumeState.last_position_seconds))}s`
-        : 'Resume is unavailable until remote progress exists.', [resumeState]);
+    const currentPathMeta = useMemo(() => {
+        if (!resumeState) return 'Take a few quiet minutes whenever you are ready.';
+        const seconds = Math.max(0, Math.floor(resumeState.last_position_seconds));
+        if (seconds < 5) return 'Ready when you are';
+        const minutes = Math.floor(seconds / 60);
+        const remainder = seconds % 60;
+        return `Continue from ${minutes}:${remainder < 10 ? '0' : ''}${remainder}`;
+    }, [resumeState]);
 
     const exploreBooks = useMemo(() => books.map((book) => ({
         ...book,

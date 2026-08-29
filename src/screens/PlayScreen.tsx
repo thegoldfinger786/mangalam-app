@@ -23,7 +23,6 @@ import Animated, {
     withSpring,
     withTiming
 } from 'react-native-reanimated';
-import { Button } from '../components/Button';
 import { HighlightedText } from '../components/HighlightedText';
 import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -49,6 +48,10 @@ const MANGALAM_ICON = require('../../assets/images/mangalam-icon.png');
 // TODO: confirm iOS App Store numeric ID once listing is live, then update APP_STORE_URL.
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.dailyshlokyaag.mangalam';
 const APP_STORE_URL  = 'https://apps.apple.com/app/mangalam/id6741428426'; // ← update ID if needed
+
+// How long the transcript follow-along waits after the listener stops scrolling
+// by hand before it resumes tracking playback.
+const AUTO_SCROLL_RESUME_DELAY_MS = 6000;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type PlayRouteProp = RouteProp<RootStackParamList, 'Play'>;
@@ -86,7 +89,6 @@ export const PlayScreen = () => {
 
     const [loading, setLoading] = useState(true);
     const [content, setContent] = useState<any>(null);
-    const [isAllowed, setIsAllowed] = useState(true);
 
     const [currentBookSlug, setCurrentBookSlug] = useState<string | null>(null);
     const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -111,6 +113,8 @@ export const PlayScreen = () => {
     }, [isFocusMode]);
 
     const scrollRef = useRef<ScrollView>(null);
+    // Timestamp until which the transcript follow-along stays out of the listener's way.
+    const autoScrollPausedUntilRef = useRef(0);
     const isNavigatingToVerse = useRef(false);
     const isMountedRef = useRef(true);
     useEffect(() => {
@@ -212,7 +216,6 @@ export const PlayScreen = () => {
 
             if (!isMountedRef.current) return;
             setContent(data);
-            setIsAllowed(true);
             setCurrentBookSlug(resolvedBookSlug);
 
             let nextId: string | null = null;
@@ -387,14 +390,22 @@ export const PlayScreen = () => {
         };
     }, [navigation, syncRemoteProgress]);
 
-    // Auto-scroll transcript proportionally to audio position
+    // Auto-scroll transcript proportionally to audio position.
+    // While the listener is scrolling by hand — and for a short settle period after
+    // they let go — the follow-along yields, so reading ahead or back isn't yanked
+    // away on the next position tick. It resumes on its own once they stop.
     useEffect(() => {
         if (!isPlaying || duration <= 1 || scrollContentHeight <= scrollViewHeight) return;
+        if (Date.now() < autoScrollPausedUntilRef.current) return;
         const progress = position / duration;
         const maxScroll = scrollContentHeight - scrollViewHeight;
         const targetY = progress * maxScroll;
         scrollRef.current?.scrollTo({ y: targetY, animated: true });
     }, [position]);
+
+    const deferAutoScroll = useCallback(() => {
+        autoScrollPausedUntilRef.current = Date.now() + AUTO_SCROLL_RESUME_DELAY_MS;
+    }, []);
 
     const togglePlayPause = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -586,25 +597,6 @@ export const PlayScreen = () => {
         );
     }
 
-    if (isAllowed === false) {
-        return (
-            <View style={[styles.center, { flex: 1, padding: spacing.xl, backgroundColor: colors.background }]}>
-                <Ionicons name="lock-closed" size={64} color={colors.primary} style={{ marginBottom: spacing.l }} />
-                <Text style={[styles.trackTitle, { marginBottom: spacing.m, color: colors.text }]}>Daily Limit Reached</Text>
-                <Text style={[styles.trackSubtitle, { marginBottom: spacing.xl, textAlign: 'center', color: colors.textSecondary }]}>
-                    You have reached your free limit of 3 sessions today. Support us to unlock unlimited wisdom.
-                </Text>
-                <Button
-                    title="Become a Supporter"
-                    onPress={() => navigation.navigate('SupportMangalam')}
-                />
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: spacing.xl }}>
-                    <Text style={{ color: colors.textSecondary }}>Go Back</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
     const playerBarBg = colors.background + 'E8';
 
     return (
@@ -664,6 +656,8 @@ export const PlayScreen = () => {
                 onContentSizeChange={(_, h) => setScrollContentHeight(h)}
                 onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
                 scrollEventThrottle={200}
+                onScrollBeginDrag={deferAutoScroll}
+                onScrollEndDrag={deferAutoScroll}
             >
                 {(() => {
                     const voicePref = voicePreference || 'english-male';
