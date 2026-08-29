@@ -207,9 +207,6 @@ export const PlayScreen = () => {
             data.book_slug = resolvedBookSlug;
             data.book_title = verse?.books?.title ?? verse?.books?.title_en ?? verse?.books?.title_hi ?? null;
 
-            // Track progress
-            useAppStore.getState().addCompletedVerse(itemId);
-
             if (!isMountedRef.current) return;
             setContent(data);
             setCurrentBookSlug(resolvedBookSlug);
@@ -298,6 +295,9 @@ export const PlayScreen = () => {
 
                     if (urlData?.publicUrl) {
                         const onFinish = () => {
+                            // A verse counts as completed only when its audio actually
+                            // finishes — not when the screen opens (LIB-06 / UX-04).
+                            useAppStore.getState().addCompletedVerse(itemId);
                             if (nextId) {
                                 navigateToVerse(nextId, true);
                             }
@@ -321,6 +321,7 @@ export const PlayScreen = () => {
                 } else {
                     // Ensure state is updated so user can still see text and manually navigate
                     loadAudio('', { ...data, artworkUrl: resolvedArtworkUrl }, false, () => {
+                        useAppStore.getState().addCompletedVerse(itemId);
                         if (nextId) navigateToVerse(nextId, true);
                     }, resumePosition);
                 }
