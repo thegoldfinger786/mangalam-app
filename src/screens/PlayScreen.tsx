@@ -8,6 +8,7 @@ import {
     ActivityIndicator,
     Dimensions,
     Image,
+    Platform,
     ScrollView,
     Share,
     StyleSheet,
@@ -22,7 +23,6 @@ import Animated, {
     withSpring,
     withTiming
 } from 'react-native-reanimated';
-import { Button } from '../components/Button';
 import { HighlightedText } from '../components/HighlightedText';
 import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -41,6 +41,17 @@ const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
 const RAMAYAN_COVER = require('../../assets/images/ramayan-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
+const MANGALAM_ICON = require('../../assets/images/mangalam-icon.png');
+
+// ── App download links ───────────────────────────────────────────────────────────────
+// Included in every share message so recipients can download the app.
+// TODO: confirm iOS App Store numeric ID once listing is live, then update APP_STORE_URL.
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.dailyshlokyaag.mangalam';
+const APP_STORE_URL  = 'https://apps.apple.com/app/mangalam/id6741428426'; // ← update ID if needed
+
+// How long the transcript follow-along waits after the listener stops scrolling
+// by hand before it resumes tracking playback.
+const AUTO_SCROLL_RESUME_DELAY_MS = 6000;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type PlayRouteProp = RouteProp<RootStackParamList, 'Play'>;
@@ -78,7 +89,6 @@ export const PlayScreen = () => {
 
     const [loading, setLoading] = useState(true);
     const [content, setContent] = useState<any>(null);
-    const [isAllowed, setIsAllowed] = useState(true);
 
     const [currentBookSlug, setCurrentBookSlug] = useState<string | null>(null);
     const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -103,6 +113,8 @@ export const PlayScreen = () => {
     }, [isFocusMode]);
 
     const scrollRef = useRef<ScrollView>(null);
+    // Timestamp until which the transcript follow-along stays out of the listener's way.
+    const autoScrollPausedUntilRef = useRef(0);
     const isNavigatingToVerse = useRef(false);
     const isMountedRef = useRef(true);
     useEffect(() => {
@@ -131,7 +143,17 @@ export const PlayScreen = () => {
     const isGita = bookCode === 'gita' || bookCode === 'bhagavad_gita';
 
     const loadContentAndCheckUsage = useCallback(async () => {
-        if (!session) return;
+        // Read session and playbackRate at call time instead of closing over them.
+        // Neither identifies *which* verse to load, but both change for unrelated
+        // reasons: the session object is replaced on every token refresh, and
+        // playbackRate changes whenever the user taps the speed pill. As
+        // dependencies they re-ran this entire loader — re-incrementing daily
+        // usage each time and inflating the streak data it feeds.
+        // Same getState() pattern already used elsewhere in this file.
+        const { session: currentSession, playbackRate: currentPlaybackRate } =
+            useAppStore.getState();
+
+        if (!currentSession) return;
 
         try {
             if (!isMountedRef.current) return;
@@ -194,7 +216,6 @@ export const PlayScreen = () => {
 
             if (!isMountedRef.current) return;
             setContent(data);
-            setIsAllowed(true);
             setCurrentBookSlug(resolvedBookSlug);
 
             let nextId: string | null = null;
@@ -216,14 +237,14 @@ export const PlayScreen = () => {
 
             // Check bookmark status
             if (session) {
-                const bookmarked = await fetchIsBookmarked(session.user.id, itemId);
+                const bookmarked = await fetchIsBookmarked(currentSession.user.id, itemId);
                 if (!isMountedRef.current) return;
                 setIsBookmarked(bookmarked);
             }
 
             // 2. Increment Usage (Non-blocking)
             try {
-                await incrementDailyUsage(session.user.id);
+                await incrementDailyUsage(currentSession.user.id);
             } catch (usageError: any) {
                 // Ignore usage error silently
             }
@@ -313,7 +334,7 @@ export const PlayScreen = () => {
             // 4. Progress Persistence (Sync current verse and restore speed)
             if (data?.book_id) {
                 try {
-                    const progress = await fetchUserProgress(session.user.id, data.book_id);
+                    const progress = await fetchUserProgress(currentSession.user.id, data.book_id);
 
                     // If we have saved progress, and this is the first load of the session (optional check)
                     // or just generally restore the speed if available.
@@ -323,12 +344,12 @@ export const PlayScreen = () => {
 
                     // Save current position
                     await upsertUserProgress({
-                        userId: session.user.id,
+                        userId: currentSession.user.id,
                         bookId: data.book_id,
                         lastContentId: itemId,
                         contentType: 'verse',
                         lastPositionSeconds: Math.max(0, Math.floor(resumePosition)),
-                        playbackSpeed: progress?.playback_speed || playbackRate
+                        playbackSpeed: progress?.playback_speed || currentPlaybackRate
                     });
                 } catch (progError) {
                     logger.error('Progress sync failed', { error: progError });
@@ -346,7 +367,7 @@ export const PlayScreen = () => {
         } finally {
             if (isMountedRef.current) setLoading(false);
         }
-    }, [autoPlay, itemId, loadAudio, params, playbackRate, bookId, resumePosition, resumeSource, session, setPlaybackRate, voicePreference]);
+    }, [autoPlay, itemId, loadAudio, params, bookId, resumePosition, resumeSource, setPlaybackRate, voicePreference]);
 
     useEffect(() => {
         loadContentAndCheckUsage();
@@ -369,14 +390,22 @@ export const PlayScreen = () => {
         };
     }, [navigation, syncRemoteProgress]);
 
-    // Auto-scroll transcript proportionally to audio position
+    // Auto-scroll transcript proportionally to audio position.
+    // While the listener is scrolling by hand — and for a short settle period after
+    // they let go — the follow-along yields, so reading ahead or back isn't yanked
+    // away on the next position tick. It resumes on its own once they stop.
     useEffect(() => {
         if (!isPlaying || duration <= 1 || scrollContentHeight <= scrollViewHeight) return;
+        if (Date.now() < autoScrollPausedUntilRef.current) return;
         const progress = position / duration;
         const maxScroll = scrollContentHeight - scrollViewHeight;
         const targetY = progress * maxScroll;
         scrollRef.current?.scrollTo({ y: targetY, animated: true });
     }, [position]);
+
+    const deferAutoScroll = useCallback(() => {
+        autoScrollPausedUntilRef.current = Date.now() + AUTO_SCROLL_RESUME_DELAY_MS;
+    }, []);
 
     const togglePlayPause = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -438,15 +467,31 @@ export const PlayScreen = () => {
     const handleShare = async () => {
         try {
             const verseTitle = content?.title || `Chapter ${content?.chapter_no}  ·  Verse ${content?.verse_no}`;
-            const bookTitle = meta.title || 'Daily Shlokya';
+            const bookTitle = meta.title || 'Mangalam';
 
-            // Build a more attractive share message
-            const message = `🌟 Wisdom from ${bookTitle}:\n\n"${verseTitle}"\n\nListen to the full story and commentary on the Mangalam app. 🙏`;
+            // Platform-specific download link embedded in the message.
+            // iOS: App Store link  |  Android: Play Store link
+            const downloadUrl = Platform.OS === 'ios' ? APP_STORE_URL : PLAY_STORE_URL;
 
-            await Share.share({
+            const message =
+                `🌟 Wisdom from ${bookTitle}:\n\n` +
+                `"${verseTitle}"\n\n` +
+                `Listen to the full story and commentary on the Mangalam app. 🙏\n\n` +
+                `📱 Download free: ${downloadUrl}`;
+
+            // On iOS, passing `url` (the App Store link) causes the share sheet
+            // to render a rich App Store preview card instead of the generic
+            // plain-text document icon. On Android, `url` is not used here
+            // because the download link is already in the message text.
+            const shareContent: { message: string; url?: string; title?: string } = {
                 message,
-                title: `Share ${bookTitle} Wisdom`,
-            });
+                title: `${bookTitle} Wisdom`,
+            };
+            if (Platform.OS === 'ios') {
+                shareContent.url = APP_STORE_URL;
+            }
+
+            await Share.share(shareContent);
 
             // Log activity
             if (session) {
@@ -458,13 +503,26 @@ export const PlayScreen = () => {
     };
 
     const navigateToVerse = async (targetVerseId: string, forceAutoPlay?: boolean) => {
-        const wasPlaying = forceAutoPlay ?? isPlaying;
-        isNavigatingToVerse.current = true;
-        void syncRemoteProgress('track_change', { force: true });
         if (!targetVerseId || !bookId) {
             logger.warn('Playback navigation missing book context', { targetVerseId, bookId });
             return;
         }
+
+        // Only the focused PlayScreen may drive stack navigation. navigateToVerse is
+        // also invoked from the audio store's onFinish callback when a verse ends: if
+        // the listener has since navigated away (mini-player showing, app backgrounded),
+        // this stale navigation object would dispatch replace('Play') against a stack
+        // that no longer contains Play — collapsing the root to a lone Play route with
+        // no parent, so the "close" chevron fires an unhandled GO_BACK and the listener
+        // is stranded on the player. When unfocused, let playback simply end; the
+        // mini-player and resume state carry the session forward.
+        if (!navigation.isFocused()) {
+            return;
+        }
+
+        const wasPlaying = forceAutoPlay ?? isPlaying;
+        isNavigatingToVerse.current = true;
+        void syncRemoteProgress('track_change', { force: true });
 
         navigation.replace('Play', {
             itemId: targetVerseId,
@@ -539,25 +597,6 @@ export const PlayScreen = () => {
         );
     }
 
-    if (isAllowed === false) {
-        return (
-            <View style={[styles.center, { flex: 1, padding: spacing.xl, backgroundColor: colors.background }]}>
-                <Ionicons name="lock-closed" size={64} color={colors.primary} style={{ marginBottom: spacing.l }} />
-                <Text style={[styles.trackTitle, { marginBottom: spacing.m, color: colors.text }]}>Daily Limit Reached</Text>
-                <Text style={[styles.trackSubtitle, { marginBottom: spacing.xl, textAlign: 'center', color: colors.textSecondary }]}>
-                    You have reached your free limit of 3 sessions today. Support us to unlock unlimited wisdom.
-                </Text>
-                <Button
-                    title="Become a Supporter"
-                    onPress={() => navigation.navigate('SupportMangalam')}
-                />
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: spacing.xl }}>
-                    <Text style={{ color: colors.textSecondary }}>Go Back</Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
     const playerBarBg = colors.background + 'E8';
 
     return (
@@ -617,6 +656,8 @@ export const PlayScreen = () => {
                 onContentSizeChange={(_, h) => setScrollContentHeight(h)}
                 onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height)}
                 scrollEventThrottle={200}
+                onScrollBeginDrag={deferAutoScroll}
+                onScrollEndDrag={deferAutoScroll}
             >
                 {(() => {
                     const voicePref = voicePreference || 'english-male';

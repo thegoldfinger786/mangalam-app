@@ -5,6 +5,9 @@ import os
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+# import-content is operator-only: the bearer token satisfies the gateway, but
+# the handler authorizes on x-admin-secret. Never hardcode this value.
+ADMIN_API_SECRET = os.environ.get("ADMIN_API_SECRET")
 
 CSV_PATH = "/Users/sandeep/DailyShlokyaAG/scripts/data/mahabharat/chapter_1_source.csv"
 
@@ -43,12 +46,17 @@ def test_verse_1_1():
         }
     }
 
+    if not ADMIN_API_SECRET:
+        print("Error: ADMIN_API_SECRET is not set in the environment (required by import-content)")
+        return
+
     print(f"Triggering import-content for Verse 1.1...")
     headers = {
         "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "x-admin-secret": ADMIN_API_SECRET,
         "Content-Type": "application/json"
     }
-    
+
     resp = requests.post(f"{SUPABASE_URL}/functions/v1/import-content", json=payload, headers=headers)
     print(f"Status: {resp.status_code}")
     print(resp.text)

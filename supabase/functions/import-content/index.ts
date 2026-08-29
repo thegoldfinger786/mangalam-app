@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin } from "../_shared/adminAuth.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 const RAPID_API_KEY = Deno.env.get("RAPID_API_KEY") || "";
@@ -173,6 +174,11 @@ async function generateEnhancedContent(chapter: number, verse: number, sanskritT
 }
 
 serve(async (req) => {
+  // Authorization first: before the body is read, before any Gemini call, and
+  // before any service-role write to verses / verse_content.
+  const denied = requireAdmin(req);
+  if (denied) return denied;
+
   try {
     const { chapter, verse, book = "gita", base_content = null } = await req.json();
     if (!chapter || !verse) return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400 });

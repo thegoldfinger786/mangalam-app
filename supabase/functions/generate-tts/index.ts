@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { requireAdmin } from "../_shared/adminAuth.ts"
 
 const PRONUNCIATION_ATLAS: Record<string, string> = {
     'Sumitra': 'Sumitraa',
@@ -114,10 +115,9 @@ const VOICE_CONFIGS = {
   hi: { male: 'hi-IN-Neural2-B', female: 'hi-IN-Neural2-A' },
 };
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+// Operator-only, server-to-server function: no browser origin needs access,
+// so no CORS headers are advertised. Responses carry plain JSON headers.
+const jsonHeaders = { 'Content-Type': 'application/json' }
 
 async function generateSingleTTS(ssml: string, voiceId: string, language: string, apiKey: string): Promise<Uint8Array> {
     const languageCode = language === 'en' ? 'en-IN' : 'hi-IN';
@@ -186,14 +186,17 @@ async function generateChunkedTTS(ssml: string, voiceId: string, language: strin
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  // Authorization first: before the body is read, before the service-role client
+  // is built, and before any Google TTS call or storage write.
+  const denied = requireAdmin(req);
+  if (denied) return denied;
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
   const ttsApiKey = Deno.env.get('TTS_API_KEY') || '';
 
   if (!supabaseUrl || !serviceRoleKey || !ttsApiKey) {
-    return new Response(JSON.stringify({ error: "Missing required environment variables." }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: "Missing required environment variables." }), { status: 500, headers: jsonHeaders });
   }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
@@ -371,6 +374,6 @@ serve(async (req) => {
         }, { onConflict: 'book_id,verse_id,language,section,voice_id,asset_type' });
     }
 
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: jsonHeaders });
   }
 });
