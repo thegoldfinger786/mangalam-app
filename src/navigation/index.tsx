@@ -6,6 +6,7 @@ import React, { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 // Navigators & Screens
+import { logger } from '../lib/logger';
 import { useAuth } from '../auth/AuthProvider';
 import { MiniPlayer } from '../components/MiniPlayer';
 import { AboutScreen } from '../screens/AboutScreen';
@@ -14,17 +15,14 @@ import { CommunityWisdomScreen } from '../screens/CommunityWisdomScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { PlayScreen } from '../screens/PlayScreen';
 import { SupportMangalamScreen } from '../screens/SupportMangalamScreen';
-import { WebViewScreen } from '../screens/WebViewScreen';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { BottomTabs } from './BottomTabs';
+import { navigationRef } from './navigationRef';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-
-import { navigationRef } from './navigationRef';
-import { logger } from '../lib/logger';
 
 function getActiveRouteName(state: any): string | null {
     if (!state || !state.routes) return null;
@@ -95,14 +93,6 @@ const AuthenticatedApp = () => {
                         <Stack.Screen
                             name="SupportMangalam"
                             component={SupportMangalamScreen}
-                            options={{
-                                headerShown: false,
-                                animation: 'slide_from_right',
-                            }}
-                        />
-                        <Stack.Screen
-                            name="WebView"
-                            component={WebViewScreen}
                             options={{
                                 headerShown: false,
                                 animation: 'slide_from_right',

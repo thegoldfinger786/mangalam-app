@@ -25,12 +25,11 @@ export const AboutScreen = () => {
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     const openLink = async (url: string) => {
+        // Legal / policy pages and Contact open in the system browser / mail app —
+        // same as the Login screen. They render in their own serif type and carry
+        // their own site nav, which clashes inside a bare in-app WebView (WEB-01/02).
         try {
-            if (url.startsWith('mailto:')) {
-                await Linking.openURL(url);
-                return;
-            }
-            navigation.navigate('WebView', { url });
+            await Linking.openURL(url);
         } catch {
             Alert.alert('Error', 'Unable to open link.');
         }
