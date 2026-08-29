@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 20 merged — PR #21)_
+_Last updated: 2026-08-29 (batch 21 merged — PR #22)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 20 merged — PR #21)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial) |
-| Verified | 44 (Batches 1–20; Batches 12, 15, 16, 18 & 19 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial); Batch 21 (PR #22 — LIB-05, UX-05 partial) |
+| Verified | 45 (Batches 1–21; Batches 12, 15, 16, 18, 19 & 21 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 35 (CONTENT-02 now PARTIAL) |
+| Open | 34 (UX-05 & CONTENT-02 now PARTIAL) |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 21 — Loading skeletons | LIB-05; UX-05 (partial) | **Merged** (PR #22 → `main`, 2026-08-29) | Library, Community Wisdom and Your Journey replaced their bare centred `ActivityIndicator` with a layout skeleton (shared `Skeleton`, matching Home). Removed the now-unused `ActivityIndicator` imports + orphaned `center`/`centerPadding` styles. `tsc` + eslint clean; loaded states verified on the running app. BookDashboard (empty-hero flash) and Play (full-screen spinner) still open under UX-05. |
 | 2026-08-29 | Batch 20 — One name per book | CONTENT-02 (partial) | **Merged** (PR #21 → `main`, 2026-08-29) | `COLLECTION_METADATA`: "Ramayana"/"Mahabharata" → "Ramayan"/"Mahabharat" (matches DB titles + Play/Dashboard headers; fixed the Play header/subtitle disagreeing for Ramayan). Not-yet-live pillars left alone. Slug casing + a proper identity-cache name helper remain open. |
 | 2026-08-29 | Batch 19 — Legal links to the browser | WEB-01, WEB-02 | **Merged** (PR #20 → `main`, 2026-08-29) | `AboutScreen.openLink` now always `Linking.openURL` (matches the Login screen); the in-app `WebViewScreen` — its only caller — is deleted along with the `WebView` route (`navigation/index.tsx` / `types.ts`). Legal pages open in Safari with the iOS return affordance. `react-native-webview` is left in `package.json` as an unused dep (removal needs a prebuild). Verified on the running app: About → Terms → `mangalamapp.com/terms` in Safari, no crash. |
 | 2026-08-29 | Batch 18 — Library chapter tiles | LIB-02 | **Merged** (PR #19 → `main`, 2026-08-29) | `LibraryScreen.tsx`: chapter tile "N / Chapter" → single "Chapter N"; removed the nested play-`<TouchableOpacity>` (duplicated the tile long-press). One tap target — tap opens the verse list, long-press plays the first verse. Verse rows: "Chapter 1, Verse 1" → "Verse N" (chapter already in the header). Verified on the running app. |
@@ -72,7 +73,7 @@ _Last updated: 2026-08-29 (batch 20 merged — PR #21)_
 | UX-02 | Two parallel content-browse implementations (Library detail vs Book Dashboard) | NEEDS CHANGE | P1 | IDENTIFIED | Library, BookDashboard, Home |
 | UX-03 | Two streak widgets with different logic & week-start | NEEDS CHANGE | P1 | **MERGED** (Batch 3 · PR #4, 2026-08-29) | Home, Streaks — now one `WeeklyStreak` component + one data source |
 | UX-04 | Metrics not measured / mislabeled (Total Time, "streak", "completed") | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 14 + Batch 16) — Total Time + "streak" label + weekly widgets (Batch 3); 30-day cap (Batch 14 · STREAK-08); "completed"-on-open now fires on audio finish (Batch 16 · LIB-06) | Streaks, Home, Library, BookDashboard |
-| UX-05 | Inconsistent loading states (skeleton vs bare spinner) | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Library, Streaks, Community, BookDashboard, Play |
+| UX-05 | Inconsistent loading states (skeleton vs bare spinner) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 21 · PR #22, 2026-08-29) | Library, Streaks, Community now use layout skeletons (shared `Skeleton`, matching Home). Still open: BookDashboard (renders empty hero, not a spinner — needs a full-layout skeleton) and Play (full-screen spinner). |
 | UX-06 | Inconsistent headers & back affordances | NEEDS IMPROVEMENT | P2 | IDENTIFIED | all stack screens |
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
 | UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
@@ -178,7 +179,7 @@ _Last updated: 2026-08-29 (batch 20 merged — PR #21)_
 | LIB-02 | Chapter tile layout | [SRC+LIVE] Number above the word "Chapter" ("1 / Chapter"); nested play button inside the tappable tile | NEEDS IMPROVEMENT | "Chapter 1"; one tap target or clearly separated | P2 | High | **MERGED** (Batch 18 · PR #19, 2026-08-29) | Single centred "Chapter N" label; nested play-`<TouchableOpacity>` removed (it duplicated the tile's long-press). Tap → verse list, long-press → first verse. Verse rows trimmed "Chapter 1, Verse 1" → "Verse N". [LIVE] verified. |
 | LIB-03 | Gita verse list unscannable | [LIVE] Raw Sanskrit as the primary line (some with "।।1.3।।"); no English hint. Ramayan list (descriptive titles) is the model that works | NEEDS IMPROVEMENT | Human title for every unit | P1 | High | IDENTIFIED | ref CONTENT-01; positioning |
 | LIB-04 | No search / filter | [SRC+LIVE] Nothing, for ~700 Gita verses | NEEDS IMPROVEMENT | Add search + filter | P1 | High | IDENTIFIED | |
-| LIB-05 | Bare spinner | [SRC+LIVE] No skeleton | NEEDS IMPROVEMENT | Skeleton | P2 | High | IDENTIFIED | ref UX-05 |
+| LIB-05 | Bare spinner | [SRC+LIVE] No skeleton | NEEDS IMPROVEMENT | Skeleton | P2 | High | **MERGED** (Batch 21 · PR #22, 2026-08-29) | Book grid + chapter-tile grid both show a `Skeleton` layout while loading. |
 | LIB-06 | "Completed" on open | [SRC+LIVE] Verses marked ✓ on open (`addCompletedVerse` on load), not on completion | NEEDS IMPROVEMENT | Mark complete on actual completion | P2 | High | **MERGED** (Batch 16 · PR #17, 2026-08-29) | ref UX-04. `addCompletedVerse(itemId)` moved from PlayScreen load-time into the audio `onFinish` callbacks (fires only on `status.didJustFinish`). [LIVE] verified — opening BG 2.1 without playing no longer bumps Chapter 2 from 0/72. `completedVerses` is still the same client-only persisted list. |
 
 ### Streaks / "Your Journey" — `StreaksScreen`
