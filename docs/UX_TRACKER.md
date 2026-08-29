@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 17 merged — PR #18)_
+_Last updated: 2026-08-29 (batch 18 merged — PR #19)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 17 merged — PR #18)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02) |
-| Verified | 41 (Batches 1–17; Batches 12, 15 & 16 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02) |
+| Verified | 42 (Batches 1–18; Batches 12, 15, 16 & 18 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 38 |
+| Open | 37 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 18 — Library chapter tiles | LIB-02 | **Merged** (PR #19 → `main`, 2026-08-29) | `LibraryScreen.tsx`: chapter tile "N / Chapter" → single "Chapter N"; removed the nested play-`<TouchableOpacity>` (duplicated the tile long-press). One tap target — tap opens the verse list, long-press plays the first verse. Verse rows: "Chapter 1, Verse 1" → "Verse N" (chapter already in the header). Verified on the running app. |
 | 2026-08-29 | Batch 17 — MiniPlayer font | MINI-02 | **Merged** (PR #18 → `main`, 2026-08-29) | `MiniPlayer` asked for `Inter-SemiBold`/`Inter-Regular` (not bundled — app ships Outfit) → silent system-font fallback. Now `typography.fontFamilies.semiBold`/`.regular` + `typography.sizes.s`/`.xs` (same values). Unused `Platform`/`RootStackParamList` imports removed. tsc + eslint clean; no simulator run (token swap, proven fonts). |
 | 2026-08-29 | Batch 16 — Completion means finished | LIB-06 (closes UX-04) | **Merged** (PR #17 → `main`, 2026-08-29) | `PlayScreen.tsx`: `addCompletedVerse(itemId)` moved from load-time to the audio `onFinish` callbacks (fires on `status.didJustFinish` — the same signal that drives auto-advance). Verses no longer show ✓ in the Library / count toward Book Dashboard progress just for being opened. `completedVerses` unchanged (same client-only persisted list). Verified on the running app: opening BG 2.1 without playing keeps Chapter 2 at 0/72. |
 | 2026-08-29 | Batch 15 — PlayScreen highlight & header | PLAY-08, PLAY-09 | **Merged** (PR #16 → `main`, 2026-08-29) | `PlayScreen.tsx`. **PLAY-08**: the Sanskrit `HighlightedText` was passed identical `activeColor`/`inactiveColor` → highlight invisible. Active sentences now use `colors.text` against the saffron rest (same pattern as the other blocks); resting look unchanged. **PLAY-09**: header "NOW PLAYING" → book name + "Chapter N · Verse M" (from data already loaded), shown in focus mode too; header title de-uppercased (matches Batch 11). Cleanup: removed unused `Dimensions`/`width`, `MANGALAM_ICON`, `assertBookIdentityReady`, dead `isVerse`, and 6 orphaned style objects. Verified on the Simulator (QA account): highlight tracks playback on BG 1.1/1.2, header updates on next-verse, playback / follow-along / prev-next / mini-player intact. |
@@ -172,7 +173,7 @@ _Last updated: 2026-08-29 (batch 17 merged — PR #18)_
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
 | LIB-01 | Three-level in-tab drilldown | [SRC+LIVE] Books → Chapters → Verses with custom "Books"/"Back" pills, no native headers | NEEDS IMPROVEMENT | One browse flow; consistent header | P2 | High | IDENTIFIED | ref UX-02, UX-06 |
-| LIB-02 | Chapter tile layout | [SRC+LIVE] Number above the word "Chapter" ("1 / Chapter"); nested play button inside the tappable tile | NEEDS IMPROVEMENT | "Chapter 1"; one tap target or clearly separated | P2 | High | IDENTIFIED | Not addressed by Batch 6 (which only restyled with tokens; the tile structure is unchanged). |
+| LIB-02 | Chapter tile layout | [SRC+LIVE] Number above the word "Chapter" ("1 / Chapter"); nested play button inside the tappable tile | NEEDS IMPROVEMENT | "Chapter 1"; one tap target or clearly separated | P2 | High | **MERGED** (Batch 18 · PR #19, 2026-08-29) | Single centred "Chapter N" label; nested play-`<TouchableOpacity>` removed (it duplicated the tile's long-press). Tap → verse list, long-press → first verse. Verse rows trimmed "Chapter 1, Verse 1" → "Verse N". [LIVE] verified. |
 | LIB-03 | Gita verse list unscannable | [LIVE] Raw Sanskrit as the primary line (some with "।।1.3।।"); no English hint. Ramayan list (descriptive titles) is the model that works | NEEDS IMPROVEMENT | Human title for every unit | P1 | High | IDENTIFIED | ref CONTENT-01; positioning |
 | LIB-04 | No search / filter | [SRC+LIVE] Nothing, for ~700 Gita verses | NEEDS IMPROVEMENT | Add search + filter | P1 | High | IDENTIFIED | |
 | LIB-05 | Bare spinner | [SRC+LIVE] No skeleton | NEEDS IMPROVEMENT | Skeleton | P2 | High | IDENTIFIED | ref UX-05 |
