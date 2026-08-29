@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 18 merged — PR #19)_
+_Last updated: 2026-08-29 (batch 19 merged — PR #20)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 18 merged — PR #19)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02) |
-| Verified | 42 (Batches 1–18; Batches 12, 15, 16 & 18 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02) |
+| Verified | 44 (Batches 1–19; Batches 12, 15, 16, 18 & 19 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 37 |
+| Open | 35 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 19 — Legal links to the browser | WEB-01, WEB-02 | **Merged** (PR #20 → `main`, 2026-08-29) | `AboutScreen.openLink` now always `Linking.openURL` (matches the Login screen); the in-app `WebViewScreen` — its only caller — is deleted along with the `WebView` route (`navigation/index.tsx` / `types.ts`). Legal pages open in Safari with the iOS return affordance. `react-native-webview` is left in `package.json` as an unused dep (removal needs a prebuild). Verified on the running app: About → Terms → `mangalamapp.com/terms` in Safari, no crash. |
 | 2026-08-29 | Batch 18 — Library chapter tiles | LIB-02 | **Merged** (PR #19 → `main`, 2026-08-29) | `LibraryScreen.tsx`: chapter tile "N / Chapter" → single "Chapter N"; removed the nested play-`<TouchableOpacity>` (duplicated the tile long-press). One tap target — tap opens the verse list, long-press plays the first verse. Verse rows: "Chapter 1, Verse 1" → "Verse N" (chapter already in the header). Verified on the running app. |
 | 2026-08-29 | Batch 17 — MiniPlayer font | MINI-02 | **Merged** (PR #18 → `main`, 2026-08-29) | `MiniPlayer` asked for `Inter-SemiBold`/`Inter-Regular` (not bundled — app ships Outfit) → silent system-font fallback. Now `typography.fontFamilies.semiBold`/`.regular` + `typography.sizes.s`/`.xs` (same values). Unused `Platform`/`RootStackParamList` imports removed. tsc + eslint clean; no simulator run (token swap, proven fonts). |
 | 2026-08-29 | Batch 16 — Completion means finished | LIB-06 (closes UX-04) | **Merged** (PR #17 → `main`, 2026-08-29) | `PlayScreen.tsx`: `addCompletedVerse(itemId)` moved from load-time to the audio `onFinish` callbacks (fires on `status.didJustFinish` — the same signal that drives auto-advance). Verses no longer show ✓ in the Library / count toward Book Dashboard progress just for being opened. `completedVerses` unchanged (same client-only persisted list). Verified on the running app: opening BG 2.1 without playing keeps Chapter 2 at 0/72. |
@@ -229,8 +230,8 @@ _Last updated: 2026-08-29 (batch 18 merged — PR #19)_
 
 | ID | Screen / Function | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| WEB-01 | Bare chrome | [SRC+LIVE] Back arrow only — no title, no loading indicator, no error state, no "open in browser" | NEEDS IMPROVEMENT | Titled header + loading/error + open-in-browser | P2 | High | IDENTIFIED | |
-| WEB-02 | Embedded site chrome & type clash | [LIVE] Page's own "← Back to Home" link is confusing in-app; serif site type vs app's Outfit | NEEDS IMPROVEMENT | Hide site chrome, or open legal pages in the browser | P2 | High | IDENTIFIED | |
+| WEB-01 | Bare chrome | [SRC+LIVE] Back arrow only — no title, no loading indicator, no error state, no "open in browser" | NEEDS IMPROVEMENT | Titled header + loading/error + open-in-browser | P2 | High | **MERGED** (Batch 19 · PR #20, 2026-08-29) | Resolved by removal — `AboutScreen` (the only caller) now opens legal links with `Linking.openURL` like the Login screen; `WebViewScreen` + its route deleted. `react-native-webview` is now an unused dep (removal needs a prebuild — deferred). |
+| WEB-02 | Embedded site chrome & type clash | [LIVE] Page's own "← Back to Home" link is confusing in-app; serif site type vs app's Outfit | NEEDS IMPROVEMENT | Hide site chrome, or open legal pages in the browser | P2 | High | **MERGED** (Batch 19 · PR #20, 2026-08-29) | Legal pages now open in Safari (verified: About → Terms → `mangalamapp.com/terms` with the iOS "◀ Mangalam" return). The site's own type/nav is no longer wrapped in app chrome. |
 | WEB-03 | Privacy page contradicts "no data" claim | [LIVE] Policy states email/usage/payment collected | NEEDS CHANGE | Align app copy with the policy | P1 | High | **MERGED** (Batch 7 · PR #8, 2026-08-29) | Resolved with AUTH-02 — the in-app copy no longer contradicts the Privacy Policy; the About card now points readers to it. |
 
 ### Navigation (cross-cutting)
@@ -239,7 +240,7 @@ _Last updated: 2026-08-29 (batch 18 merged — PR #19)_
 |---|---|---|---|---|---|---|---|---|
 | NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen shows an unhandled `GO_BACK` on the close chevron; swipe-dismiss also fails. Root cause (confirmed by reproduction): an **unfocused** PlayScreen driving `navigation.replace('Play')` via the audio store's `onFinish` callback — not the modal-dismiss sequence originally hypothesised. See PLAY-01. | NEEDS CHANGE | See PLAY-01 | **P0** | High | **MERGED** (PR #1) | Fixed with PLAY-01 (focus guard in `navigateToVerse`). Verified on simulator 2026-08-28; merged 2026-08-28 (`9c51ba1`). |
 | NAV-02 | Modal-over-tabs vs in-tab | [SRC+LIVE] Home→Dashboard→Play hides the tab bar; Library's parallel flow keeps it | NEEDS IMPROVEMENT | One navigation model for browse→play | P1 | High | IDENTIFIED | ref UX-02, UX-06 |
-| NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | IDENTIFIED | ref UX-06. Batch 11 removed the ALL-CAPS styling from the About header specifically; the structural five-header inconsistency is unchanged. |
+| NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | IDENTIFIED | ref UX-06. Batch 11 removed the ALL-CAPS styling from the About header; Batch 19 removed the bare `WebViewScreen` header entirely. The structural inconsistency across the remaining stack screens is unchanged. |
 
 ### Positioning (spiritual wellness vs religious)
 
