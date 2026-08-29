@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 24 merged — PR #25)_
+_Last updated: 2026-08-29 (batch 26 merged — PR #28)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,17 @@ _Last updated: 2026-08-29 (batch 24 merged — PR #25)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06); Batch 17 (PR #18 — MINI-02); Batch 18 (PR #19 — LIB-02); Batch 19 (PR #20 — WEB-01, WEB-02); Batch 20 (PR #21 — CONTENT-02 partial); Batch 21 (PR #22 — LIB-05, UX-05 partial); Batch 22 (PR #23 — UX-05 BookDashboard); Batch 23 (PR #24 — UX-05 complete, LIB-05); Batch 24 (PR #25 — SUP-01/SUP-03 partial) |
-| Verified | 48 (Batches 1–24; Batches 12, 15, 16, 18, 19, 21 & 22 also verified on the running app) |
+| Implemented / Merged | Batches 1–24 (see rows below); Batch 25 (PR #27 — UX-08 partial); Batch 26 (PR #28 — PLAY-15). Dep cleanup: PR #26 (react-native-webview). |
+| Verified | 50 (Batches 1–26; Batches 12, 15, 16, 18, 19, 21, 22, 25 & 26 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 33 (CONTENT-02, SUP-01, SUP-03 PARTIAL) |
+| Open | 31 (CONTENT-02, SUP-01, SUP-03, UX-08 PARTIAL) |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 26 — Play/pause icon sync | PLAY-15 | **Merged** (PR #28 → `main`, 2026-08-29) | `togglePlayPause` set `isPlaying` optimistically after `sound.play()`/`.pause()` instead of waiting for the async status listener (which stays authoritative). Verified on a clean build — icon flips instantly. |
+| 2026-08-29 | Batch 25 — Retry on load failure | UX-08 (partial) | **Merged** (PR #27 → `main`, 2026-08-29) | New shared `LoadError` component. Wired into Library / Community / Journey / Book Dashboard load-failure paths (silent empty renders + a Book-Dashboard `Alert` replaced by an inline "Try again"). Verified on the running app with a forced failure. PlayScreen / audio errors + Home not included. |
 | 2026-08-29 | Batch 24 — Calm the Support screen | SUP-01 (partial), SUP-03 (partial) | **Merged** (PR #25 → `main`, 2026-08-29) | Applied Batch 11's About-screen treatment to the Support screen (near-clone): no ALL-CAPS / wide letter-spacing on headers, section titles → text colour + sentence case. Removed the `transform: scale(1.02)` on the contribution button (SUP-01 clip). Dead `buttonGrid` style + unused theme bindings removed. The hard-coded "€5" CTA and the mission-text duplication with About still need product/editorial calls. |
 | 2026-08-29 | Batch 23 — Play screen skeleton (UX-05 done) | UX-05 | **Merged** (PR #24 → `main`, 2026-08-29) | Play screen's bare full-screen `ActivityIndicator` → a player-layout skeleton in a `ScreenContainer`. Every data-loading screen now uses the shared `Skeleton`; UX-05 fully resolved. `tsc` + eslint clean. |
 | 2026-08-29 | Batch 22 — Book Dashboard skeleton | UX-05 (partial) | **Merged** (PR #23 → `main`, 2026-08-29) | Book Dashboard showed its real layout with empty values while loading (a "0 verses / journey begins here" flash). Now a `Skeleton` layout during load; header bar hoisted into a shared `headerBar` const. Verified loaded state on the running app. Play screen's spinner still open under UX-05. |
@@ -79,7 +81,7 @@ _Last updated: 2026-08-29 (batch 24 merged — PR #25)_
 | UX-05 | Inconsistent loading states (skeleton vs bare spinner) | NEEDS IMPROVEMENT | P2 | **MERGED** (Batches 21–23 · PRs #22–#24, 2026-08-29) | Every data-loading screen — Home, Library, Community, Journey, Book Dashboard, Play — now shows a layout skeleton via the shared `Skeleton` component. Bare `ActivityIndicator`s removed. |
 | UX-06 | Inconsistent headers & back affordances | NEEDS IMPROVEMENT | P2 | IDENTIFIED | all stack screens |
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
-| UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | IDENTIFIED | Play, Library, BookDashboard, audio engine |
+| UX-08 | Errors via Alert / silent failure; no retry affordances | NEEDS CHANGE | P1 | **PARTIAL** (Batch 25 · PR #27, 2026-08-29) | New shared `LoadError` (calm icon + "We couldn't load this just now." + "Try again"). Wired into Library, Community, Journey, Book Dashboard load-failure paths (each retry re-runs the fetch); Book Dashboard's `Alert` replaced. Still open: Play / audio-engine errors (PLAY-02, PLAY-03) and Home (partial-data failures). |
 | UX-09 | Gamification cues inconsistent with positioning | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 5 + Batch 9) | Streaks flame/score removed (Batch 3); Community podium removed (Batch 5 · PR #6); the last cue — the "Streaks" tab + flame icon — became "Journey" + leaf (Batch 9 · PR #10) |
 | UX-10 | Typography scale bypassed (hard-coded fontSize / fontWeight) | NEEDS IMPROVEMENT | P2 | **PARTIAL** (Batch 6 · PR #7; Batch 17 · PR #18) | `Card`, `BookCard`, `VoiceOptionCard`, Library & the voice section (Batch 6); `MiniPlayer` (Batch 17, incl. the invalid `Inter-*` font — MINI-02). Other screens still hard-code fontSize in places. |
 | UX-11 | Content language framed only as "Voice Preference", buried | NEEDS IMPROVEMENT | P1 | IDENTIFIED | Settings, Play, Library |
@@ -130,7 +132,7 @@ _Last updated: 2026-08-29 (batch 24 merged — PR #25)_
 | COMM-01 | Competitive framing | [SRC+LIVE] Gold trophy #1, silver/bronze medals, "#1"–"#5", "TRENDING NOW / MOST INSPIRED / TOP SAVED" | NEEDS CHANGE | Reframe: no ranks/medals/"trending"; "what others found meaningful" | P1 | High | **MERGED** (Batch 5 · PR #6, 2026-08-29) | ref UX-09, POS-05. `CommunityWisdomScreen.tsx`: rank badge / trophy / medal / #N / medal-tinted borders all removed. Sections relabelled "Others are listening to / sharing / keeping" with neutral icons; intro line "A quiet look at the verses others are finding meaningful." (also fixes COMM-03's broken sentence). Rows are still ordered by engagement but carry no rank chrome. Verified on the running app. |
 | COMM-02 | Rows convey nothing | [LIVE] Every row is "Bhagavad Gita / Chapter 2, Verse 4" — no title, no snippet, no reason | NEEDS IMPROVEMENT | Show title + one-line why | P1 | High | IDENTIFIED | **Still open** — blocked by CONTENT-01 (Gita verses have no titles). Batch 5 cleaned the chrome but the row text is unchanged. |
 | COMM-03 | Section labels & subtitle | [LIVE] Engagement-app tone; "Discover what fellow seekers are finding inspired by" is grammatically broken | NEEDS IMPROVEMENT | Rewrite | P2 | High | **MERGED** (Batch 5 · PR #6, 2026-08-29) | Done with COMM-01. Section labels de-shouted (sentence case, no uppercase/letter-spacing); intro sentence rewritten. |
-| COMM-04 | Empty state | [SRC] Empty sections just vanish | NEEDS IMPROVEMENT | Designed empty state | P2 | Med | IDENTIFIED | ref UX-05 |
+| COMM-04 | Empty state | [SRC] Empty sections just vanish | NEEDS IMPROVEMENT | Designed empty state | P2 | Med | IDENTIFIED | ref UX-05. Batch 25 added the *load-failure* state; a genuinely-empty Community (no shared verses yet) still shows only the bare intro — needs a one-line "nothing here yet" message (editorial). |
 | COMM-05 | Production data | [LIVE] Real `activity_log` aggregate; test-account listen/share/bookmark feeds public rankings | — | Behavioural note | — | High | REVIEWED | See TESTING.md |
 
 ### Book Dashboard — `BookDashboardScreen`
@@ -163,7 +165,7 @@ _Last updated: 2026-08-29 (batch 24 merged — PR #25)_
 | PLAY-12 | Core layered experience | [LIVE] Labeled layers, cover art, speed, skip-15, prev/next, auto-advance, bookmark, share — all work; audio reliable for Gita + Ramayan | KEEP | — | KEEP | High | REVIEWED | Product's strongest asset |
 | PLAY-13 | Sanskrit with no context | [LIVE] Sanskrit lands first, large, orange, with no "what this is" for a newcomer | NEEDS IMPROVEMENT | One-line plain-language framing above the Sanskrit | P2 | High | IDENTIFIED | ref POS-04 |
 | PLAY-14 | No background auto-advance | [LIVE] Deliberate consequence of the PLAY-01 fix: when a verse ends while the listener is on another tab or the app is backgrounded, playback now simply stops instead of auto-advancing to the next verse. Aligns with "daily habit over binge consumption" (`CLAUDE.md` §3). If continuous background listening is later wanted, it must be driven by the audio store (loading the next verse's audio) — never by screen navigation. | NEEDS CHANGE | Accept as-is for now; revisit only if product wants background continuous play | P2 | High | REVIEWED | Introduced 2026-08-28 with the PLAY-01 fix |
-| PLAY-15 | Play/pause icon desync | [LIVE] Observed intermittently during testing: the large play/pause button shows the "play" triangle while audio is actually playing (transcript scrolling, timer advancing). `isPlaying` state lags the real player state. Pre-existing; not caused by the PLAY-01 fix. | NEEDS IMPROVEMENT | Drive the button purely from the player's reported status | P2 | Medium | IDENTIFIED | Noticed while verifying PLAY-01 |
+| PLAY-15 | Play/pause icon desync | [LIVE] Observed intermittently during testing: the large play/pause button shows the "play" triangle while audio is actually playing (transcript scrolling, timer advancing). `isPlaying` state lags the real player state. Pre-existing; not caused by the PLAY-01 fix. | NEEDS IMPROVEMENT | Drive the button purely from the player's reported status | P2 | Medium | **MERGED** (Batch 26 · PR #28, 2026-08-29) | Cause: `togglePlayPause` waited for the async `playbackStatusUpdate` listener to flip `isPlaying`. Fix: set `isPlaying` optimistically right after `sound.play()`/`.pause()`; the listener stays authoritative and reconciles. Verified on a clean build — icon flips instantly. The one auto-play-on-open glitch seen earlier didn't reproduce on a clean build (fast-refresh artifact). |
 | PLAY-16 | Auto-scroll `scrollTo` re-triggers scroll callbacks | [SRC+LIVE] Discovered while implementing PLAY-04: an animated `scrollRef.scrollTo()` fires `onMomentumScrollEnd`. Wiring the "listener is scrolling" detector to `onMomentumScrollEnd` therefore made the follow-along suppress *itself* (~one scroll every 6s). Fixed within Batch 2 by binding only to `onScrollBeginDrag` / `onScrollEndDrag`, which fire only for real touch drags. | NEEDS IMPROVEMENT | (fixed in Batch 2) | P2 | High | **MERGED** (Batch 2 · PR #2) | Keep this in mind for any future scroll-driven feature on this screen. |
 
 ### Mini Player — `MiniPlayer`
