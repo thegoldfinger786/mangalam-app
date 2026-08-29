@@ -6,31 +6,32 @@ import Animated, {
     useAnimatedStyle,
     useSharedValue,
     withSpring,
-    withSequence,
-    withDelay
+    withDelay,
 } from 'react-native-reanimated';
 import { useTheme } from '../theme';
-import { RollingNumber } from './RollingNumber';
 
 interface WeeklyStreakProps {
-    currentStreak: number;
-    sessionsToday: number;
+    /**
+     * ISO `YYYY-MM-DD` dates (UTC, matching `user_daily_usage.usage_date`) on
+     * which the listener spent any time in Mangalam. The widget shows the last
+     * seven calendar days and marks each one that appears in this list — a real
+     * per-day record, not an inferred run. Wherever weekly rhythm is shown it
+     * uses this same component and the same data, so the result is identical.
+     */
+    activeDates: string[];
 }
 
-const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boolean; isToday: boolean; color: string; delay: number; }) => {
+const toIsoDay = (d: Date) => d.toISOString().split('T')[0];
+const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+const DayDot = ({ isActive, isToday, color, delay }: { isActive: boolean; isToday: boolean; color: string; delay: number; }) => {
     const scale = useSharedValue(0);
     const opacity = useSharedValue(0);
 
     useDerivedValue(() => {
-        scale.value = withDelay(
-            delay,
-            withSpring(1, { damping: 10, stiffness: 100 })
-        );
-        opacity.value = withDelay(
-            delay,
-            withSpring(1)
-        );
-    }, [delay, isCompleted, isToday]);
+        scale.value = withDelay(delay, withSpring(1, { damping: 10, stiffness: 100 }));
+        opacity.value = withDelay(delay, withSpring(1));
+    }, [delay, isActive, isToday]);
 
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
@@ -39,7 +40,7 @@ const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boo
 
     return (
         <Animated.View style={animatedStyle}>
-            {isCompleted ? (
+            {isActive ? (
                 <Ionicons name="checkmark-circle" size={24} color={color} />
             ) : isToday ? (
                 <Ionicons name="ellipse" size={24} color={color} />
@@ -50,104 +51,63 @@ const AnimatedIcon = ({ isCompleted, isToday, color, delay }: { isCompleted: boo
     );
 };
 
-export const WeeklyStreak = ({ currentStreak, sessionsToday }: WeeklyStreakProps) => {
+export const WeeklyStreak = ({ activeDates }: WeeklyStreakProps) => {
     const { colors, spacing, typography, borderRadius } = useTheme();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    let todayIndex = new Date().getDay() - 1;
-    if (todayIndex < 0) todayIndex = 6;
+    const active = useMemo(() => new Set(activeDates), [activeDates]);
 
-    let weekCompleted = 0;
+    const week = useMemo(() => {
+        const today = new Date();
+        const todayIso = toIsoDay(today);
+        return Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(today.getDate() - (6 - i));
+            const iso = toIsoDay(d);
+            return {
+                iso,
+                label: DAY_LETTERS[d.getDay()],
+                isActive: active.has(iso),
+                isToday: iso === todayIso,
+            };
+        });
+    }, [active]);
 
-    const history = days.map((day, index) => {
-        let status: 'completed' | 'today' | 'upcoming' | 'missed' = 'upcoming';
-        if (index === todayIndex) {
-            if (sessionsToday > 0) {
-                status = 'completed';
-                weekCompleted++;
-            } else {
-                status = 'today';
-            }
-        } else if (index < todayIndex) {
-            const relativeDaysAgo = todayIndex - index;
-            const isWithinStreak = relativeDaysAgo <= (currentStreak - (sessionsToday > 0 ? 1 : 0));
-            if (isWithinStreak) {
-                status = 'completed';
-                weekCompleted++;
-            } else {
-                status = 'missed';
-            }
-        }
-        return { day, status };
-    });
-
-    const streakTitleScale = useSharedValue(1);
-
-    useDerivedValue(() => {
-        if (sessionsToday > 0) {
-            streakTitleScale.value = withSequence(
-                withSpring(1.2),
-                withSpring(1)
-            );
-        }
-    }, [sessionsToday]);
-
-    const streakTitleAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: streakTitleScale.value }]
-    }));
+    const dayCount = week.filter((d) => d.isActive).length;
 
     return (
         <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.xl, padding: spacing.l }]}>
             <View style={styles.headerRow}>
-                <Animated.Text style={[
-                    styles.title, 
-                    streakTitleAnimatedStyle,
-                    { 
-                        color: colors.text, 
-                        fontFamily: typography.fontFamilies.semiBold, 
-                        fontSize: typography.sizes.l
-                    }
-                ]}>
-                    This Week
-                </Animated.Text>
-                <View style={styles.scoreBadge}>
-                    <Ionicons name="flame" size={20} color={colors.primary} style={{ marginRight: spacing.xs }} />
-                    <RollingNumber value={weekCompleted} fontSize={typography.sizes.l} color={colors.primary} />
-                    <Text style={[styles.scoreText, { color: colors.textSecondary, fontFamily: typography.fontFamilies.semiBold, fontSize: typography.sizes.m }]}>/7</Text>
-                </View>
+                <Text style={[styles.title, { color: colors.text, fontFamily: typography.fontFamilies.semiBold, fontSize: typography.sizes.l }]}>
+                    Last 7 days
+                </Text>
+                <Text style={[styles.count, { color: colors.textSecondary, fontFamily: typography.fontFamilies.medium, fontSize: typography.sizes.m }]}>
+                    {dayCount === 1 ? '1 day' : `${dayCount} days`}
+                </Text>
             </View>
 
             <View style={styles.daysRow}>
-                {history.map((item, i) => {
-                    const isCompleted = item.status === 'completed';
-                    const isToday = item.status === 'today';
-                    const iconColor = isCompleted ? colors.secondary : isToday ? colors.primary : colors.border;
-
+                {week.map((item, i) => {
+                    const iconColor = item.isActive ? colors.secondary : item.isToday ? colors.primary : colors.border;
                     return (
                         <View
-                            key={i}
+                            key={item.iso}
                             style={[
                                 styles.dayColumn,
                                 { paddingVertical: spacing.s, borderRadius: borderRadius.m },
-                                isToday && { backgroundColor: colors.primary + '15' }
+                                item.isToday && { backgroundColor: colors.primary + '15' },
                             ]}
                         >
                             <View style={styles.iconContainer}>
-                                <AnimatedIcon 
-                                    isCompleted={isCompleted} 
-                                    isToday={isToday} 
-                                    color={iconColor} 
-                                    delay={300 + (i * 100)} 
-                                />
+                                <DayDot isActive={item.isActive} isToday={item.isToday} color={iconColor} delay={300 + i * 100} />
                             </View>
                             <Text style={[
                                 styles.dayText,
                                 { color: colors.textSecondary, fontFamily: typography.fontFamilies.medium },
-                                isCompleted && { color: colors.secondary },
-                                isToday && { color: colors.primary }
+                                item.isActive && { color: colors.secondary },
+                                item.isToday && { color: colors.primary },
                             ]}>
-                                {item.day}
+                                {item.label}
                             </Text>
                         </View>
                     );
@@ -167,14 +127,8 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         alignItems: 'center',
         marginBottom: spacing.l,
     },
-    title: {
-    },
-    scoreBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    scoreText: {
-    },
+    title: {},
+    count: {},
     daysRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
