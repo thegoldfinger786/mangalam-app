@@ -6,7 +6,6 @@ import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Dimensions,
     Image,
     Platform,
     ScrollView,
@@ -28,7 +27,7 @@ import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaCont
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
-import { assertValidBookId, assertBookIdentityConsistency, assertBookIdentityReady, getBookCode } from '../lib/bookIdentity';
+import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '../lib/bookIdentity';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, fetchVerseByIdAndBookId, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { supabase } from '../lib/supabase';
@@ -37,11 +36,9 @@ import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
 
-const { width } = Dimensions.get('window');
 const GITA_COVER = require('../../assets/images/gita-cover.jpg');
 const RAMAYAN_COVER = require('../../assets/images/ramayan-cover.jpg');
 const MAHABHARAT_COVER = require('../../assets/images/mahabharat-cover.jpg');
-const MANGALAM_ICON = require('../../assets/images/mangalam-icon.png');
 
 // ── App download links ───────────────────────────────────────────────────────────────
 // Included in every share message so recipients can download the app.
@@ -134,7 +131,6 @@ export const PlayScreen = () => {
     const invalidPlaybackContext = !itemId || !assertValidBookId(bookId, 'PlayScreen.render');
 
     const meta = COLLECTION_METADATA[currentBookSlug as string] || { title: 'Unknown', icon: 'book', color: colors.primary };
-    const isVerse = true; // Hardcoded to true as all content utilizes the unified Verses DB structure now
 
     // Single cache lookup for classification — avoids 3 separate scans
     const bookCode = getBookCode(bookId);
@@ -599,20 +595,35 @@ export const PlayScreen = () => {
 
     const playerBarBg = colors.background + 'E8';
 
+    // Header context: which book and where in it. Prefer the verse's own book
+    // title, fall back to the classification metadata (skip its "Unknown" default).
+    const headerBookName = content?.book_title || (meta.title !== 'Unknown' ? meta.title : null);
+    const headerRef = content?.chapter_no != null
+        ? `Chapter ${content.chapter_no}${content?.verse_no != null ? `  ·  Verse ${content.verse_no}` : ''}`
+        : null;
+
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
             {/* ── Fixed Top Header ── */}
             <Animated.View style={[styles.header, { paddingTop: spacing.m, paddingHorizontal: spacing.m }, animatedFocusHeaderStyle]}>
                 {!isFocusMode ? (
-                    <>
-                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                            <Ionicons name="chevron-down" size={26} color={colors.text} />
-                        </TouchableOpacity>
-                        <Text style={[styles.headerTitle, { color: colors.textSecondary }]}>Now Playing</Text>
-                    </>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                        <Ionicons name="chevron-down" size={26} color={colors.text} />
+                    </TouchableOpacity>
                 ) : (
-                    <View style={{ flex: 1 }} /> // Spacer to keep icons on the right
+                    <View style={styles.headerSideSpacer} />
                 )}
+
+                <View style={styles.headerCenter}>
+                    <Text style={[styles.headerTitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {headerBookName || 'Now Playing'}
+                    </Text>
+                    {headerRef ? (
+                        <Text style={[styles.headerRef, { color: colors.textTertiary }]} numberOfLines={1}>
+                            {headerRef}
+                        </Text>
+                    ) : null}
+                </View>
                 <View style={styles.headerRight}>
                     <TouchableOpacity onPress={handleShare} style={[styles.iconButton, { marginRight: spacing.s }]}>
                         <Ionicons name="share-outline" size={24} color={colors.text} />
@@ -763,7 +774,7 @@ export const PlayScreen = () => {
                                     text={sanskritText}
                                     progress={getLocalProgress(sanskritText)}
                                     style={[styles.contentSanskrit, { color: colors.primary, marginBottom: spacing.xl, fontSize: isFocusMode ? 28 : 22 }]}
-                                    activeColor={colors.primary}
+                                    activeColor={colors.text}
                                     inactiveColor={colors.primary}
                                 />
                             ) : null}
@@ -927,19 +938,27 @@ const createStyles = (
     iconButton: {
         padding: spacing.xs,
     },
+    headerCenter: {
+        flex: 1,
+        alignItems: 'center',
+        paddingHorizontal: spacing.s,
+    },
     headerTitle: {
         fontFamily: typography.fontFamilies.medium,
         fontSize: typography.sizes.s,
         color: colors.textSecondary,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
+    },
+    headerRef: {
+        fontFamily: typography.fontFamilies.regular,
+        fontSize: typography.sizes.xs,
+        marginTop: 1,
+    },
+    headerSideSpacer: {
+        width: 34,
     },
     headerRight: {
         flexDirection: 'row',
         alignItems: 'center',
-    },
-    scrollContent: {
-        paddingBottom: spacing.xxxl,
     },
     topSection: {
         alignItems: 'center',
@@ -975,11 +994,6 @@ const createStyles = (
         shadowRadius: 12,
         elevation: 6,
         marginBottom: spacing.s,
-    },
-    titleInfo: {
-        paddingHorizontal: spacing.xl,
-        marginBottom: spacing.l,
-        alignItems: 'center',
     },
     trackTitle: {
         fontFamily: typography.fontFamilies.semiBold,
@@ -1024,12 +1038,6 @@ const createStyles = (
         paddingHorizontal: spacing.s,
         marginTop: -spacing.s,
         marginBottom: spacing.xs,
-    },
-    timeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.s,
-        marginTop: -spacing.s,
     },
     timeText: {
         fontFamily: typography.fontFamilies.medium,
@@ -1095,22 +1103,6 @@ const createStyles = (
         fontSize: typography.sizes.s,
         color: colors.primary,
         letterSpacing: 0.5,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: colors.border,
-        marginVertical: spacing.l,
-        marginHorizontal: spacing.xl,
-    },
-    transcriptHeader: {
-        fontFamily: typography.fontFamilies.semiBold,
-        fontSize: typography.sizes.l,
-        color: colors.text,
-        paddingHorizontal: spacing.xl,
-        marginBottom: spacing.l,
-    },
-    transcriptBox: {
-        paddingHorizontal: spacing.xl,
     },
     contentSanskrit: {
         fontFamily: typography.fontFamilies.medium,
