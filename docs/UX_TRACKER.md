@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 15 merged — PR #16)_
+_Last updated: 2026-08-29 (batch 16 merged — PR #17)_
 
 | Metric | Count |
 |---|---|
@@ -32,15 +32,16 @@ _Last updated: 2026-08-29 (batch 15 merged — PR #16)_
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09) |
-| Verified | 39 (Batches 1–15; Batches 12 & 15 also verified on the running app) |
+| Implemented / Merged | 24 merged (Batches 1–5); Batch 6 (PR #7); Batch 7 (PR #8 — AUTH-01, AUTH-02, WEB-03); Batch 8 (PR #9 — ONB-01); Batch 9 (PR #10 — STREAK-09, STREAK-10); Batch 10 (PR #11 — DASH-03, DASH-04, DASH-05); Batch 11 (PR #12 — ABOUT-03, ABOUT-04); Batch 12 (PR #13 — SET-01, SET-03); Batch 13 (PR #14 — DASH-07); Batch 14 (PR #15 — STREAK-08); Batch 15 (PR #16 — PLAY-08, PLAY-09); Batch 16 (PR #17 — LIB-06) |
+| Verified | 40 (Batches 1–16; Batches 12, 15 & 16 also verified on the running app) |
 | Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 40 |
+| Open | 39 |
 
 ### Change log
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | Batch 16 — Completion means finished | LIB-06 (closes UX-04) | **Merged** (PR #17 → `main`, 2026-08-29) | `PlayScreen.tsx`: `addCompletedVerse(itemId)` moved from load-time to the audio `onFinish` callbacks (fires on `status.didJustFinish` — the same signal that drives auto-advance). Verses no longer show ✓ in the Library / count toward Book Dashboard progress just for being opened. `completedVerses` unchanged (same client-only persisted list). Verified on the running app: opening BG 2.1 without playing keeps Chapter 2 at 0/72. |
 | 2026-08-29 | Batch 15 — PlayScreen highlight & header | PLAY-08, PLAY-09 | **Merged** (PR #16 → `main`, 2026-08-29) | `PlayScreen.tsx`. **PLAY-08**: the Sanskrit `HighlightedText` was passed identical `activeColor`/`inactiveColor` → highlight invisible. Active sentences now use `colors.text` against the saffron rest (same pattern as the other blocks); resting look unchanged. **PLAY-09**: header "NOW PLAYING" → book name + "Chapter N · Verse M" (from data already loaded), shown in focus mode too; header title de-uppercased (matches Batch 11). Cleanup: removed unused `Dimensions`/`width`, `MANGALAM_ICON`, `assertBookIdentityReady`, dead `isVerse`, and 6 orphaned style objects. Verified on the Simulator (QA account): highlight tracks playback on BG 1.1/1.2, header updates on next-verse, playback / follow-along / prev-next / mini-player intact. |
 | 2026-08-29 | Batch 14 — Uncap days of practice | STREAK-08 | **Merged** (PR #15 → `main`, 2026-08-29) | `fetchStreakData` `.limit(30)` → `.limit(366)`. The Streaks screen's "N days of practice" no longer freezes at 30 for a consistent listener. Consumers unaffected by the longer array; `user_daily_usage` is one row per active day so the query stays cheap. Stale "most recent 30" comment updated. |
 | 2026-08-29 | Batch 13 — Drop dead nav params | DASH-07 | **Merged** (PR #14 → `main`, 2026-08-29) | `HomeScreen` passed `clickedBookId` / `clickedTitle` to `BookDashboard` that the screen never read. Removed from `RootStackParamList.BookDashboard`, the `navigate` call and the screen; the unused `stats` state + chapter-`Set` computation in the same load function went too. Type-checked; no runtime behaviour change. |
@@ -66,7 +67,7 @@ _Last updated: 2026-08-29 (batch 15 merged — PR #16)_
 | UX-01 | Developer-facing microcopy & unfinished states in the UI | NEEDS CHANGE | P1 | IDENTIFIED | Home, Welcome, Play, all error paths |
 | UX-02 | Two parallel content-browse implementations (Library detail vs Book Dashboard) | NEEDS CHANGE | P1 | IDENTIFIED | Library, BookDashboard, Home |
 | UX-03 | Two streak widgets with different logic & week-start | NEEDS CHANGE | P1 | **MERGED** (Batch 3 · PR #4, 2026-08-29) | Home, Streaks — now one `WeeklyStreak` component + one data source |
-| UX-04 | Metrics not measured / mislabeled (Total Time, "streak", "completed") | NEEDS CHANGE | P1 | **PARTIAL** — Batch 3 fixed Total Time + "streak" label + the weekly widgets (Streaks, Home). "completed"-on-open (LIB-06) still open | Streaks, Home, Library, BookDashboard |
+| UX-04 | Metrics not measured / mislabeled (Total Time, "streak", "completed") | NEEDS CHANGE | P1 | **MERGED** (Batch 3 + Batch 14 + Batch 16) — Total Time + "streak" label + weekly widgets (Batch 3); 30-day cap (Batch 14 · STREAK-08); "completed"-on-open now fires on audio finish (Batch 16 · LIB-06) | Streaks, Home, Library, BookDashboard |
 | UX-05 | Inconsistent loading states (skeleton vs bare spinner) | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Library, Streaks, Community, BookDashboard, Play |
 | UX-06 | Inconsistent headers & back affordances | NEEDS IMPROVEMENT | P2 | IDENTIFIED | all stack screens |
 | UX-07 | "Support / donate" surfaced 3–4 ways, inconsistent labels | NEEDS IMPROVEMENT | P2 | IDENTIFIED | Settings, About, Support, (dead paywall) |
@@ -174,7 +175,7 @@ _Last updated: 2026-08-29 (batch 15 merged — PR #16)_
 | LIB-03 | Gita verse list unscannable | [LIVE] Raw Sanskrit as the primary line (some with "।।1.3।।"); no English hint. Ramayan list (descriptive titles) is the model that works | NEEDS IMPROVEMENT | Human title for every unit | P1 | High | IDENTIFIED | ref CONTENT-01; positioning |
 | LIB-04 | No search / filter | [SRC+LIVE] Nothing, for ~700 Gita verses | NEEDS IMPROVEMENT | Add search + filter | P1 | High | IDENTIFIED | |
 | LIB-05 | Bare spinner | [SRC+LIVE] No skeleton | NEEDS IMPROVEMENT | Skeleton | P2 | High | IDENTIFIED | ref UX-05 |
-| LIB-06 | "Completed" on open | [SRC+LIVE] Verses marked ✓ on open (`addCompletedVerse` on load), not on completion | NEEDS IMPROVEMENT | Mark complete on actual completion | P2 | High | IDENTIFIED | ref UX-04 |
+| LIB-06 | "Completed" on open | [SRC+LIVE] Verses marked ✓ on open (`addCompletedVerse` on load), not on completion | NEEDS IMPROVEMENT | Mark complete on actual completion | P2 | High | **MERGED** (Batch 16 · PR #17, 2026-08-29) | ref UX-04. `addCompletedVerse(itemId)` moved from PlayScreen load-time into the audio `onFinish` callbacks (fires only on `status.didJustFinish`). [LIVE] verified — opening BG 2.1 without playing no longer bumps Chapter 2 from 0/72. `completedVerses` is still the same client-only persisted list. |
 
 ### Streaks / "Your Journey" — `StreaksScreen`
 
@@ -272,7 +273,7 @@ _Last updated: 2026-08-29 (batch 15 merged — PR #16)_
 | 3 | Rebuild onboarding around the practice; fix blank strings | ONB-01, ONB-02, POS-06 | P1 | IDENTIFIED |
 | 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | **PARTIAL** — HOME-03 resume-card copy done (Batch 2); Welcome blanks, error/loading states still open |
 | 5 | Consolidate the two content-browse UIs | UX-02, DASH-01, LIB-01, NAV-02 | P1 | IDENTIFIED |
-| 6 | Honest metrics + one streak widget | UX-03, UX-04, STREAK-01, STREAK-02, STREAK-04 | P1 | **MERGED** (Batch 3 · PR #4, 2026-08-29) — remaining: LIB-06 ("completed" on open), STREAK-08 (30-day cap) |
+| 6 | Honest metrics + one streak widget | UX-03, UX-04, STREAK-01, STREAK-02, STREAK-04 | P1 | **MERGED** — Batch 3 (PR #4); STREAK-08 30-day cap (Batch 14 · PR #15); LIB-06 "completed" on open (Batch 16 · PR #17). Fully resolved. |
 | 7 | De-gamify Community Wisdom | UX-09, COMM-01, POS-05 | P1 | **MERGED** (Batch 5 · PR #6, 2026-08-29) |
 | 8 | Remove the "Change Path?" gate; free movement between books | UX-12, HOME-04, POS-03 | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) |
 | 9 | Tame the transcript auto-scroll | PLAY-04 | P1 | **MERGED** (Batch 2 · PR #2, 2026-08-29) |
