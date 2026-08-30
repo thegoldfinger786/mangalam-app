@@ -330,7 +330,7 @@ export const SettingsScreen = () => {
                 <View style={styles.sliderRow}>
                     <Text style={[styles.accountLabel, { color: colors.textSecondary, marginBottom: spacing.s }]}>Narration Volume</Text>
                     <Slider
-                        minimumValue={0.7}
+                        minimumValue={0.5}
                         maximumValue={1.0}
                         step={0.05}
                         minimumTrackTintColor={colors.primary}
