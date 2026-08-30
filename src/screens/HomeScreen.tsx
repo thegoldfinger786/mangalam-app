@@ -12,6 +12,7 @@ import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
 import { auditBookIds, assertValidBookId, assertBookIdentityConsistency, getBookByCode } from '../lib/bookIdentity';
+import { formatRef } from '../lib/bookTerminology';
 import { DailyVerse, fetchActiveBooks, fetchBookById, fetchDailyVerse, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
 import { supabase } from '../lib/supabase';
 import { ROUTES } from '../navigation/routes';
@@ -243,7 +244,7 @@ export const HomeScreen = () => {
     const currentPathTitle = useMemo(() => resumeState?.book_title || 'Ready to begin', [resumeState]);
 
     const currentPathDesc = useMemo(() => resumeState
-        ? `Chapter ${resumeState.chapter_no} · Verse ${resumeState.verse_no}`
+        ? formatRef(resumeState.book_id, resumeState.chapter_no, resumeState.verse_no)
         : 'Choose a path below to start listening.', [resumeState]);
 
     const currentPathMeta = useMemo(() => {
@@ -382,7 +383,7 @@ export const HomeScreen = () => {
                                             {dailyVerse.title || dailyVerse.sanskrit || 'Today’s verse'}
                                         </Text>
                                         <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
-                                            Bhagavad Gita · Chapter {dailyVerse.chapter_no}, Verse {dailyVerse.verse_no}
+                                            Bhagavad Gita · {formatRef(dailyVerse.book_id, dailyVerse.chapter_no, dailyVerse.verse_no, ', ')}
                                         </Text>
                                         <Text style={[styles.cardMeta, { color: colors.textTertiary }]}>
                                             A few quiet minutes to begin.

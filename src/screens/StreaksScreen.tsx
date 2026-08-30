@@ -20,6 +20,7 @@ import {
     fetchVerseBookIndex,
     removeBookmark,
 } from '../lib/queries';
+import { formatRef } from '../lib/bookTerminology';
 import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
@@ -266,7 +267,7 @@ export const StreaksScreen = () => {
                             key={b.bookmarkId}
                             badge={b.verse_no}
                             title={b.title || b.sanskrit || 'Verse'}
-                            subtitle={`Chapter ${b.chapter_no}, Verse ${b.verse_no}`}
+                            subtitle={formatRef(b.book_id, b.chapter_no, b.verse_no, ', ')}
                             onPress={() => handleOpenBookmark(b)}
                             right={
                                 <TouchableOpacity onPress={() => handleRemoveBookmark(b)} hitSlop={10} accessibilityLabel="Remove bookmark">

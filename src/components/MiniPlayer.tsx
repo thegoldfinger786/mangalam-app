@@ -93,8 +93,9 @@ export const MiniPlayer = () => {
                     autoPlay: true,
                 });
             }
-        } catch (error: any) {
-            Alert.alert('Playback Error', error?.message || 'Unable to change verse.');
+        } catch (error) {
+            logger.error('MiniPlayer failed to change track', { error });
+            Alert.alert('Couldn’t continue', 'We couldn’t load the next one just now.');
         }
     };
 

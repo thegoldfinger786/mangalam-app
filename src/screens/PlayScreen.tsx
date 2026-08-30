@@ -29,6 +29,7 @@ import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '../lib/bookIdentity';
+import { formatRef } from '../lib/bookTerminology';
 import { cleanContentText, stripMarkup } from '../lib/contentText';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, fetchVerseByIdAndBookId, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
@@ -471,7 +472,7 @@ export const PlayScreen = () => {
 
     const handleShare = async () => {
         try {
-            const verseTitle = content?.title || `Chapter ${content?.chapter_no}  ·  Verse ${content?.verse_no}`;
+            const verseTitle = content?.title || formatRef(bookId, content?.chapter_no, content?.verse_no);
             const bookTitle = meta.title || 'Mangalam';
 
             // Platform-specific download link embedded in the message.
@@ -623,9 +624,7 @@ export const PlayScreen = () => {
     // Header context: which book and where in it. Prefer the verse's own book
     // title, fall back to the classification metadata (skip its "Unknown" default).
     const headerBookName = content?.book_title || (meta.title !== 'Unknown' ? meta.title : null);
-    const headerRef = content?.chapter_no != null
-        ? `Chapter ${content.chapter_no}${content?.verse_no != null ? `  ·  Verse ${content.verse_no}` : ''}`
-        : null;
+    const headerRef = formatRef(bookId, content?.chapter_no, content?.verse_no, '  ·  ') || null;
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
@@ -678,7 +677,7 @@ export const PlayScreen = () => {
                     )}
                 </View>
                 <Text style={[styles.trackTitle, { color: colors.text, marginTop: spacing.xs }]}>
-                    {content?.title || `Chapter ${content?.chapter_no}  ·  Verse ${content?.verse_no}`}
+                    {content?.title || formatRef(bookId, content?.chapter_no, content?.verse_no)}
                 </Text>
                 <Text style={[styles.trackSubtitle, { color: colors.textSecondary, marginBottom: spacing.xs }]}>{meta.title}</Text>
             </Animated.View>
