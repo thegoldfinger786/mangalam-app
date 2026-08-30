@@ -43,19 +43,46 @@ call() {
     -d "$1"
 }
 
+# Exit loudly on an auth / server error instead of silently treating it as "done".
+guard() {
+  local body="$1" err
+  err="$(echo "$body" | jq -r '.error // .message // empty' 2>/dev/null || true)"
+  if [[ -n "$err" ]]; then
+    echo "$body" | jq . 2>/dev/null || echo "$body"
+    case "$err" in
+      Forbidden)
+        echo "→ x-admin-secret does not match the project's ADMIN_API_SECRET." >&2
+        echo "  Copy it from Supabase dashboard → Project Settings → Edge Functions → Secrets," >&2
+        echo "  then: export ADMIN_API_SECRET='<exact value>'" >&2 ;;
+      *AUTH_HEADER*|*authorization*)
+        echo "→ gateway rejected the request; anon key missing or wrong." >&2 ;;
+      "Server misconfigured")
+        echo "→ ADMIN_API_SECRET is not set on the function itself." >&2 ;;
+    esac
+    exit 1
+  fi
+}
+
 cmd="${1:-sample}"
 case "$cmd" in
+  check)
+    out="$(call '{"dryRun": true, "limit": 1}')"; guard "$out"
+    echo "auth OK"; echo "$out" | jq '{attempted, succeeded}'
+    ;;
   sample)
-    call '{"dryRun": true, "limit": 8}' | jq
+    out="$(call '{"dryRun": true, "limit": 8}')"; guard "$out"; echo "$out" | jq
     ;;
   probe)
-    call '{"dryRun": true, "limit": 4, "chapterFrom": 9, "chapterTo": 9}'   | jq '.samples'
-    call '{"dryRun": true, "limit": 4, "chapterFrom": 18, "chapterTo": 18}' | jq '.samples'
+    for r in '9,9' '18,18'; do
+      f="${r%,*}"; t="${r#*,}"
+      out="$(call "{\"dryRun\": true, \"limit\": 4, \"chapterFrom\": $f, \"chapterTo\": $t}")"
+      guard "$out"; echo "$out" | jq '.samples'
+    done
     ;;
   run)
     for i in $(seq 1 25); do
       echo "--- batch $i ---"
-      out="$(call '{"mode": "missing", "limit": 40}')"
+      out="$(call '{"mode": "missing", "limit": 40}')"; guard "$out"
       echo "$out" | jq '{attempted, succeeded, updated, skipped, failures: (.failures | length)}'
       attempted="$(echo "$out" | jq -r '.attempted // 0')"
       [[ "$attempted" == "0" ]] && { echo "nothing left to do"; break; }
@@ -66,7 +93,7 @@ case "$cmd" in
     call "${2:?usage: run.sh raw '<json body>'}" | jq
     ;;
   *)
-    echo "usage: run.sh [sample|probe|run|raw '<json>']" >&2
+    echo "usage: run.sh [check|sample|probe|run|raw '<json>']" >&2
     exit 1
     ;;
 esac

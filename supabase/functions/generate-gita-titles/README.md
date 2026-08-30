@@ -65,13 +65,20 @@ From the repo root:
 
 ```bash
 export ADMIN_API_SECRET='...'          # the project's ADMIN_API_SECRET
+./supabase/functions/generate-gita-titles/run.sh check    # verify auth only, no generation
 ./supabase/functions/generate-gita-titles/run.sh sample   # dry-run, 8 verses — inspect output
 ./supabase/functions/generate-gita-titles/run.sh probe    # dry-run, chapters 9 and 18
 ./supabase/functions/generate-gita-titles/run.sh run      # full resumable backfill loop
 ```
 
-The script reads the public anon key from `.env` automatically and stops the
+The script reads the public anon key from `.env` automatically, aborts loudly
+on an auth error (instead of treating it as "nothing to do"), and stops the
 loop when a batch reports `attempted: 0`.
+
+`{"error":"Forbidden"}` means the exported `ADMIN_API_SECRET` does not match the
+project secret. Copy the exact value from **Supabase dashboard → Project
+Settings → Edge Functions → Secrets** (or wherever `ADMIN_API_SECRET` was
+originally set) and re-export it.
 
 ### Or call curl directly
 
