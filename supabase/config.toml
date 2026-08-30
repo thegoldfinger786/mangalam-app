@@ -23,6 +23,13 @@ verify_jwt = true
 [functions.generate-gita-titles]
 verify_jwt = true
 
+# User-facing self-service account deletion (SET-06). verify_jwt = true is the
+# ONLY gate — the function acts solely on the user id in the caller's own
+# verified token, never a request parameter, so it can only delete the caller.
+# No x-admin-secret (this is not an operator function).
+[functions.delete-account]
+verify_jwt = true
+
 # The eight functions below were deployed without ever being committed to this
 # repository. Their source was recovered via `supabase functions download` on
 # 2026-08-23 and each now uses the same requireAdmin check.
