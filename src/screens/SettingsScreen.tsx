@@ -119,7 +119,7 @@ export const SettingsScreen = () => {
         });
 
         if (error) {
-            Alert.alert('Error', error.message);
+            Alert.alert('Couldn’t save', 'Your name couldn’t be saved just now. Please try again.');
             return;
         }
 

@@ -32,7 +32,7 @@ export const AboutScreen = () => {
         try {
             await Linking.openURL(url);
         } catch {
-            Alert.alert('Error', 'Unable to open link.');
+            Alert.alert('Couldn’t open link', 'Please try again in a moment.');
         }
     };
 
