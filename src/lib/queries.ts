@@ -395,6 +395,73 @@ export const fetchIsBookmarked = async (userId: string, contentId: string) => {
     return !!data;
 };
 
+export type BookmarkedVerse = {
+    bookmarkId: string;
+    verse_id: string;
+    book_id: string;
+    chapter_no: number;
+    verse_no: number;
+    title: string | null;
+    sanskrit: string | null;
+};
+
+/**
+ * The user's bookmarked verses, newest first, with the title in the requested
+ * language. `user_bookmarks.content_id` has no FK to `verses`, so this is two
+ * round-trips (bookmarks, then the verses for those ids) joined in memory.
+ */
+export const fetchBookmarkedVerses = async (
+    userId: string,
+    lang: 'en' | 'hi',
+): Promise<BookmarkedVerse[]> => {
+    const { data: bms, error } = await supabase
+        .from('user_bookmarks')
+        .select('id, content_id, created_at')
+        .eq('user_id', userId)
+        .eq('content_type', 'verse')
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    if (!bms || bms.length === 0) return [];
+
+    const ids = bms.map((b) => b.content_id);
+    const { data: verses, error: vErr } = await supabase
+        .from('verses')
+        .select('verse_id, book_id, chapter_no, verse_no, sanskrit, verse_content!inner(title, language)')
+        .in('verse_id', ids)
+        .eq('verse_content.language', lang);
+    if (vErr) throw vErr;
+
+    const byId = new Map((verses || []).map((v: any) => [v.verse_id, v]));
+    return bms
+        .map((b) => {
+            const v: any = byId.get(b.content_id);
+            if (!v) return null;
+            return {
+                bookmarkId: b.id,
+                verse_id: v.verse_id,
+                book_id: v.book_id,
+                chapter_no: v.chapter_no,
+                verse_no: v.verse_no,
+                title: v.verse_content?.[0]?.title ?? null,
+                sanskrit: v.sanskrit ?? null,
+            } as BookmarkedVerse;
+        })
+        .filter((x): x is BookmarkedVerse => x !== null);
+};
+
+/** Removes a single bookmark by its row id (owned rows only — RLS enforces). */
+export const removeBookmark = async (bookmarkId: string) => {
+    const { error } = await supabase.from('user_bookmarks').delete().eq('id', bookmarkId);
+    if (error) throw error;
+};
+
+/** `verse_id → book_id` for every verse. Small (< 1k rows); used for per-book progress. */
+export const fetchVerseBookIndex = async (): Promise<{ verse_id: string; book_id: string }[]> => {
+    const { data, error } = await supabase.from('verses').select('verse_id, book_id');
+    if (error) throw error;
+    return (data || []) as { verse_id: string; book_id: string }[];
+};
+
 export const logActivity = async (userId: string | null, contentId: string, contentType: 'verse', actionType: 'share' | 'listen' | 'bookmark') => {
     const { error } = await supabase.from('activity_log').insert({
         user_id: userId,

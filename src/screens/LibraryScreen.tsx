@@ -14,6 +14,7 @@ import {
 import { BookCard } from '../components/BookCard';
 import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
+import { VerseListRow } from '../components/VerseListRow';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
@@ -112,62 +113,19 @@ export const LibraryScreen = () => {
     const renderVerseRow = (verse: any, contextLabel: string) => {
         const isCompleted = completedVerses.includes(verse.verse_id);
         return (
-            <TouchableOpacity
+            <VerseListRow
                 key={verse.verse_id}
-                style={[
-                    styles.verseItem,
-                    {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                        shadowColor: colors.cardShadow,
-                    },
-                    isCompleted && {
-                        borderColor: colors.primary + '40',
-                        backgroundColor: colors.primary + '05',
-                    },
-                ]}
+                badge={verse.verse_no}
+                title={verse.title || verse.sanskrit || verse.reference || 'Verse'}
+                subtitle={contextLabel}
+                highlighted={isCompleted}
                 onPress={() => handlePlayItem(verse.verse_id)}
-            >
-                <View style={styles.verseHeader}>
-                    <View
-                        style={[
-                            styles.verseNumberBadge,
-                            { backgroundColor: colors.surfaceSecondary },
-                            isCompleted && { backgroundColor: colors.primary },
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.verseNumberText,
-                                { color: colors.primary },
-                                isCompleted && { color: colors.textInverse },
-                            ]}
-                        >
-                            {verse.verse_no}
-                        </Text>
-                    </View>
-                    <View style={styles.verseInfo}>
-                        <Text
-                            style={[
-                                styles.previewText,
-                                { color: colors.textSecondary },
-                                isCompleted && { color: colors.text },
-                            ]}
-                            numberOfLines={2}
-                        >
-                            {verse.title || verse.sanskrit || verse.reference || 'Verse'}
-                        </Text>
-                        <Text style={[styles.verseChapterRef, { color: colors.textSecondary }]}>
-                            {contextLabel}
-                        </Text>
-                    </View>
-                    {isCompleted && (
-                        <View style={styles.completedBadge}>
-                            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
-                        </View>
-                    )}
-                </View>
-            </TouchableOpacity>
+                right={
+                    isCompleted ? (
+                        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                    ) : undefined
+                }
+            />
         );
     };
 
@@ -584,47 +542,6 @@ const createStyles = (
         // ── Verse list ─────────────────────────────────────────────
         listContainer: {
             paddingTop: spacing.m,
-        },
-        verseItem: {
-            padding: spacing.m,
-            borderRadius: borderRadius.m,
-            marginBottom: spacing.s,
-            borderWidth: 1,
-            // iOS shadow
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.06,
-            shadowRadius: 4,
-            elevation: 1,
-        },
-        verseHeader: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        verseNumberBadge: {
-            width: spacing.xl + spacing.s,   // 40px
-            height: spacing.xl + spacing.s,  // 40px
-            borderRadius: borderRadius.round,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: spacing.m,
-        },
-        verseNumberText: {
-            fontSize: typography.sizes.m,
-            fontWeight: '600',
-        },
-        verseInfo: {
-            flex: 1,
-        },
-        previewText: {
-            flex: 1,
-            fontSize: typography.sizes.m,
-        },
-        verseChapterRef: {
-            fontSize: typography.sizes.s,
-            marginTop: spacing.xs,
-        },
-        completedBadge: {
-            marginLeft: spacing.s,
         },
 
         // ── Chapter tile grid ──────────────────────────────────────
