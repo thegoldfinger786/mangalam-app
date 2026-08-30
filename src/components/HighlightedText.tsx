@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { StyleProp, Text, TextStyle } from 'react-native';
+import { stripMarkup } from '../lib/contentText';
 import { useTheme } from '../theme';
 
 interface HighlightedTextProps {
@@ -15,16 +16,10 @@ export const HighlightedText = ({ text, progress, style, activeColor, inactiveCo
     const active = activeColor || colors.text;
     const inactive = inactiveColor || colors.textSecondary;
 
-    // Clean SSML and markdown artifacts before display
-    const cleanedText = useMemo(() => {
-        if (!text) return '';
-        return text
-            .replace(/<break\s+time="[^"]*"\s*\/>/gi, '') // strip <break time="500ms"/>
-            .replace(/<break\s*\/>/gi, '')                 // strip <break/>
-            .replace(/\*\*/g, '')                          // strip markdown bold
-            .replace(/\s{2,}/g, ' ')                       // collapse extra spaces
-            .trim();
-    }, [text]);
+    // Clean SSML and markdown artifacts before display. PlayScreen already
+    // passes text through cleanContentText(); this keeps the component safe in
+    // isolation and is idempotent.
+    const cleanedText = useMemo(() => stripMarkup(text), [text]);
 
     // Split text into sentences and calculate cumulative lengths for better syncing
     const sentenceData = useMemo(() => {
