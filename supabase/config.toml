@@ -17,6 +17,12 @@ verify_jwt = true
 [functions.import-content]
 verify_jwt = true
 
+# One-purpose operator function: populate verse_content.title for Bhagavad Gita
+# verses that lack one (English + Hindi). Gita-only, title-only, non-destructive.
+# requireAdmin + Gemini, same pattern as import-content.
+[functions.generate-gita-titles]
+verify_jwt = true
+
 # The eight functions below were deployed without ever being committed to this
 # repository. Their source was recovered via `supabase functions download` on
 # 2026-08-23 and each now uses the same requireAdmin check.
