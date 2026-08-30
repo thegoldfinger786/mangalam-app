@@ -95,7 +95,7 @@ case "$cmd" in
     # multi-second Gemini call — so keep the per-call limit small and loop a lot.
     # mode:"missing" makes every call resumable, so a transient
     # WORKER_RESOURCE_LIMIT / 5xx just means "call again".
-    batch_limit="${2:-6}"
+    batch_limit="${2:-25}"
     empty_streak=0
     for i in $(seq 1 300); do
       out="$(call "{\"mode\": \"missing\", \"limit\": $batch_limit}")"
