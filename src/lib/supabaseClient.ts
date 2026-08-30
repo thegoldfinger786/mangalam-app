@@ -71,6 +71,28 @@ export const signOut = async () => {
     }
 };
 
+/**
+ * Permanently delete the signed-in user's account (SET-06).
+ * Calls the `delete-account` Edge Function, which derives the user id from the
+ * caller's own verified JWT and removes the auth user; DB cascades handle the
+ * rest. Local sign-out / teardown is the caller's responsibility (AuthProvider).
+ */
+export const deleteAccount = async () => {
+    try {
+        const { error } = await getSupabase().functions.invoke('delete-account', {
+            method: 'POST',
+        });
+        if (error) {
+            logger.error('Account deletion failed', { error });
+            return { error };
+        }
+        return { error: null };
+    } catch (error) {
+        logger.error('Account deletion threw', { error });
+        return { error: error as Error };
+    }
+};
+
 export const signInWithPassword = async (params: { email: string; password: string }) => {
     try {
         const result = await getSupabase().auth.signInWithPassword(params);

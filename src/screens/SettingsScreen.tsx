@@ -49,7 +49,8 @@ const VOICE_OPTIONS = [
 
 export const SettingsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
-    const { signOut } = useAuth();
+    const { signOut, deleteAccount } = useAuth();
+    const [isDeleting, setIsDeleting] = useState(false);
     const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
     
@@ -148,6 +149,33 @@ export const SettingsScreen = () => {
         );
     };
 
+    const handleDeleteAccount = () => {
+        if (isDeleting) return;
+        Alert.alert(
+            'Delete Account',
+            'This permanently deletes your account and all your saved progress, bookmarks and preferences. This cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete Account',
+                    style: 'destructive',
+                    onPress: async () => {
+                        setIsDeleting(true);
+                        const { error } = await deleteAccount();
+                        setIsDeleting(false);
+                        if (error) {
+                            Alert.alert(
+                                'Could not delete account',
+                                'Something went wrong. Please check your connection and try again.',
+                            );
+                        }
+                        // On success the session clears and the app returns to sign-in.
+                    },
+                },
+            ],
+        );
+    };
+
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
@@ -231,6 +259,16 @@ export const SettingsScreen = () => {
                 <TouchableOpacity onPress={handleSignOut} style={styles.optionRow}>
                     <Text style={[styles.optionText, { color: colors.error }]}>Sign Out</Text>
                     <Ionicons name="log-out-outline" size={18} color={colors.error} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={handleDeleteAccount}
+                    disabled={isDeleting}
+                    style={[styles.optionRow, { opacity: isDeleting ? 0.5 : 1 }]}
+                >
+                    <Text style={[styles.deleteAccountText, { color: colors.textSecondary }]}>
+                        {isDeleting ? 'Deleting account…' : 'Delete Account'}
+                    </Text>
+                    <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
             </Card>
 
@@ -456,6 +494,9 @@ const createStyles = (
     },
     optionText: {
         fontSize: typography.sizes.m,
+    },
+    deleteAccountText: {
+        fontSize: typography.sizes.s,
     },
     toggleRow: {
         flexDirection: 'row',
