@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 
 import {
+    deleteAccount as callDeleteAccount,
     getSupabase,
     signInWithGoogle as startGoogleOAuth,
     signOut as supabaseSignOut,
@@ -41,6 +42,8 @@ type AuthContextValue = {
     signInWithGoogle: () => Promise<void>;
     signInWithApple: () => Promise<void>;
     signOut: () => Promise<void>;
+    /** Permanently deletes the account, then tears the session down like signOut. */
+    deleteAccount: () => Promise<{ error: Error | null }>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -337,10 +340,9 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     // Always clears local state regardless of Supabase response.
     // This prevents "stuck session" scenarios on network failure.
 
-    const handleSignOut = useCallback(async () => {
-        logger.log('[AUTH] signOut initiated');
-
-        // 1. Synchronously stop audio & force final remote sync while session still exists
+    // Local teardown shared by sign-out and account deletion: stop audio and
+    // clear every trace of the session so the app can never get stuck signed-in.
+    const performLocalTeardown = useCallback(async () => {
         try {
             await stopAudio();
         } catch (e) {
@@ -348,12 +350,16 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         } finally {
             resetAudioState();
         }
-
-        // 2. Always clear local state to prevent stuck sessions
         setSession(null);
         clearLocalAuthState();
+    }, []);
 
-        // 3. Attempt to clear server-side session
+    const handleSignOut = useCallback(async () => {
+        logger.log('[AUTH] signOut initiated');
+
+        await performLocalTeardown();
+
+        // Attempt to clear the server-side session (local state is already gone).
         try {
             const { error } = await supabaseSignOut();
             if (error) {
@@ -362,10 +368,25 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                 logger.log('[AUTH] signOut complete — server and local state cleared');
             }
         } catch (error) {
-            // Network failure etc. — local state is already cleared, user is logged out.
             logger.error('[AUTH] Supabase signOut threw', { error });
         }
-    }, []);
+    }, [performLocalTeardown]);
+
+    const handleDeleteAccount = useCallback(async () => {
+        logger.log('[AUTH] account deletion initiated');
+
+        // Delete server-side first — while the session JWT is still valid.
+        const { error } = await callDeleteAccount();
+        if (error) {
+            logger.error('[AUTH] account deletion failed', { error });
+            return { error };
+        }
+
+        // Account is gone; tear the local session down the same way sign-out does.
+        await performLocalTeardown();
+        logger.log('[AUTH] account deletion complete');
+        return { error: null };
+    }, [performLocalTeardown]);
 
     // ── Context value ──
 
@@ -377,7 +398,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         signInWithGoogle,
         signInWithApple,
         signOut: handleSignOut,
-    }), [authLoading, loading, isProfileLoading, session, signInWithGoogle, signInWithApple, handleSignOut]);
+        deleteAccount: handleDeleteAccount,
+    }), [authLoading, loading, isProfileLoading, session, signInWithGoogle, signInWithApple, handleSignOut, handleDeleteAccount]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
