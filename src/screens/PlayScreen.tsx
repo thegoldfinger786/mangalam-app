@@ -781,18 +781,20 @@ export const PlayScreen = () => {
                     };
 
                     // For Gita the opening field is the verse in Sanskrit; for the
-                    // epics it holds the traditional sign-off (see PLAY-06), so the
-                    // "Sanskrit verse" framing only applies to verse-based content.
-                    const showSanskritLabel = sanskritText && !isRamayan && !isMahabharat;
+                    // epics it holds only the devotional sign-off (see PLAY-06),
+                    // which also appears — now labelled — at the very end, so it is
+                    // not shown here.
+                    const isEpic = isRamayan || isMahabharat;
+                    const showSanskrit = sanskritText && !isEpic;
 
                     return (
                         <>
-                            {showSanskritLabel ? (
+                            {showSanskrit ? (
                                 <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
                                     Sanskrit verse
                                 </Text>
                             ) : null}
-                            {sanskritText ? (
+                            {showSanskrit ? (
                                 <HighlightedText
                                     text={sanskritText}
                                     progress={getLocalProgress(sanskritText)}
@@ -842,16 +844,16 @@ export const PlayScreen = () => {
 
                             {pe.length > 0 && (
                                 <>
-                                    {(!isRamayan && !isMahabharat) && (
-                                        <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>Practical Examples</Text>
-                                    )}
+                                    <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
+                                        {isEpic ? 'A traditional closing blessing' : 'Practical Examples'}
+                                    </Text>
                                     {pe.map((ex: string, idx: number) => (
                                         <View key={idx} style={{ flexDirection: 'row', marginBottom: spacing.m }}>
-                                            {(!isRamayan && !isMahabharat) && <Text style={{ color: colors.text, marginRight: spacing.s }}>•</Text>}
+                                            {!isEpic && <Text style={{ color: colors.text, marginRight: spacing.s }}>•</Text>}
                                             <HighlightedText
                                                 text={ex}
                                                 progress={getLocalProgress(ex)}
-                                                style={[styles.contentText, { color: colors.textSecondary, flex: 1, fontSize: isFocusMode ? 20 : 17, textAlign: (isRamayan || isMahabharat) ? 'center' : 'left' }]}
+                                                style={[styles.contentText, { color: colors.textSecondary, flex: 1, fontSize: isFocusMode ? 20 : 17, textAlign: isEpic ? 'center' : 'left' }]}
                                                 activeColor={colors.text}
                                                 inactiveColor={colors.textSecondary}
                                             />
