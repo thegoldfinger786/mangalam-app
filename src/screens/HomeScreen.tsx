@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { DynamicBackground } from '../components/DynamicBackground';
@@ -216,15 +216,8 @@ export const HomeScreen = () => {
                 return;
             }
 
-            const { activeBookId: currentActiveBookId } = useAppStore.getState();
-            assertBookIdentityConsistency({ source: 'HomeScreen.handleOpenPath', bookId: currentActiveBookId });
-            if (!assertValidBookId(currentActiveBookId, 'HomeScreen.handleOpenPath')) {
-                Alert.alert('Unavailable', 'No book is selected yet.');
-                return;
-            }
-            navigation.navigate(ROUTES.BOOK_DASHBOARD, {
-                bookId: currentActiveBookId,
-            });
+            // No resume position — send them to the library to pick up a thread.
+            navigation.navigate('MainTabs', { screen: 'Library' });
         } catch (e) {
             logger.error('Failed to continue path', { error: e });
         }

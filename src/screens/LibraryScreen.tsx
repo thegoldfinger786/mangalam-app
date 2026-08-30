@@ -102,6 +102,22 @@ export const LibraryScreen = () => {
         );
     }, [items, trimmedSearch]);
 
+    // Book-level overview: how far through, and the next unfinished unit.
+    const bookOverview = useMemo(() => {
+        if (items.length === 0) return null;
+        const done = new Set(completedVerses);
+        const completed = items.filter((v) => done.has(v.verse_id)).length;
+        const chaptersTouched = new Set(
+            items.filter((v) => done.has(v.verse_id)).map((v) => v.chapter_no),
+        ).size;
+        const ordered = [...items].sort(
+            (a, b) => a.chapter_no - b.chapter_no || a.verse_no - b.verse_no,
+        );
+        const next = ordered.find((v) => !done.has(v.verse_id)) ?? ordered[ordered.length - 1];
+        const allDone = completed >= items.length;
+        return { completed, total: items.length, chaptersTouched, next, allDone };
+    }, [items, completedVerses]);
+
     const handlePlayItem = (id: string) => {
         if (!assertValidBookId(selectedBook?.book_id, 'LibraryScreen.handlePlayItem')) {
             return;
@@ -110,6 +126,14 @@ export const LibraryScreen = () => {
             itemId: id,
             bookId: selectedBook.book_id,
         });
+    };
+
+    // Start a chapter at its first unfinished unit (falls back to its first).
+    const startChapter = (chapterVerses: any[]) => {
+        const done = new Set(completedVerses);
+        const ordered = [...chapterVerses].sort((a, b) => a.verse_no - b.verse_no);
+        const target = ordered.find((v) => !done.has(v.verse_id)) ?? ordered[0];
+        if (target) handlePlayItem(target.verse_id);
     };
 
     // ── Single verse row (shared by the chapter list and search results) ────
@@ -188,13 +212,16 @@ export const LibraryScreen = () => {
                                     },
                                 ]}
                                 onPress={() => setSelectedChapter(chNo)}
-                                onLongPress={() => {
-                                    const firstVerse = chapterVerses.sort(
-                                        (a, b) => a.verse_no - b.verse_no,
-                                    )[0];
-                                    if (firstVerse) handlePlayItem(firstVerse.verse_id);
-                                }}
+                                onLongPress={() => startChapter(chapterVerses)}
                             >
+                                <TouchableOpacity
+                                    style={styles.chapterStartBtn}
+                                    hitSlop={8}
+                                    onPress={() => startChapter(chapterVerses)}
+                                    accessibilityLabel={`Start ${terms.group} ${chNo}`}
+                                >
+                                    <Ionicons name="play-circle" size={20} color={colors.primary} />
+                                </TouchableOpacity>
                                 <Text style={[styles.chapterTileTitle, { color: colors.text }]}>
                                     {terms.group} {chNo}
                                 </Text>
@@ -287,6 +314,35 @@ export const LibraryScreen = () => {
                     />
                 ) : (
                     <>
+                        {!inChapter && !trimmedSearch && bookOverview && (
+                            <View style={[styles.bookHero, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                                <View style={[styles.bookHeroIcon, { backgroundColor: (COLLECTION_METADATA[selectedBook.slug]?.color || colors.primary) + '15' }]}>
+                                    {getScriptureIcon(selectedBook.slug, 34, COLLECTION_METADATA[selectedBook.slug]?.color || colors.primary)}
+                                </View>
+                                <Text style={[styles.bookHeroProgress, { color: colors.textSecondary }]}>
+                                    {bookOverview.completed === 0
+                                        ? `${bookOverview.total} ${bookOverview.total === 1 ? terms.unit.toLowerCase() : terms.unit.toLowerCase() + 's'} to explore`
+                                        : bookOverview.allDone
+                                          ? `All ${bookOverview.total} ${terms.unit.toLowerCase()}s complete`
+                                          : `${bookOverview.completed} of ${bookOverview.total} ${terms.unit.toLowerCase()}s · across ${bookOverview.chaptersTouched} ${bookOverview.chaptersTouched === 1 ? terms.group.toLowerCase() : terms.group.toLowerCase() + 's'}`}
+                                </Text>
+                                {bookOverview.next && (
+                                    <TouchableOpacity
+                                        style={[styles.bookHeroCta, { backgroundColor: colors.primary }]}
+                                        onPress={() => handlePlayItem(bookOverview.next.verse_id)}
+                                    >
+                                        <Ionicons name="play" size={16} color={colors.textInverse} />
+                                        <Text style={[styles.bookHeroCtaText, { color: colors.textInverse }]}>
+                                            {bookOverview.completed === 0
+                                                ? 'Begin'
+                                                : bookOverview.allDone
+                                                  ? `Replay ${terms.unit.toLowerCase()} ${bookOverview.next.verse_no}`
+                                                  : `Continue · ${formatRef(selectedBook.book_id, bookOverview.next.chapter_no, bookOverview.next.verse_no)}`}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        )}
                         {items.length > 0 && (
                             <View
                                 style={[
@@ -444,6 +500,45 @@ const createStyles = (
             paddingTop: spacing.m,
         },
 
+        // ── Book overview hero ─────────────────────────────────────
+        bookHero: {
+            alignItems: 'center',
+            padding: spacing.l,
+            borderRadius: borderRadius.l,
+            borderWidth: 1,
+            marginBottom: spacing.m,
+        },
+        bookHeroIcon: {
+            width: 64,
+            height: 64,
+            borderRadius: borderRadius.round,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: spacing.m,
+        },
+        bookHeroProgress: {
+            fontSize: typography.sizes.s,
+            textAlign: 'center',
+            marginBottom: spacing.m,
+        },
+        bookHeroCta: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.s,
+            paddingHorizontal: spacing.l,
+            paddingVertical: spacing.s,
+            borderRadius: borderRadius.round,
+        },
+        bookHeroCtaText: {
+            fontSize: typography.sizes.s,
+            fontWeight: '600',
+        },
+        chapterStartBtn: {
+            position: 'absolute',
+            top: spacing.xs,
+            right: spacing.xs,
+        },
+
         // ── Verse-title search ─────────────────────────────────────
         searchBar: {
             flexDirection: 'row',
@@ -488,6 +583,7 @@ const createStyles = (
             marginBottom: spacing.m,
             alignItems: 'center',
             justifyContent: 'center',
+            position: 'relative',
             // iOS shadow
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.06,
