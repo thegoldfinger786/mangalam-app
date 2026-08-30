@@ -11,8 +11,8 @@ import { Skeleton } from '../components/Skeleton';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ContentPath } from '../data/types';
-import { auditBookIds, assertValidBookId, assertBookIdentityConsistency } from '../lib/bookIdentity';
-import { fetchActiveBooks, fetchBookById, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
+import { auditBookIds, assertValidBookId, assertBookIdentityConsistency, getBookByCode } from '../lib/bookIdentity';
+import { DailyVerse, fetchActiveBooks, fetchBookById, fetchDailyVerse, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
 import { supabase } from '../lib/supabase';
 import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
@@ -67,6 +67,7 @@ export const HomeScreen = () => {
     const [activeDates, setActiveDates] = useState<string[]>([]);
     const [resumeLoading, setResumeLoading] = useState(true);
     const [resumeState, setResumeState] = useState<ResumeState | null>(null);
+    const [dailyVerse, setDailyVerse] = useState<DailyVerse | null>(null);
 
     const hydrateResumeState = useCallback(async (activeBooks: any[]) => {
         if (!session?.user?.id) {
@@ -165,6 +166,19 @@ export const HomeScreen = () => {
 
             await hydrateResumeState(activeBooks);
 
+            // A calm, deterministic "verse of the day" (Gita) — the obvious thing to
+            // open when there's nothing to resume. Failure here is non-fatal.
+            const gitaId = (activeBooks || []).find((b: any) => b.slug === 'gita')?.book_id
+                ?? getBookByCode('gita')?.book_id;
+            const dailyLang = useAppStore.getState().voicePreference.startsWith('hindi') ? 'hi' : 'en';
+            if (gitaId) {
+                try {
+                    setDailyVerse(await fetchDailyVerse(gitaId, dailyLang));
+                } catch (e) {
+                    logger.warn('Failed to load daily verse', { error: e });
+                }
+            }
+
             // A real per-day record of activity — one ISO date per day the listener
             // spent time in Mangalam. The weekly widget derives everything it shows
             // from this, so Home and the Streaks screen always agree.
@@ -213,6 +227,12 @@ export const HomeScreen = () => {
         } catch (e) {
             logger.error('Failed to continue path', { error: e });
         }
+    };
+
+    const handleOpenDailyVerse = () => {
+        if (!dailyVerse || !assertValidBookId(dailyVerse.book_id, 'HomeScreen.handleOpenDailyVerse')) return;
+        setActiveBookId(dailyVerse.book_id);
+        navigation.navigate(ROUTES.PLAY, { itemId: dailyVerse.verse_id, bookId: dailyVerse.book_id });
     };
 
     // Memoize derived UI values to improve stability
@@ -298,7 +318,9 @@ export const HomeScreen = () => {
 
                 {/* Current Path Section */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Continue</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                        {resumeState || resumeLoading ? 'Continue' : 'Today'}
+                    </Text>
                     {resumeState || resumeLoading ? (
                         <TouchableOpacity activeOpacity={0.85} onPress={() => handleOpenPath?.()} disabled={resumeLoading}>
                             <Card style={[
@@ -340,6 +362,37 @@ export const HomeScreen = () => {
                                     style={styles.continueButton}
                                     disabled={resumeLoading}
                                 />
+                            </Card>
+                        </TouchableOpacity>
+                    ) : loading ? (
+                        <View style={styles.primaryCard}>
+                            <Skeleton width={200} height={22} borderRadius={4} style={{ marginBottom: spacing.s }} />
+                            <Skeleton width={150} height={16} borderRadius={4} style={{ marginBottom: spacing.l }} />
+                            <Skeleton width="100%" height={44} borderRadius={22} />
+                        </View>
+                    ) : dailyVerse ? (
+                        <TouchableOpacity activeOpacity={0.85} onPress={handleOpenDailyVerse}>
+                            <Card style={[
+                                styles.primaryCard,
+                                { backgroundColor: 'transparent', borderColor: colors.primary, borderWidth: 1.5, elevation: 0, shadowOpacity: 0 },
+                            ]}>
+                                <View style={styles.cardHeader}>
+                                    <View style={styles.cardInfo}>
+                                        <Text style={[styles.cardTitle, { color: colors.text }]}>
+                                            {dailyVerse.title || dailyVerse.sanskrit || 'Today’s verse'}
+                                        </Text>
+                                        <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
+                                            Bhagavad Gita · Chapter {dailyVerse.chapter_no}, Verse {dailyVerse.verse_no}
+                                        </Text>
+                                        <Text style={[styles.cardMeta, { color: colors.textTertiary }]}>
+                                            A few quiet minutes to begin.
+                                        </Text>
+                                    </View>
+                                    <View style={[styles.cardIconBox, { backgroundColor: colors.primary + '15' }]}>
+                                        {getScriptureIcon('gita', 32, colors.primary)}
+                                    </View>
+                                </View>
+                                <Button title="Listen" onPress={handleOpenDailyVerse} style={styles.continueButton} />
                             </Card>
                         </TouchableOpacity>
                     ) : (
