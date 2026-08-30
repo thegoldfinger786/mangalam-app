@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-29 (batch 26 merged — PR #28)_
+_Last updated: 2026-08-29 (batch 26 merged — PR #28; CONTENT-01 in progress — PR #30)_
 
 | Metric | Count |
 |---|---|
@@ -41,6 +41,7 @@ _Last updated: 2026-08-29 (batch 26 merged — PR #28)_
 
 | Date | Batch | Tracker items | Status | What shipped |
 |---|---|---|---|---|
+| 2026-08-29 | CONTENT-01 — Gita verse titles | CONTENT-01 (→ LIB-03, COMM-02, MINI-01) | **PR #30 open — blocked** | Built `supabase/functions/generate-gita-titles` (Gita-only, title-only, non-destructive, `x-admin-secret` + Gemini, resumable) + README runbook. Blocked on: operator deploy/run, and a founder decision on whether/how to also write `content_master.title` (production-only pipeline table, not inspectable from here). |
 | 2026-08-29 | Batch 26 — Play/pause icon sync | PLAY-15 | **Merged** (PR #28 → `main`, 2026-08-29) | `togglePlayPause` set `isPlaying` optimistically after `sound.play()`/`.pause()` instead of waiting for the async status listener (which stays authoritative). Verified on a clean build — icon flips instantly. |
 | 2026-08-29 | Batch 25 — Retry on load failure | UX-08 (partial) | **Merged** (PR #27 → `main`, 2026-08-29) | New shared `LoadError` component. Wired into Library / Community / Journey / Book Dashboard load-failure paths (silent empty renders + a Book-Dashboard `Alert` replaced by an inline "Try again"). Verified on the running app with a forced failure. PlayScreen / audio errors + Home not included. |
 | 2026-08-29 | Batch 24 — Calm the Support screen | SUP-01 (partial), SUP-03 (partial) | **Merged** (PR #25 → `main`, 2026-08-29) | Applied Batch 11's About-screen treatment to the Support screen (near-clone): no ALL-CAPS / wide letter-spacing on headers, section titles → text colour + sentence case. Removed the `transform: scale(1.02)` on the contribution button (SUP-01 clip). Dead `buttonGrid` style + unused theme bindings removed. The hard-coded "€5" CTA and the mission-text duplication with About still need product/editorial calls. |
@@ -266,7 +267,7 @@ _Last updated: 2026-08-29 (batch 26 merged — PR #28)_
 
 | ID | Area | Finding | Class | Rec | Pri | Conf | Status | Notes |
 |---|---|---|---|---|---|---|---|---|
-| CONTENT-01 | Missing verse titles (Gita) | [LIVE] Gita verses lack descriptive titles (list shows Sanskrit); Ramayan verses have them | NEEDS IMPROVEMENT | A human title for every content unit, every book | P1 | High | IDENTIFIED | Unblocks LIB-03, COMM-02, MINI-01 |
+| CONTENT-01 | Missing verse titles (Gita) | [LIVE] Gita verses lack descriptive titles (list shows Sanskrit); Ramayan verses have them | NEEDS IMPROVEMENT | A human title for every content unit, every book | P1 | High | **IN PROGRESS** (PR #30 — not merged) | Confirmed [LIVE]: Gita = 701 verses, 701 en + 701 hi `verse_content` rows, **`title` NULL on all**; Ramayan `verse_content.title` populated (the model). Built `generate-gita-titles` Edge Function (Gita-only, title-only via `.update()`, `x-admin-secret` + Gemini, resumable). **Blocked**: deploy + run needs an operator (this session's classifier blocks `supabase functions deploy`; local `GEMINI_API_KEY` is rotated/invalid). **`content_master.title` deliberately not written** — production-only, RLS-blocked, feeds the YouTube/Spotify/Instagram pipeline; needs the founder's mapping + safety call. App: Library + mini-player already consume `verse_content.title`; Community needs a small client-side merge once titles exist. |
 | CONTENT-02 | Book-name inconsistency | [LIVE] "Ramayan" vs "Ramayana"; "Mahabharat" vs "Mahabharata"; slug `AntarKathaye` | NEEDS IMPROVEMENT | One canonical display name per book, resolved via identity cache | P2 | High | **PARTIAL** (Batch 20 · PR #21, 2026-08-29) | ref UX-14. `COLLECTION_METADATA` "Ramayana"/"Mahabharata" → "Ramayan"/"Mahabharat", matching the DB titles and the Play/Dashboard headers (fixed the Play-screen header/subtitle disagreeing for Ramayan). Still open: the `AntarKathaye` slug casing (schema/migration) and a proper identity-cache-resolved name helper. |
 | CONTENT-03 | Generation artifacts in body text | [LIVE] "Welcome to today's lesson…" as transcript; "mine ness"; "Chapter 1 Verse 1" in commentary | NEEDS IMPROVEMENT | Strip on display; content QA pass | P2 | High | IDENTIFIED | ref PLAY-07 |
 | CONTENT-04 | "Story" = undisclosed LLM retelling | [SRC+LIVE] Ramayan/Mahabharat "Story" is a "recreate and expand" dramatisation with invented detail, shown under a plain "Story" label | NEEDS IMPROVEMENT | (Disclosure decision) | P2 | High | **DEFERRED** | Acknowledged & deferred in VISION_ALIGNMENT §1.4 / §6. Finding preserved; no action now |
