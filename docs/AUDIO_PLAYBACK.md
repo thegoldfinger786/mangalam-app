@@ -52,18 +52,14 @@ Read this before touching `src/store/useAudioStore.ts`, `App.tsx`'s audio init,
    and CarPlay do not offer them. Adding them would require patching expo-audio
    or a native module.
 
-2. **No auto-advance to the next verse while backgrounded (PLAY-14).** When a
-   verse ends, continuation to the next verse is driven by
-   `PlayScreen.navigateToVerse`, which **early-returns when
-   `!navigation.isFocused()`** — the deliberate PLAY-01 fix that stopped a stale,
-   unfocused screen from collapsing the nav stack. So in the foreground the next
-   verse plays automatically; with the app backgrounded / on another tab / on
-   CarPlay, playback stops at the end of the current verse. PLAY-14 was reviewed
-   and accepted under "daily habit over binge consumption" (`CLAUDE.md` §3), and
-   its note prescribes the fix if it is ever wanted: *"driven by the audio store
-   (loading the next verse's audio) — never by screen navigation."* Building that
-   is a deliberate change to the playback flow and needs a product decision +
-   real-device testing; it is **not** a config regression.
+2. **Continuous playback (PLAY-14) — SHIPPED (PR #50).** A verse/episode
+   finishing now advances to the next one whether the player is focused, behind
+   the mini-player, on another tab, or dismissed. `PlayScreen.navigateToVerse`
+   uses the root `navigationRef.navigate('Play', …)` (the same call the
+   mini-player's next/prev use), not the screen-scoped `navigation.replace` that
+   PLAY-01 had to guard against. The `onFinish` callback is unchanged. Still to
+   confirm on a real device: that this fires reliably when the app is fully
+   backgrounded / Play dismissed, and that Now-Playing metadata follows.
 
 ## Needs a real-device / CarPlay-simulator test (cannot be confirmed from code)
 
