@@ -82,8 +82,15 @@ Tables: `books`, `verses`, `verse_content`, `verse_audio`, `audio_cache`,
 `user_progress`, `user_bookmarks`, `user_daily_usage`, `activity_log`,
 `profiles`.
 
-Edge Functions: `generate-tts`, `import-content`, and the audio-generation
-functions serving app content.
+Edge Functions: `generate-tts`, `import-content`, `generate-gita-titles` (all
+operator-only — `requireAdmin`), and the audio-generation functions serving app
+content. `delete-account` is the one **user-facing** Edge Function: its only
+gate is `verify_jwt`, and it acts solely on the user id in the caller's own
+verified token (no request parameter names a user), so a caller can only ever
+delete themselves. It calls `auth.admin.deleteUser`; DB FK cascades remove the
+user's rows in `profiles` / `user_progress` / `user_bookmarks` /
+`user_daily_usage`, and `activity_log.user_id` is `ON DELETE SET NULL`
+(aggregates retained, de-personalised).
 
 Storage: `audio-content` (verse narration the app streams; public read is
 intentional — client/public **write** is not) and `background-audio` (see
