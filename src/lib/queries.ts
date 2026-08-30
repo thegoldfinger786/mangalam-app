@@ -462,6 +462,61 @@ export const fetchVerseBookIndex = async (): Promise<{ verse_id: string; book_id
     return (data || []) as { verse_id: string; book_id: string }[];
 };
 
+export type DailyVerse = {
+    verse_id: string;
+    book_id: string;
+    chapter_no: number;
+    verse_no: number;
+    title: string | null;
+    sanskrit: string | null;
+};
+
+/**
+ * A deterministic "verse of the day" for the given book: the same verse for the
+ * whole calendar day (in the device's local timezone), rotating through the
+ * book in canonical order. No editorial pipeline, no personalisation — just a
+ * calm, obvious thing to open. Reuses the normal verse/content shape so it
+ * plays through the existing Play screen.
+ */
+export const fetchDailyVerse = async (
+    bookId: string,
+    lang: 'en' | 'hi',
+): Promise<DailyVerse | null> => {
+    const { count, error: cErr } = await supabase
+        .from('verses')
+        .select('verse_id', { count: 'exact', head: true })
+        .eq('book_id', bookId);
+    if (cErr) throw cErr;
+    if (!count || count === 0) return null;
+
+    const now = new Date();
+    const dayNumber = Math.floor(
+        Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86_400_000,
+    );
+    const index = ((dayNumber % count) + count) % count;
+
+    const { data, error } = await supabase
+        .from('verses')
+        .select('verse_id, book_id, chapter_no, verse_no, sanskrit, verse_content!inner(title, language)')
+        .eq('book_id', bookId)
+        .eq('verse_content.language', lang)
+        .order('chapter_no', { ascending: true })
+        .order('verse_no', { ascending: true })
+        .range(index, index)
+        .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+        verse_id: data.verse_id,
+        book_id: data.book_id,
+        chapter_no: data.chapter_no,
+        verse_no: data.verse_no,
+        title: (data as any).verse_content?.[0]?.title ?? null,
+        sanskrit: data.sanskrit ?? null,
+    };
+};
+
 export const logActivity = async (userId: string | null, contentId: string, contentType: 'verse', actionType: 'share' | 'listen' | 'bookmark') => {
     const { error } = await supabase.from('activity_log').insert({
         user_id: userId,
