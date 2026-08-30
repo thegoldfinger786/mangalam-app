@@ -14,10 +14,18 @@ instead of a human headline (tracker CONTENT-01 → LIB-03, COMM-02, MINI-01).
 
 - **Gita only** — `GITA_BOOK_ID` is hard-coded (same id `import-content` uses).
 - **Title only** — writes `title` + `updated_at` via `.update()` on rows that
-  already exist. Never touches `translation` / `commentary` / `practical_examples`,
-  never inserts rows, never touches another book, **never touches `content_master`**.
+  already exist. Never touches `translation` / `commentary` / `practical_examples`
+  / audio, never inserts rows, never touches another book.
+- **Both tables, same value** — the generated language-specific title is written
+  to the matching `(verse_id, language)` row in **`verse_content`** (the app
+  table) *and* **`content_master`** (the canonical record). Verified once against
+  production: Gita has a clean 1:1 `(verse_id, language)` match between the two —
+  1402 rows each, no orphans either way. `content_master.title` for Gita was a
+  mechanical `"Chapter N - Verse M"` placeholder (Ramayan/Mahabharat rows there
+  already hold real headlines); nothing downstream reads that Gita value except
+  one `console.log`. Ramayan / Mahabharat rows in either table are never touched.
 - **Resumable** — `mode: "missing"` (default) skips verses where both `en` and
-  `hi` titles are already set, so you can call it repeatedly until done.
+  `hi` `verse_content` titles are already set, so you can call it repeatedly.
 - Same authorization as the other operator functions: `x-admin-secret` header
   (`ADMIN_API_SECRET`). Nothing in `src/` calls it.
 
@@ -101,9 +109,19 @@ where vc.updated_at > now() - interval '1 day' group by b.slug;   -- expect only
 
 ## Revert
 
+`verse_content` back to NULL, `content_master` back to the placeholder:
+
 ```sql
 update verse_content set title = null
 where language in ('en','hi')
   and verse_id in (select verse_id from verses
                    where book_id = '80ead5fd-bc3d-4726-ba8d-7cf00b6b75a9');
+
+update content_master
+set title = 'Chapter ' || chapter_no || ' - Verse ' || verse_no
+where book_id = '80ead5fd-bc3d-4726-ba8d-7cf00b6b75a9';
 ```
+
+A row-level backup of both tables' Gita `title` columns is taken before the
+first run (see the operator's scratchpad) — restore from that if an exact
+rollback is needed.

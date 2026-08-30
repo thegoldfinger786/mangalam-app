@@ -16,6 +16,7 @@ import { Skeleton } from '../components/Skeleton';
 import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchTopContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
+import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { logger } from '../lib/logger';
@@ -26,6 +27,7 @@ export const CommunityWisdomScreen = () => {
     const { colors, spacing } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const lang = useAppStore(s => s.voicePreference).startsWith('hindi') ? 'hi' : 'en';
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [topStats, setTopStats] = useState<{
@@ -39,9 +41,9 @@ export const CommunityWisdomScreen = () => {
             setLoading(true);
             setLoadError(false);
             const [listened, shared, bookmarked] = await Promise.all([
-                fetchTopContent('listen', 5),
-                fetchTopContent('share', 5),
-                fetchTopContent('bookmark', 5)
+                fetchTopContent('listen', 5, lang),
+                fetchTopContent('share', 5, lang),
+                fetchTopContent('bookmark', 5, lang)
             ]);
             setTopStats({ listened, shared, bookmarked });
         } catch (error) {
@@ -50,7 +52,7 @@ export const CommunityWisdomScreen = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [lang]);
 
     useEffect(() => {
         loadData();
@@ -142,11 +144,15 @@ export const CommunityWisdomScreen = () => {
                                                 <View style={[styles.miniIconBox, { backgroundColor: colors.surfaceSecondary }]}>
                                                     {getScriptureIcon(item.book_slug, 12, colors.primary)}
                                                 </View>
-                                                <Text style={[styles.bookName, { color: colors.primary }]}>{item.title}</Text>
+                                                <Text style={[styles.bookName, { color: colors.primary }]}>
+                                                    {item.title}  ·  {item.subtitle}
+                                                </Text>
                                             </View>
-                                            <Text style={[styles.verseTitle, { color: colors.text }]} numberOfLines={1}>
-                                                {item.subtitle}
-                                            </Text>
+                                            {item.verse_title ? (
+                                                <Text style={[styles.verseTitle, { color: colors.text }]} numberOfLines={2}>
+                                                    {item.verse_title}
+                                                </Text>
+                                            ) : null}
                                         </View>
 
                                         <Ionicons name="chevron-forward" size={18} color={colors.border} />

@@ -3,16 +3,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireAdmin } from "../_shared/adminAuth.ts";
 
 // ─── generate-gita-titles ──────────────────────────────────────────────────────
-// One-purpose operator function: populate `verse_content.title` for Bhagavad
-// Gita verses that don't have one yet, in both English and Hindi.
+// One-purpose operator function: give every Bhagavad Gita verse a short
+// human-readable title in English and Hindi.
 //
 // Scoped and non-destructive by design:
 //   • Bhagavad Gita only (GITA_BOOK_ID hard-coded, same id used by import-content).
-//   • Writes ONLY `title` (+ `updated_at`) via `.update()` on existing rows —
-//     never touches translation / commentary / examples, never inserts rows,
-//     never touches another book or `content_master`.
-//   • `mode: "missing"` (default) skips verses that already have both titles,
-//     so repeated invocations resume where the last one stopped.
+//   • Writes ONLY `title` (+ `updated_at`) via `.update()` on rows that already
+//     exist — never translation / commentary / examples / audio, never inserts,
+//     never another book.
+//   • Writes the same language-specific title to the matching (verse_id, language)
+//     row in BOTH `verse_content` (the app table, where Gita title was NULL) and
+//     `content_master` (the canonical record, where Gita title was a mechanical
+//     "Chapter N - Verse M" placeholder). Verified against production: Gita has a
+//     clean 1:1 (verse_id, language) match — 1402 rows each, no orphans. Nothing
+//     downstream reads the Gita content_master.title except one console.log.
+//   • `mode: "missing"` (default) skips verses whose `verse_content` title is
+//     already set, so repeated invocations resume where the last one stopped.
 //
 // Follows the import-content pattern: service-role client, `x-admin-secret`
 // authorization, Gemini 2.5 Flash. Nothing in src/ invokes it.
@@ -176,19 +182,21 @@ serve(async (req) => {
         );
 
         if (!dryRun) {
-          const w1 = await supabase
-            .from("verse_content")
-            .update({ title: titles.en, updated_at: new Date().toISOString() })
-            .eq("verse_id", v.verse_id)
-            .eq("language", "en");
-          if (w1.error) throw w1.error;
-
-          const w2 = await supabase
-            .from("verse_content")
-            .update({ title: titles.hi, updated_at: new Date().toISOString() })
-            .eq("verse_id", v.verse_id)
-            .eq("language", "hi");
-          if (w2.error) throw w2.error;
+          const now = new Date().toISOString();
+          // The same generated title goes to the language-specific row in both
+          // the app table (verse_content) and the canonical record
+          // (content_master). Gita has a verified 1:1 (verse_id, language) match
+          // between the two — see the function README.
+          for (const [lang, title] of [["en", titles.en], ["hi", titles.hi]] as const) {
+            for (const table of ["verse_content", "content_master"] as const) {
+              const w = await supabase
+                .from(table)
+                .update({ title, updated_at: now })
+                .eq("verse_id", v.verse_id)
+                .eq("language", lang);
+              if (w.error) throw w.error;
+            }
+          }
           updated++;
         }
 
@@ -210,7 +218,7 @@ serve(async (req) => {
         updated,
         skipped,
         failures,
-        samples: results.slice(0, 8),
+        samples: dryRun ? results : results.slice(0, 8),
       }),
       { headers: { "Content-Type": "application/json" } },
     );

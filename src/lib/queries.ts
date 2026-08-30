@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { syncBookIdentityCache } from './bookIdentity';
+import { syncBookIdentityCache, getBookByCode } from './bookIdentity';
 import { logger } from '../lib/logger';
 export { supabase };
 
@@ -408,11 +408,35 @@ export const logActivity = async (userId: string | null, contentId: string, cont
 
 // --- Aggregate Stats ---
 
-export const fetchTopContent = async (type: 'listen' | 'share' | 'bookmark', limit: number = 3) => {
+export const fetchTopContent = async (
+    type: 'listen' | 'share' | 'bookmark',
+    limit: number = 3,
+    lang: 'en' | 'hi' = 'en',
+) => {
     const { data, error } = await supabase.rpc('get_top_content', {
         p_action_type: type,
         p_limit: limit
     });
     if (error) throw error;
-    return data;
+
+    const rows = (data || []) as any[];
+    if (rows.length === 0) return rows;
+
+    // `get_top_content` returns the *book* name as `title` and no `book_id`.
+    // Resolve the book_id from the slug (needed for the "open" tap) and merge in
+    // the verse's own human title from verse_content (null until CONTENT-01
+    // backfills Gita — the screen falls back to "Chapter N · Verse M").
+    const verseIds = rows.map(r => r.content_id).filter(Boolean);
+    const { data: titleRows } = await supabase
+        .from('verse_content')
+        .select('verse_id, title')
+        .in('verse_id', verseIds)
+        .eq('language', lang);
+    const titleByVerse = new Map((titleRows || []).map((t: any) => [t.verse_id, t.title]));
+
+    return rows.map(r => ({
+        ...r,
+        book_id: r.book_id ?? getBookByCode(r.book_slug)?.book_id ?? null,
+        verse_title: r.verse_title ?? titleByVerse.get(r.content_id) ?? null,
+    }));
 };
