@@ -105,8 +105,10 @@ async function generateTitles(
       const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       const parsed = JSON.parse(raw);
 
-      const enTitle = trim(parsed.en, 200);
-      const hiTitle = trim(parsed.hi, 200);
+      // Headlines, not sentences — strip a trailing full stop (Latin "." or
+      // Devanagari danda "।") the model sometimes adds.
+      const enTitle = trim(parsed.en, 200).replace(/[।.]+$/, "").trim();
+      const hiTitle = trim(parsed.hi, 200).replace(/[।.]+$/, "").trim();
 
       const problems: string[] = [];
       if (!enTitle) problems.push("empty en");
