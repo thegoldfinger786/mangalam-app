@@ -22,6 +22,7 @@ import Animated, {
     withTiming
 } from 'react-native-reanimated';
 import { HighlightedText } from '../components/HighlightedText';
+import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
 import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -79,6 +80,7 @@ export const PlayScreen = () => {
         syncRemoteProgress,
         togglePlayPause: storeTogglePlayPause,
         isPlaying,
+        audioLoadError,
         position,
         duration,
         seek,
@@ -371,6 +373,11 @@ export const PlayScreen = () => {
         loadContentAndCheckUsage();
     }, [loadContentAndCheckUsage]);
 
+    // A failed audio load in the store → the same retry screen as a content error.
+    useEffect(() => {
+        if (audioLoadError) setPlaybackError('The audio for this verse could not be loaded.');
+    }, [audioLoadError]);
+
     useEffect(() => {
         if (isPlaying && !hasLoggedListen && session) {
             setHasLoggedListen(true);
@@ -578,12 +585,14 @@ export const PlayScreen = () => {
 
     if (playbackError) {
         return (
-            <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
-                <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>
-                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
-                    {playbackError}
-                </Text>
-            </View>
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={[styles.header, { paddingTop: spacing.m, paddingHorizontal: spacing.m }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                        <Ionicons name="chevron-down" size={26} color={colors.text} />
+                    </TouchableOpacity>
+                </View>
+                <LoadError message={playbackError} onRetry={loadContentAndCheckUsage} />
+            </ScreenContainer>
         );
     }
 
@@ -771,8 +780,18 @@ export const PlayScreen = () => {
                         return Math.max(0, Math.min(1, (globalProgress - startRatio) / (endRatio - startRatio)));
                     };
 
+                    // For Gita the opening field is the verse in Sanskrit; for the
+                    // epics it holds the traditional sign-off (see PLAY-06), so the
+                    // "Sanskrit verse" framing only applies to verse-based content.
+                    const showSanskritLabel = sanskritText && !isRamayan && !isMahabharat;
+
                     return (
                         <>
+                            {showSanskritLabel ? (
+                                <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
+                                    Sanskrit verse
+                                </Text>
+                            ) : null}
                             {sanskritText ? (
                                 <HighlightedText
                                     text={sanskritText}
