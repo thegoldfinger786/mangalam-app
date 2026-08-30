@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as Haptics from 'expo-haptics';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from '../components/Button';
@@ -55,7 +54,6 @@ export const HomeScreen = () => {
     
     // Strict selector-based subscriptions to prevent unnecessary re-renders
     const session = useAppStore(state => state.session);
-    const activeBookId = useAppStore(state => state.activeBookId);
     const setActiveBookId = useAppStore(state => state.setActiveBookId);
     const userName = useAppStore(state => state.userName);
     const setUserName = useAppStore(state => state.setUserName);
@@ -217,23 +215,6 @@ export const HomeScreen = () => {
         }
     };
 
-    const handlePathPress = (book: any) => {
-        if (!assertValidBookId(book?.book_id, 'HomeScreen.handlePathPress')) {
-            Alert.alert('Unavailable', 'This book is not available right now.');
-            return;
-        }
-        assertBookIdentityConsistency({ source: 'HomeScreen.handlePathPress', bookId: book.book_id });
-
-        // Opening any book is free — no confirmation gate. Switching just quietly
-        // makes it the book the "Continue" card resumes from.
-        if (book.book_id !== activeBookId) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setActiveBookId(book.book_id);
-        }
-
-        navigation.navigate(ROUTES.BOOK_DASHBOARD, { bookId: book.book_id });
-    };
-
     // Memoize derived UI values to improve stability
     const currentPathColor = useMemo(() => resumeState
         ? (EXPLORE_PATH_DISPLAY[resumeState.book_slug]?.color || colors.primary)
@@ -253,12 +234,6 @@ export const HomeScreen = () => {
         const remainder = seconds % 60;
         return `Continue from ${minutes}:${remainder < 10 ? '0' : ''}${remainder}`;
     }, [resumeState]);
-
-    const exploreBooks = useMemo(() => books.map((book) => ({
-        ...book,
-        displayTitle: book.title_en || book.title_hi || book.title || book.name || EXPLORE_PATH_DISPLAY[book.slug]?.title || 'Untitled',
-        displayColor: EXPLORE_PATH_DISPLAY[book.slug]?.color || colors.primary,
-    })), [books, colors.primary]);
 
     if (loading && !books.length) {
         return (
@@ -375,53 +350,28 @@ export const HomeScreen = () => {
                 {/* Weekly rhythm — same component and data as the Streaks screen */}
                 <WeeklyStreak activeDates={activeDates} />
 
-                {/* Explore Section */}
+                {/* Explore Section — a single entry into the Library tab */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Explore Paths</Text>
-                    <View style={styles.exploreGrid}>
-                        {exploreBooks.map((book) => (
-                            <TouchableOpacity
-                                key={book.book_id}
-                                style={[
-                                    styles.exploreItem,
-                                    {
-                                        backgroundColor: colors.surface,
-                                        borderColor: activeBookId === book.book_id ? book.displayColor : colors.border,
-                                        borderWidth: activeBookId === book.book_id ? 2 : 1,
-                                    }
-                                ]}
-                                onPress={() => handlePathPress(book)}
-                            >
-                                <View style={[styles.exploreIconBox, { backgroundColor: book.displayColor + '15' }]}>
-                                    {getScriptureIcon(book.slug || 'book', 28, book.displayColor)}
-                                </View>
-                                <Text style={[styles.exploreItemTitle, { color: colors.text }]}>{book.displayTitle}</Text>
-                            </TouchableOpacity>
-                        ))}
-                        {EXPLORE_PATHS.filter((path) => path.isComingSoon).map((path) => (
-                            <TouchableOpacity
-                                key={path.id}
-                                style={[
-                                    styles.exploreItem,
-                                    {
-                                        backgroundColor: colors.surface,
-                                        borderColor: colors.border,
-                                        borderWidth: 1,
-                                        opacity: 0.6,
-                                    }
-                                ]}
-                                disabled
-                            >
-                                <View style={[styles.exploreIconBox, { backgroundColor: path.color + '15' }]}>
-                                    {getScriptureIcon(path.id, 28, path.color)}
-                                </View>
-                                <Text style={[styles.exploreItemTitle, { color: colors.text }]}>{path.title}</Text>
-                                <View style={[styles.miniBadge, { backgroundColor: colors.surfaceSecondary }]}>
-                                    <Text style={[styles.miniBadgeText, { color: colors.textTertiary }]}>Soon</Text>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Explore</Text>
+                    <TouchableOpacity
+                        style={[styles.discoveryBar, { backgroundColor: colors.surfaceSecondary }]}
+                        onPress={() => navigation.navigate('MainTabs', { screen: 'Library' })}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.discoveryIconBox, { backgroundColor: colors.primary + '15' }]}>
+                            <Ionicons name="book-outline" size={16} color={colors.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={[styles.discoveryText, { color: colors.text }]}>Browse the library</Text>
+                            <Text style={[styles.exploreSubtext, { color: colors.textSecondary }]}>
+                                Bhagavad Gita, Ramayan, Mahabharat and more
+                            </Text>
+                        </View>
+                        <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                    </TouchableOpacity>
+                    <Text style={[styles.exploreSubtext, { color: colors.textTertiary, paddingHorizontal: spacing.l, marginTop: spacing.s }]}>
+                        {EXPLORE_PATHS.filter((p) => p.isComingSoon).map((p) => p.title).join(' and ')} are on the way.
+                    </Text>
                 </View>
             </ScrollView>
             </ScreenContainer>
@@ -529,36 +479,9 @@ const createStyles = (
     continueButton: {
         width: '100%',
     },
-    exploreGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        paddingHorizontal: spacing.l,
-        justifyContent: 'space-between',
-    },
-    exploreItem: {
-        width: '48%',
-        marginBottom: spacing.m,
-        padding: spacing.xl,
-        borderRadius: 16,
-        borderWidth: 1,
-        alignItems: 'center',
-    },
-    exploreIconBox: {
-        width: 64, // Slightly increased
-        height: 64, // Slightly increased
-        borderRadius: 32,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: spacing.m,
-    },
-    sectionSubtitle: {
+    exploreSubtext: {
         fontSize: typography.sizes.s,
         marginTop: spacing.xs,
-    },
-    exploreItemTitle: {
-        fontSize: typography.sizes.s,
-        textAlign: 'center',
-        fontWeight: '500',
     },
     statGroup: {
         marginBottom: spacing.l,
@@ -622,17 +545,4 @@ const createStyles = (
         fontSize: typography.sizes.xs,
         fontWeight: '500',
     },
-    miniBadge: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        paddingHorizontal: spacing.s,
-        paddingVertical: spacing.micro,
-        borderRadius: 6,
-    },
-    miniBadgeText: {
-        fontSize: 9,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-    }
 });

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { BookCard } from '../components/BookCard';
 import { LoadError } from '../components/LoadError';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Skeleton } from '../components/Skeleton';
 import { VerseListRow } from '../components/VerseListRow';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -226,21 +227,7 @@ export const LibraryScreen = () => {
 
         return (
             <View style={styles.listContainer}>
-                {/* Chapter header — rounded container using theme tokens only */}
-                <View
-                    style={[
-                        styles.verseHeaderChapter,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
-                        },
-                    ]}
-                >
-                    <Text style={[styles.chapterHeaderTitle, { color: colors.text }]}>
-                        Chapter {selectedChapter}
-                    </Text>
-                </View>
-
+                {/* The chapter name lives in the ScreenHeader while a chapter is open. */}
                 {selectedVerses.map((verse) =>
                     renderVerseRow(verse, `Verse ${verse.verse_no}`),
                 )}
@@ -250,55 +237,34 @@ export const LibraryScreen = () => {
 
     // ── Selected-book detail view ────────────────────────────────────────────
     const renderSelectedBook = () => {
-        const meta = COLLECTION_METADATA[selectedBook.slug] || {
-            icon: 'book',
-            color: colors.primary,
-        };
+        const bookName =
+            selectedBook.title_en ||
+            selectedBook.title_hi ||
+            selectedBook.title ||
+            COLLECTION_METADATA[selectedBook.slug]?.title ||
+            'Wisdom';
+
+        const inChapter = selectedChapter !== null && !trimmedSearch;
 
         return (
-            <ScrollView
-                contentContainerStyle={{
-                    backgroundColor: colors.background,
-                    paddingHorizontal: spacing.l,
-                    paddingTop: spacing.m,
-                    paddingBottom: layout.miniPlayerHeight + spacing.m,
-                }}
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Back / book title header — rounded container */}
-                <View
-                    style={[
-                        styles.innerHeader,
-                        {
-                            backgroundColor: colors.surface,
-                            borderColor: colors.border,
-                        },
-                    ]}
+            <>
+                <ScreenHeader
+                    title={inChapter ? `Chapter ${selectedChapter}` : bookName}
+                    onBack={() => {
+                        if (search) setSearch('');
+                        else if (selectedChapter !== null) setSelectedChapter(null);
+                        else setSelectedBook(null);
+                    }}
+                />
+                <ScrollView
+                    contentContainerStyle={{
+                        backgroundColor: colors.background,
+                        paddingHorizontal: spacing.l,
+                        paddingTop: spacing.m,
+                        paddingBottom: layout.miniPlayerHeight + spacing.m,
+                    }}
+                    showsVerticalScrollIndicator={false}
                 >
-                    <TouchableOpacity
-                        onPress={() => {
-                            if (selectedChapter !== null) setSelectedChapter(null);
-                            else setSelectedBook(null);
-                        }}
-                        style={styles.backButton}
-                    >
-                        <Ionicons name="arrow-back" size={24} color={colors.text} />
-                        <Text style={[styles.backText, { color: colors.text }]}>
-                            {selectedChapter !== null ? 'Back' : 'Books'}
-                        </Text>
-                    </TouchableOpacity>
-                    <View style={styles.collectionHeaderTitleBox}>
-                        <View style={[styles.smallIconBox, { backgroundColor: meta.color + '15' }]}>
-                            {getScriptureIcon(selectedBook.slug, 24, meta.color)}
-                        </View>
-                        <Text style={[styles.collectionHeaderTitle, { color: colors.text }]}>
-                            {selectedBook.title_en ||
-                                selectedBook.title_hi ||
-                                selectedBook.title ||
-                                meta.title}
-                        </Text>
-                    </View>
-                </View>
 
                 {itemsLoading ? (
                     <View style={styles.chapterGrid}>
@@ -347,7 +313,8 @@ export const LibraryScreen = () => {
                         {trimmedSearch ? renderSearchResults() : renderVerseChapters()}
                     </>
                 )}
-            </ScrollView>
+                </ScrollView>
+            </>
         );
     };
 
@@ -475,47 +442,6 @@ const createStyles = (
             paddingTop: spacing.m,
         },
 
-        // ── Selected-book: back / title header (rounded) ───────────
-        innerHeader: {
-            padding: spacing.m,
-            borderRadius: borderRadius.l,
-            borderWidth: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: spacing.m,
-            // iOS shadow
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.06,
-            shadowRadius: 6,
-            elevation: 2,
-        },
-        backButton: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        backText: {
-            fontSize: typography.sizes.m,
-            fontWeight: '500',
-            marginLeft: spacing.xs,
-        },
-        collectionHeaderTitleBox: {
-            flexDirection: 'row',
-            alignItems: 'center',
-        },
-        smallIconBox: {
-            width: spacing.xl,
-            height: spacing.xl,
-            borderRadius: borderRadius.round,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: spacing.s,
-        },
-        collectionHeaderTitle: {
-            fontSize: typography.sizes.m,
-            fontWeight: '600',
-        },
-
         // ── Verse-title search ─────────────────────────────────────
         searchBar: {
             flexDirection: 'row',
@@ -584,17 +510,5 @@ const createStyles = (
         },
         tileProgressText: {
             fontSize: typography.sizes.xs,
-        },
-
-        // ── Chapter header (rounded) ───────────────────────────────
-        verseHeaderChapter: {
-            padding: spacing.m,
-            borderRadius: borderRadius.l,
-            borderWidth: 1,
-            marginBottom: spacing.m,
-        },
-        chapterHeaderTitle: {
-            fontSize: typography.sizes.xl,
-            fontWeight: '600',
         },
     });

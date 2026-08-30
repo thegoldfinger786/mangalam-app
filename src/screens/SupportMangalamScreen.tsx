@@ -1,19 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { RootStackParamList } from '../navigation/types';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
 
 export const SupportMangalamScreen = () => {
     const { colors, spacing } = useTheme();
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     // The Stripe payment link provided by the user
@@ -33,13 +30,7 @@ export const SupportMangalamScreen = () => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Support</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader title="Support Mangalam" />
 
             <ScrollView contentContainerStyle={{ padding: spacing.l }}>
                 {/* Hero Header - Mirrored from AboutScreen */}
@@ -129,24 +120,6 @@ export const SupportMangalamScreen = () => {
 const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        height: 60,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.xl,
-        borderBottomWidth: 1,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
     },
     heroSection: {
         alignItems: 'center',
