@@ -177,7 +177,10 @@ const DEFAULT_NARRATION_VOLUME = 0.9;
 const DEFAULT_BG_VOLUME = 0.6;
 const MIN_BG_VOLUME = 0.01;
 const DEFAULT_ARTWORK_URL = Image.resolveAssetSource(require('../../assets/images/Mangalam-cover.jpeg')).uri;
-const clampNarrationVolume = (volume: number) => Math.min(1, Math.max(0.7, volume));
+// Floor at 0.5 — narration stays clearly audible over background music, but the
+// slider has more usable range than the old 0.7 floor allowed (SET-05).
+const NARRATION_VOLUME_FLOOR = 0.5;
+const clampNarrationVolume = (volume: number) => Math.min(1, Math.max(NARRATION_VOLUME_FLOOR, volume));
 const clampBgVolume = (volume: number) => Math.min(0.8, Math.max(0, volume));
 const REMOTE_SYNC_INTERVAL_MS = 15000;
 const normalize = (url?: string | null) =>
