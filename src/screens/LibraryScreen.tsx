@@ -7,6 +7,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -34,6 +35,7 @@ export const LibraryScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const [selectedBook, setSelectedBook] = useState<any | null>(null);
     const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
+    const [search, setSearch] = useState('');
     const [books, setBooks] = useState<any[]>([]);
     const [items, setItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,12 +79,24 @@ export const LibraryScreen = () => {
     };
 
     useEffect(() => {
+        setSearch('');
         if (selectedBook) {
+            // Reload when the book changes or the content language changes
+            // (voice preference switch) so titles match the chosen language.
             loadItems(selectedBook);
         } else {
             setItems([]);
         }
-    }, [selectedBook]);
+    }, [selectedBook, lang]);
+
+    // Book-wide title search over the already-loaded verses (client-side only).
+    const trimmedSearch = search.trim().toLowerCase();
+    const searchResults = useMemo(() => {
+        if (!trimmedSearch) return [];
+        return items.filter((v) =>
+            (v.title || '').toLowerCase().includes(trimmedSearch),
+        );
+    }, [items, trimmedSearch]);
 
     const handlePlayItem = (id: string) => {
         if (!assertValidBookId(selectedBook?.book_id, 'LibraryScreen.handlePlayItem')) {
@@ -92,6 +106,87 @@ export const LibraryScreen = () => {
             itemId: id,
             bookId: selectedBook.book_id,
         });
+    };
+
+    // ── Single verse row (shared by the chapter list and search results) ────
+    const renderVerseRow = (verse: any, contextLabel: string) => {
+        const isCompleted = completedVerses.includes(verse.verse_id);
+        return (
+            <TouchableOpacity
+                key={verse.verse_id}
+                style={[
+                    styles.verseItem,
+                    {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        shadowColor: colors.cardShadow,
+                    },
+                    isCompleted && {
+                        borderColor: colors.primary + '40',
+                        backgroundColor: colors.primary + '05',
+                    },
+                ]}
+                onPress={() => handlePlayItem(verse.verse_id)}
+            >
+                <View style={styles.verseHeader}>
+                    <View
+                        style={[
+                            styles.verseNumberBadge,
+                            { backgroundColor: colors.surfaceSecondary },
+                            isCompleted && { backgroundColor: colors.primary },
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.verseNumberText,
+                                { color: colors.primary },
+                                isCompleted && { color: colors.textInverse },
+                            ]}
+                        >
+                            {verse.verse_no}
+                        </Text>
+                    </View>
+                    <View style={styles.verseInfo}>
+                        <Text
+                            style={[
+                                styles.previewText,
+                                { color: colors.textSecondary },
+                                isCompleted && { color: colors.text },
+                            ]}
+                            numberOfLines={2}
+                        >
+                            {verse.title || verse.sanskrit || verse.reference || 'Verse'}
+                        </Text>
+                        <Text style={[styles.verseChapterRef, { color: colors.textSecondary }]}>
+                            {contextLabel}
+                        </Text>
+                    </View>
+                    {isCompleted && (
+                        <View style={styles.completedBadge}>
+                            <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                        </View>
+                    )}
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+    // ── Book-wide title search results ─────────────────────────────────────
+    const renderSearchResults = () => {
+        if (searchResults.length === 0) {
+            return (
+                <Text style={[styles.searchEmpty, { color: colors.textSecondary }]}>
+                    No verse titles match &ldquo;{search.trim()}&rdquo;.
+                </Text>
+            );
+        }
+        return (
+            <View style={styles.listContainer}>
+                {searchResults.map((verse) =>
+                    renderVerseRow(verse, `Chapter ${verse.chapter_no}, Verse ${verse.verse_no}`),
+                )}
+            </View>
+        );
     };
 
     // ── Chapter Grid (shown when a book is selected) ────────────────────────
@@ -188,71 +283,9 @@ export const LibraryScreen = () => {
                     </Text>
                 </View>
 
-                {selectedVerses.map((verse) => {
-                    const isCompleted = completedVerses.includes(verse.verse_id);
-                    return (
-                        <TouchableOpacity
-                            key={verse.verse_id}
-                            style={[
-                                styles.verseItem,
-                                {
-                                    backgroundColor: colors.surface,
-                                    borderColor: colors.border,
-                                    shadowColor: colors.cardShadow,
-                                },
-                                isCompleted && {
-                                    borderColor: colors.primary + '40',
-                                    backgroundColor: colors.primary + '05',
-                                },
-                            ]}
-                            onPress={() => handlePlayItem(verse.verse_id)}
-                        >
-                            <View style={styles.verseHeader}>
-                                <View
-                                    style={[
-                                        styles.verseNumberBadge,
-                                        { backgroundColor: colors.surfaceSecondary },
-                                        isCompleted && { backgroundColor: colors.primary },
-                                    ]}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.verseNumberText,
-                                            { color: colors.primary },
-                                            isCompleted && { color: colors.textInverse },
-                                        ]}
-                                    >
-                                        {verse.verse_no}
-                                    </Text>
-                                </View>
-                                <View style={styles.verseInfo}>
-                                    <Text
-                                        style={[
-                                            styles.previewText,
-                                            { color: colors.textSecondary },
-                                            isCompleted && { color: colors.text },
-                                        ]}
-                                        numberOfLines={2}
-                                    >
-                                        {verse.title || verse.sanskrit || verse.reference || 'Verse'}
-                                    </Text>
-                                    <Text style={[styles.verseChapterRef, { color: colors.textSecondary }]}>
-                                        Verse {verse.verse_no}
-                                    </Text>
-                                </View>
-                                {isCompleted && (
-                                    <View style={styles.completedBadge}>
-                                        <Ionicons
-                                            name="checkmark-circle"
-                                            size={20}
-                                            color={colors.primary}
-                                        />
-                                    </View>
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                    );
-                })}
+                {selectedVerses.map((verse) =>
+                    renderVerseRow(verse, `Verse ${verse.verse_no}`),
+                )}
             </View>
         );
     };
@@ -327,7 +360,34 @@ export const LibraryScreen = () => {
                         onRetry={() => selectedBook && loadItems(selectedBook)}
                     />
                 ) : (
-                    renderVerseChapters()
+                    <>
+                        {items.length > 0 && (
+                            <View
+                                style={[
+                                    styles.searchBar,
+                                    { backgroundColor: colors.surface, borderColor: colors.border },
+                                ]}
+                            >
+                                <Ionicons name="search" size={18} color={colors.textSecondary} />
+                                <TextInput
+                                    style={[styles.searchInput, { color: colors.text }]}
+                                    value={search}
+                                    onChangeText={setSearch}
+                                    placeholder="Search verse titles"
+                                    placeholderTextColor={colors.textSecondary}
+                                    returnKeyType="search"
+                                    autoCorrect={false}
+                                    autoCapitalize="none"
+                                />
+                                {search.length > 0 && (
+                                    <TouchableOpacity onPress={() => setSearch('')} hitSlop={8}>
+                                        <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        )}
+                        {trimmedSearch ? renderSearchResults() : renderVerseChapters()}
+                    </>
                 )}
             </ScrollView>
         );
@@ -496,6 +556,29 @@ const createStyles = (
         collectionHeaderTitle: {
             fontSize: typography.sizes.m,
             fontWeight: '600',
+        },
+
+        // ── Verse-title search ─────────────────────────────────────
+        searchBar: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.s,
+            paddingHorizontal: spacing.m,
+            paddingVertical: spacing.s,
+            borderRadius: borderRadius.l,
+            borderWidth: 1,
+            marginBottom: spacing.m,
+        },
+        searchInput: {
+            flex: 1,
+            fontSize: typography.sizes.m,
+            padding: 0,
+        },
+        searchEmpty: {
+            fontSize: typography.sizes.m,
+            lineHeight: typography.sizes.m * 1.4,
+            paddingTop: spacing.l,
+            textAlign: 'center',
         },
 
         // ── Verse list ─────────────────────────────────────────────
