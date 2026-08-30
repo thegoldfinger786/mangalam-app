@@ -1,9 +1,13 @@
 # Mangalam — Navigation & Information-Architecture Model (proposal)
 
-Status: **PROPOSED — not implemented.** Prepared 2026-08-30 as the "establish the
-model first" step for the tracker cluster **UX-02 / DASH-01 / LIB-01 / NAV-02 /
-NAV-03 / HOME-07**. Nothing here is built yet. Implementation is a separate,
-staged effort (see §5); each stage is independently shippable and low-risk.
+Status: **Stages 1, 2, 4, 5 shipped (PRs #40, #49). Stage 3 pending.** Prepared
+2026-08-30 for the tracker cluster **UX-02 / DASH-01 / LIB-01 / NAV-02 / NAV-03 /
+HOME-07**. The user-visible consolidation is done: one in-tab browse flow, the
+modal `BookDashboardScreen` deleted, its hero/progress/CTA folded into the
+Library book view, Home's duplicate Explore grid replaced by a single "Browse
+the library" entry, a shared `ScreenHeader`. **Stage 3** (the internal
+`useState` → pushed-stack-screens refactor — no user-visible change) is the only
+remaining piece; see §5.
 
 This document only concerns *how the user moves between browse and play*. It does
 **not** change the sunrise aesthetic, card visual language, the Play screen, the
@@ -135,11 +139,11 @@ layout question, not just a wiring one.
 
 | Stage | Change | Findings closed / advanced | Risk |
 |---|---|---|---|
-| 1 | Add a shared `ScreenHeader` (chevron-left + centered title). Adopt in Library's book & chapter views, `About`, `SupportMangalam`. | NAV-03 (partial) | Low — presentational |
-| 2 | Lift `BookDashboardScreen`'s hero + progress + "Continue" CTA into a reusable block; render it at the top of the Library in-tab book view. Chapter tap → verse list (stop the jump-to-Play shortcut). | UX-02 / DASH-01 (partial), design pass here | Low–med — layout |
-| 3 | Convert Library's `selectedBook` / `selectedChapter` `useState` into a real Library stack: `Books → BookDetail → ChapterVerses`. Keep the tab bar. | LIB-01 | Med — navigation refactor, no data change |
-| 4 | Point Home's Explore/Continue at `BookDetail` in the Library stack. Make the `BookDashboard` route an alias, then delete `BookDashboardScreen`. | UX-02, DASH-01, NAV-02 | Med — cross-tab navigation |
-| 5 | Replace Home's 4-book Explore grid with a single entry into the Library tab; move the "coming soon" tiles. | HOME-07 | Low |
+| ~~1~~ ✅ | Add a shared `ScreenHeader` (chevron-left + centered title). Adopt in Library's book & chapter views, `About`, `SupportMangalam`. | NAV-03 (partial) | Low — presentational |
+| ~~2~~ ✅ | Lift `BookDashboardScreen`'s hero + progress + "Continue" CTA into a reusable block; render it at the top of the Library in-tab book view. Chapter tap → verse list (stop the jump-to-Play shortcut). | UX-02 / DASH-01 (partial), design pass here | Low–med — layout |
+| **3 — pending** | Convert Library's `selectedBook` / `selectedChapter` `useState` into a real Library stack: `Books → BookDetail → ChapterVerses`. Keep the tab bar. | LIB-01 | Med — navigation refactor, no data change |
+| ~~4~~ ✅ | Point Home's Explore/Continue at `BookDetail` in the Library stack. Make the `BookDashboard` route an alias, then delete `BookDashboardScreen`. | UX-02, DASH-01, NAV-02 | Med — cross-tab navigation |
+| ~~5~~ ✅ | Replace Home's 4-book Explore grid with a single entry into the Library tab; move the "coming soon" tiles. | HOME-07 | Low |
 
 Stop after any stage and the app is still coherent. Do **not** start stage 3
 without stages 1–2 merged, and do not start the cluster at all without a design
