@@ -32,6 +32,7 @@ import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '.
 import { formatRef } from '../lib/bookTerminology';
 import { cleanContentText, stripMarkup } from '../lib/contentText';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, fetchVerseByIdAndBookId, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
+import { navigationRef } from '../navigation/navigationRef';
 import { RootStackParamList } from '../navigation/types';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store/useAppStore';
@@ -116,7 +117,6 @@ export const PlayScreen = () => {
     const scrollRef = useRef<ScrollView>(null);
     // Timestamp until which the transcript follow-along stays out of the listener's way.
     const autoScrollPausedUntilRef = useRef(0);
-    const isNavigatingToVerse = useRef(false);
     // The verse whose "session" was already counted — so a language switch (which
     // re-runs the loader via the voicePreference dep) doesn't re-increment usage.
     const usageCountedForRef = useRef<string | null>(null);
@@ -520,28 +520,25 @@ export const PlayScreen = () => {
             return;
         }
 
-        // Only the focused PlayScreen may drive stack navigation. navigateToVerse is
-        // also invoked from the audio store's onFinish callback when a verse ends: if
-        // the listener has since navigated away (mini-player showing, app backgrounded),
-        // this stale navigation object would dispatch replace('Play') against a stack
-        // that no longer contains Play — collapsing the root to a lone Play route with
-        // no parent, so the "close" chevron fires an unhandled GO_BACK and the listener
-        // is stranded on the player. When unfocused, let playback simply end; the
-        // mini-player and resume state carry the session forward.
-        if (!navigation.isFocused()) {
-            return;
-        }
-
         const wasPlaying = forceAutoPlay ?? isPlaying;
-        isNavigatingToVerse.current = true;
         void syncRemoteProgress('track_change', { force: true });
+        setHasLoggedListen(false); // Reset listen tracking for the new verse
 
-        navigation.replace('Play', {
-            itemId: targetVerseId,
-            bookId,
-            autoPlay: wasPlaying
-        });
-        setHasLoggedListen(false); // Reset tracking for new verse
+        // Use the ROOT navigation ref, not the screen-scoped `navigation.replace`.
+        // This is what the mini-player's next/prev already use, and it is safe
+        // whether the player is focused, sitting behind the mini-player, on another
+        // tab, or dismissed — so `onFinish` can advance to the next verse/episode
+        // for continuous listening (PLAY-14) without the stale-`replace` stack
+        // collapse that PLAY-01 fixed. When Play is the current route this just
+        // updates its params and the loader re-runs; otherwise Play is brought
+        // forward / pushed onto the tabs.
+        if (navigationRef.isReady()) {
+            navigationRef.navigate('Play', {
+                itemId: targetVerseId,
+                bookId,
+                autoPlay: wasPlaying,
+            });
+        }
     };
 
     const formatTime = (millis: number) => {
