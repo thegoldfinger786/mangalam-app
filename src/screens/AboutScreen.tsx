@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { Card } from '../components/Card';
-import { Button } from '../components/Button';
 import { ScreenHeader } from '../components/ScreenHeader';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -78,24 +77,16 @@ export const AboutScreen = () => {
                     <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Ancient Wisdom • Modern Life</Text>
                 </View>
 
-                {/* Introduction Section */}
+                {/* What Mangalam is */}
                 <SectionCard
                     title="About Mangalam"
-                    content="Mangalam is a quiet space to reconnect with the timeless wisdom of India’s sacred traditions. For thousands of years, texts such as the Bhagavad Gita, Ramayan, and Mahabharat have guided people through questions of purpose, duty, resilience, and inner peace. Mangalam brings this wisdom into a simple daily practice; one reflection at a time."
+                    content="Mangalam is a quiet space to reconnect with the timeless wisdom of India’s sacred traditions. For thousands of years, texts such as the Bhagavad Gita, Ramayan, and Mahabharat have guided people through questions of purpose, duty, resilience, and inner peace. Mangalam blends scripture, reflection, and calm narration into a simple daily practice — one reflection at a time."
                 />
 
+                {/* Philosophy / mission */}
                 <SectionCard
-                    title="What is Mangalam?"
-                    content="Mangalam is a spiritual storytelling and learning platform designed to bring ancient wisdom into modern life. It blends scripture, reflection, and narration into a format that feels calm, accessible, and meaningful in the middle of everyday routines."
-                />
-
-                <SectionCard
-                    title="Our Mission"
-                    content="To make timeless knowledge accessible, engaging, and relevant for everyday life. Mangalam exists to help people build a steady relationship with sacred stories and wisdom without requiring formal study, prior background, or long uninterrupted time."
-                />
-
-                <SectionCard
-                    title="Why Mangalam?"
+                    title="Our mission"
+                    content="To make timeless knowledge accessible, engaging, and relevant for everyday life — helping people build a steady relationship with sacred stories and wisdom without requiring formal study, prior background, or long uninterrupted time."
                     bulletPoints={[
                         "Daily spiritual growth through small, steady practice",
                         "Story-based learning rooted in dharmic tradition",
@@ -103,85 +94,52 @@ export const AboutScreen = () => {
                     ]}
                 />
 
-                {/* Detailed Sections */}
-                <SectionCard 
-                    title="Why Mangalam was Created"
-                    content="Many people feel drawn to the wisdom of ancient scriptures but find traditional study difficult to begin. Long commentaries, complex language, and the demands of daily life can make it hard to engage with these teachings."
-                    quote="Mangalam was created to make this wisdom accessible in a calm, simple format; something that fit naturally into everyday life."
+                {/* The broader story */}
+                <SectionCard
+                    title="Why Mangalam was created"
+                    content="Many people feel drawn to the wisdom of ancient scriptures but find traditional study difficult to begin — long commentaries, complex language, and the demands of daily life get in the way. Mangalam was created to make this wisdom accessible in a calm, simple format that fits naturally into everyday life. It is a private initiative, and the app will always remain free and ad-free."
+                    quote="We approach these traditions with respect for their depth, nuance, and spiritual heritage."
                 />
 
-                <SectionCard 
-                    title="What You Will Find"
-                    content="Inside Mangalam you will discover a curated path to explore dharmic philosophy:"
+                <SectionCard
+                    title="What you’ll find"
+                    content="A curated path to explore dharmic philosophy:"
                     bulletPoints={[
                         "Daily reflections inspired by the Bhagavad Gita",
                         "Stories and insights from the Ramayan and Mahabharat",
                         "Short wisdom passages designed for reflection",
                         "Calm audio narration for any moment",
-                        "A gentle introduction to timeless spiritual logic"
                     ]}
                 />
 
-                <SectionCard 
-                    title="Our Approach"
-                    content="The content in Mangalam is inspired by classical Sanskrit texts and traditional interpretations. Our aim is not to replace traditional study or scholarly commentary. Instead, Mangalam serves as a simple entry point into these timeless teachings."
-                    quote="We approach these traditions with respect for their depth, nuance, and spiritual heritage."
-                />
-
-                <SectionCard 
-                    title="Sources and Tradition"
-                    content="The reflections shared in Mangalam draw inspiration from classical texts that have guided generations:"
+                <SectionCard
+                    title="Sources and approach"
+                    content="The content is inspired by classical Sanskrit texts and traditional interpretations, supported in places by modern tools to improve accessibility and narration. It is a simple entry point into these teachings, not a replacement for traditional study or scholarly commentary."
                     bulletPoints={[
                         "Bhagavad Gita",
                         "Valmiki Ramayan",
                         "Mahabharat",
-                        "Traditional dharmic philosophy"
+                        "Traditional dharmic philosophy",
                     ]}
                 />
 
-                <SectionCard 
-                    title="Daily Practice"
-                    content="Mangalam is designed to be part of a small daily ritual. You may wish to listen in the morning, read during a quiet moment, or reflect before sleep."
-                    bulletPoints={[
-                        "Listen. Reflect. Contemplate."
-                    ]}
-                    quote="Even a few minutes of thoughtful listening can bring clarity and perspective to daily life."
-                />
-
-                <SectionCard 
+                <SectionCard
                     title="Your trust matters to us"
                     content="We show no ads and never sell your data. We keep only what Mangalam needs to work — your name, your progress and your preferences. See the Privacy Policy below for the details."
                 />
 
-                <SectionCard 
-                    title="Disclaimer"
-                    content="The content in this app is intended for spiritual learning and personal reflection. Texts are drawn from traditional sources and publicly available translations, and in some cases supported by modern tools to improve accessibility and narration. Interpretations may vary across traditions and scholars. This app does not claim to represent any single authoritative interpretation of these sacred texts."
-                />
-
                 <SectionCard
-                    title="A private initiative"
-                    content="Mangalam is a private initiative created to share ancient wisdom. Contributions are optional and help support the development and hosting of the platform. The app will remain free for everyone."
+                    title="Disclaimer"
+                    content="The content in this app is intended for spiritual learning and personal reflection. Interpretations may vary across traditions and scholars. This app does not claim to represent any single authoritative interpretation of these sacred texts."
                 />
 
-                {/* Support Section */}
-                <Card style={[styles.sectionCard, { backgroundColor: colors.surfaceSecondary, marginBottom: spacing.l, borderColor: colors.primaryLight }]}>
-                    <View style={{ alignItems: 'center' }}>
-                        <Ionicons name="heart-outline" size={32} color={colors.primary} style={{ marginBottom: spacing.s }} />
-                        <Text style={[styles.sectionTitle, { color: colors.text, textAlign: 'center', marginBottom: spacing.s }]}>Support Mangalam</Text>
-                        <Text style={[styles.contentBody, { color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.l }]}>
-                            If Mangalam has brought value to your life, consider supporting our mission to keep these teachings accessible and ad-free for everyone.
-                        </Text>
-                        <Button 
-                            title="Support Mangalam" 
-                            onPress={() => navigation.navigate('SupportMangalam')}
-                            variant="primary"
-                            style={{ width: '100%', marginBottom: spacing.s }}
-                        />
-                        <Text style={[styles.contentBody, { fontSize: 13, color: colors.textSecondary, textAlign: 'center', fontStyle: 'italic' }]}>
-                            Help keep Mangalam free and ad-free.
-                        </Text>
-                    </View>
-                </Card>
+                {/* One contextual Support mention — the full page is in Settings → Support */}
+                <TouchableOpacity onPress={() => navigation.navigate('SupportMangalam')} style={styles.supportLine}>
+                    <Ionicons name="heart-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.contentBody, { color: colors.primary, marginLeft: spacing.s }]}>
+                        Mangalam is kept free by optional contributions — learn more
+                    </Text>
+                </TouchableOpacity>
 
                 {/* Final Closing */}
                 <View style={styles.closingSection}>
@@ -311,5 +269,12 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     brandBottom: {
         fontSize: 24,
         fontWeight: 'bold',
-    }
+    },
+    supportLine: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: spacing.m,
+        marginBottom: spacing.l,
+    },
 });

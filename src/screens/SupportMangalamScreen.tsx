@@ -46,31 +46,21 @@ export const SupportMangalamScreen = () => {
                     <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Helping preserve and share ancient wisdom</Text>
                 </View>
 
-                {/* Mission Section */}
-                <SectionCard 
-                    title="Our mission"
-                    content="Mangalam is built to make the wisdom of ancient Indian scriptures accessible to everyone. The app will always remain free and ad-free so that anyone can listen, learn, and reflect."
-                >
-                    <Text style={[styles.contentBody, { color: colors.text, marginTop: spacing.m }]}>
-                        If this content has brought value to your life, you may support this initiative with a small contribution.
-                    </Text>
-                </SectionCard>
-
-                {/* Private Initiative Note */}
-                <SectionCard 
-                    title="A private initiative"
-                    content="Mangalam is a private initiative created to share ancient wisdom. Contributions are optional and help support the development and hosting of the platform. The app will remain free for everyone."
+                {/* Why support helps */}
+                <SectionCard
+                    title="Why your support helps"
+                    content="Mangalam is a private initiative, kept free and ad-free for everyone. Contributions are entirely optional — they cover the running costs so the app can stay that way and keep growing."
                 />
 
                 <SectionCard title="Make a contribution">
-                    <Button 
-                        title="Support with €5 / Custom Amount" 
-                        variant="primary" 
-                        onPress={handleSupport} 
+                    <Button
+                        title="Support Mangalam"
+                        variant="primary"
+                        onPress={handleSupport}
                         style={[styles.gridButton, styles.highlightedButton]}
                     />
                     <Text style={[styles.paymentNote, { color: colors.textTertiary, marginTop: spacing.l }]}>
-                        Secure payments via Apple Pay, Google Pay, and cards.
+                        Choose any amount. Secure payments via Apple Pay, Google Pay, and cards.
                     </Text>
                 </SectionCard>
 
