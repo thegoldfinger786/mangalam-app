@@ -49,33 +49,56 @@ Request body (all optional):
 | `dryRun`      | `false`     | generate + validate but do not write. |
 | `chapterFrom` / `chapterTo` | — | restrict to a chapter range. |
 
-### 1. Sample check first
+### Two headers are required
+
+- `Authorization: Bearer <anon key>` — satisfies the Supabase gateway
+  (`verify_jwt = true`). The anon key is **public** — it ships in the app bundle
+  and in `.env` (`EXPO_PUBLIC_SUPABASE_ANON_KEY`). It is authentication, not
+  authorization. Without it the gateway returns
+  `{"code":"UNAUTHORIZED_NO_AUTH_HEADER"}` before the function runs.
+- `x-admin-secret: <ADMIN_API_SECRET>` — the real authorization check
+  ([`_shared/adminAuth.ts`](../_shared/adminAuth.ts)). Without it: `403 Forbidden`.
+
+### Easiest: use the bundled script
+
+From the repo root:
 
 ```bash
+export ADMIN_API_SECRET='...'          # the project's ADMIN_API_SECRET
+./supabase/functions/generate-gita-titles/run.sh sample   # dry-run, 8 verses — inspect output
+./supabase/functions/generate-gita-titles/run.sh probe    # dry-run, chapters 9 and 18
+./supabase/functions/generate-gita-titles/run.sh run      # full resumable backfill loop
+```
+
+The script reads the public anon key from `.env` automatically and stops the
+loop when a batch reports `attempted: 0`.
+
+### Or call curl directly
+
+```bash
+ANON="$(grep '^EXPO_PUBLIC_SUPABASE_ANON_KEY=' .env | cut -d= -f2-)"
+
+# 1. sample check
 curl -s -X POST \
   "https://yhuvjcmemsqjkttizxem.supabase.co/functions/v1/generate-gita-titles" \
+  -H "Authorization: Bearer $ANON" \
   -H "x-admin-secret: $ADMIN_API_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"dryRun": true, "limit": 8}' | jq
 ```
 
 Eyeball `samples` — English is English, Hindi is Devanagari, each title matches
-its chapter/verse. Also try a middle and a late chapter:
+its chapter/verse. Repeat with
+`-d '{"dryRun": true, "limit": 4, "chapterFrom": 9, "chapterTo": 9}'` and
+`chapterFrom/To: 18` for a middle and a late chapter.
 
 ```bash
--d '{"dryRun": true, "limit": 4, "chapterFrom": 9, "chapterTo": 9}'
--d '{"dryRun": true, "limit": 4, "chapterFrom": 18, "chapterTo": 18}'
-```
-
-### 2. Full run
-
-701 verses × ~1.5s ≈ well over a single invocation, so loop:
-
-```bash
+# 2. full run — 701 verses is more than one invocation, so loop
 for i in $(seq 1 25); do
   echo "--- batch $i ---"
   curl -s -X POST \
     "https://yhuvjcmemsqjkttizxem.supabase.co/functions/v1/generate-gita-titles" \
+    -H "Authorization: Bearer $ANON" \
     -H "x-admin-secret: $ADMIN_API_SECRET" \
     -H "Content-Type: application/json" \
     -d '{"mode": "missing", "limit": 40}' | jq '{attempted, succeeded, updated, skipped, failures: (.failures | length)}'
