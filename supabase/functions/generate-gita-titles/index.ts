@@ -95,7 +95,14 @@ async function generateTitles(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { response_mime_type: "application/json", temperature: 0.7 },
+            generationConfig: {
+              response_mime_type: "application/json",
+              temperature: 0.7,
+              // A short title needs no chain-of-thought; disabling it cuts each
+              // call from ~10s to ~1-2s, which is what makes a full-catalogue
+              // backfill finish inside the edge worker's budget.
+              thinkingConfig: { thinkingBudget: 0 },
+            },
           }),
         },
       );
@@ -105,8 +112,10 @@ async function generateTitles(
       const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       const parsed = JSON.parse(raw);
 
-      const enTitle = trim(parsed.en, 200);
-      const hiTitle = trim(parsed.hi, 200);
+      // Headlines, not sentences — strip a trailing full stop (Latin "." or
+      // Devanagari danda "।") the model sometimes adds.
+      const enTitle = trim(parsed.en, 200).replace(/[।.]+$/, "").trim();
+      const hiTitle = trim(parsed.hi, 200).replace(/[।.]+$/, "").trim();
 
       const problems: string[] = [];
       if (!enTitle) problems.push("empty en");
