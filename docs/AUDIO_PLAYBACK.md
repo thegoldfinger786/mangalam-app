@@ -65,9 +65,9 @@ Read this before touching `src/store/useAudioStore.ts`, `App.tsx`'s audio init,
 
 - CarPlay Now Playing renders correctly (artwork, title, the seek/skip buttons)
   in an actual car / the Xcode CarPlay Simulator.
-- Whether, on CarPlay, the app's screen counts as "focused" behind the CarPlay
-  UI — if it does, `navigateToVerse` may actually advance verses there today; if
-  not, playback stops at each verse end (gap #2).
+- That continuous playback (PLAY-14 / §"Known gaps" #2) actually advances to the
+  next verse/episode when a verse ends with the app **fully backgrounded** or the
+  Play modal dismissed — and that Now-Playing / CarPlay metadata follows.
 - Android Auto head-unit surface shows the MediaSession with working controls.
 
 ## Sleep timer (PLAY-10)
