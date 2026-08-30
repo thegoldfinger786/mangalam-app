@@ -28,6 +28,7 @@ import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
 import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '../lib/bookIdentity';
+import { cleanContentText, stripMarkup } from '../lib/contentText';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, fetchVerseByIdAndBookId, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
 import { supabase } from '../lib/supabase';
@@ -698,20 +699,15 @@ export const PlayScreen = () => {
                         : `Welcome to today's lesson. We are in Chapter ${chapterNo} Verse ${verseNo}`;
 
                     const rawSanskrit = content?.sanskrit || content?.sanskrit_text || '';
-                    const translationText = content?.translation || '';
-                    const commentaryText = content?.commentary || '';
-                    const dailyLifeText = content?.dailyLifeApplication || content?.daily_life_application || '';
-
-                    // Strip SSML tags from displayed text (same as HighlightedText does)
-                    const stripDisplay = (t: string) => t
-                        .replace(/<break\s+time="[^"]*"\s*\/>/gi, '')
-                        .replace(/<break\s*\/>/gi, '')
-                        .replace(/\*\*/g, '')
-                        .replace(/\s{2,}/g, ' ')
-                        .trim();
+                    // Body text is LLM-generated — clean generation artifacts once,
+                    // here, so display and audio-sync both use the same string
+                    // (tracker CONTENT-03 / PLAY-07). Stored content is untouched.
+                    const translationText = cleanContentText(content?.translation || '');
+                    const commentaryText = cleanContentText(content?.commentary || '');
+                    const dailyLifeText = cleanContentText(content?.dailyLifeApplication || content?.daily_life_application || '');
 
                     // Always show the sanskrit/opening text (including "Jai Shri Krishna" sign-off shown in orange)
-                    const sanskritText = stripDisplay(rawSanskrit);
+                    const sanskritText = stripMarkup(rawSanskrit);
 
                     // Build the narrative exactly matching what's displayed on screen
                     let narrativeSections: string[];
@@ -723,7 +719,7 @@ export const PlayScreen = () => {
 
                     const exactAudioNarrative = narrativeSections
                         .filter(t => t && t.trim().length > 0)
-                        .map(t => stripDisplay(t))
+                        .map(t => stripMarkup(t))
                         .join('\n\n');
 
                     // Split dailyLifeText for UI display only
