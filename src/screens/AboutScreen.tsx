@@ -8,6 +8,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -61,13 +62,7 @@ export const AboutScreen = () => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>About Mangalam</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader title="About Mangalam" />
 
             <ScrollView contentContainerStyle={{ padding: spacing.l }}>
                 {/* Hero Header */}
@@ -224,24 +219,6 @@ export const AboutScreen = () => {
 const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        height: 60,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.xl,
-        borderBottomWidth: 1,
-    },
-    backButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: 'bold',
     },
     heroSection: {
         alignItems: 'center',
