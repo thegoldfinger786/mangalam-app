@@ -30,6 +30,8 @@ interface AudioState {
     bgSound: AudioPlayerLike | null;
     currentBgUrl: string | null;
     isPlaying: boolean;
+    /** True when the last loadAudio() call failed (network / decode). Reset on the next load. */
+    audioLoadError: boolean;
     position: number;
     duration: number;
     playbackRate: number;
@@ -191,6 +193,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     bgSound: null,
     currentBgUrl: null,
     isPlaying: false,
+    audioLoadError: false,
     position: 0,
     duration: 1,
     playbackRate: 1.0,
@@ -536,7 +539,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         await get().hydrateAudioSettings();
 
         const nextToken = get().loadToken + 1;
-        set({ loadToken: nextToken });
+        set({ loadToken: nextToken, audioLoadError: false });
 
         const {
             sound: existingSound,
@@ -812,15 +815,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 // Volume 0 makes iOS background resource allocation heuristics stall the stream.
                 newBgSound.volume = 0.01;
                 
-                let ambientStatusUpdateCount = 0;
-                bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', (status: any) => {
-                    ambientStatusUpdateCount++;
-                    const bgRef = get().bgSound;
-                                                                                if (status?.playing === true) {
-                                            }
-                    if (status?.error) {
-                                            }
-                });
+                // Registered only so it can be cleaned up alongside the others;
+                // the ambient track needs no per-tick handling.
+                bgStatusSubNew = newBgSound.addListener('playbackStatusUpdate', () => {});
             }
 
             if (get().loadToken !== nextToken) {
@@ -920,11 +917,15 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 }
             }
         } catch (error) {
-            logger.error('Failed to load audio in store', { 
-                error, 
+            logger.error('Failed to load audio in store', {
+                error,
                 context: { action: 'loadAudio', url },
                 tags: { module: 'audio_store' }
             });
+            // Surface it — PlayScreen shows a retry instead of a dead player (PLAY-03).
+            if (get().loadToken === nextToken && url) {
+                set({ audioLoadError: true });
+            }
         }
     },
 
