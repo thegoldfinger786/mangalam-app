@@ -10,7 +10,6 @@ import { logger } from '../lib/logger';
 import { useAuth } from '../auth/AuthProvider';
 import { MiniPlayer } from '../components/MiniPlayer';
 import { AboutScreen } from '../screens/AboutScreen';
-import { BookDashboardScreen } from '../screens/BookDashboardScreen';
 import { CommunityWisdomScreen } from '../screens/CommunityWisdomScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { PlayScreen } from '../screens/PlayScreen';
@@ -58,14 +57,6 @@ const AuthenticatedApp = () => {
                 ) : (
                     <>
                         <Stack.Screen name="MainTabs" component={BottomTabs} />
-                        <Stack.Screen
-                            name="BookDashboard"
-                            component={BookDashboardScreen}
-                            options={{
-                                presentation: 'modal',
-                                animation: 'slide_from_bottom',
-                            }}
-                        />
                         <Stack.Screen
                             name="Play"
                             component={PlayScreen}

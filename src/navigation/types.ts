@@ -11,7 +11,6 @@ export type RootStackParamList = {
     Auth: undefined;
     Welcome: undefined;
     MainTabs: NavigatorScreenParams<BottomTabParamList>;
-    BookDashboard: { bookId: string };
     Play:
         | { verseId: string; bookId: string; autoPlay?: boolean; position?: number; startPosition?: number; resumeSource?: string }
         | { itemId: string; bookId: string; autoPlay?: boolean; position?: number; startPosition?: number; resumeSource?: string };
