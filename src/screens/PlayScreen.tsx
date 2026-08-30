@@ -75,7 +75,7 @@ export const PlayScreen = () => {
         throw new Error("BOOK_ID_REQUIRED");
     }
 
-    const { voicePreference, session, playbackRate, setPlaybackRate } = useAppStore();
+    const { voicePreference, session, playbackRate, setPlaybackRate, setVoicePreference } = useAppStore();
     const {
         loadAudio,
         syncRemoteProgress,
@@ -117,6 +117,9 @@ export const PlayScreen = () => {
     // Timestamp until which the transcript follow-along stays out of the listener's way.
     const autoScrollPausedUntilRef = useRef(0);
     const isNavigatingToVerse = useRef(false);
+    // The verse whose "session" was already counted — so a language switch (which
+    // re-runs the loader via the voicePreference dep) doesn't re-increment usage.
+    const usageCountedForRef = useRef<string | null>(null);
     const isMountedRef = useRef(true);
     useEffect(() => {
         isMountedRef.current = true;
@@ -239,11 +242,14 @@ export const PlayScreen = () => {
                 setIsBookmarked(bookmarked);
             }
 
-            // 2. Increment Usage (Non-blocking)
-            try {
-                await incrementDailyUsage(currentSession.user.id);
-            } catch (usageError: any) {
-                // Ignore usage error silently
+            // 2. Increment Usage (Non-blocking) — once per verse, not per reload
+            if (usageCountedForRef.current !== itemId) {
+                usageCountedForRef.current = itemId;
+                try {
+                    await incrementDailyUsage(currentSession.user.id);
+                } catch (usageError: any) {
+                    // Ignore usage error silently
+                }
             }
 
             // 3. Audio Cache Check
@@ -545,6 +551,16 @@ export const PlayScreen = () => {
         return `${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
+    // Content-language toggle. Language and voice (gender) are separate: switching
+    // language keeps the chosen voice, and the loader (keyed on voicePreference)
+    // reloads this verse's text + narration in the new language.
+    const contentLang: 'english' | 'hindi' = voicePreference.startsWith('hindi') ? 'hindi' : 'english';
+    const switchLanguage = (next: 'english' | 'hindi') => {
+        if (next === contentLang) return;
+        const gender = voicePreference.endsWith('female') ? 'female' : 'male';
+        setVoicePreference(`${next}-${gender}` as typeof voicePreference);
+    };
+
     const animatedPlayPauseStyle = useAnimatedStyle(() => {
         return {
             transform: [
@@ -679,7 +695,26 @@ export const PlayScreen = () => {
                 <Text style={[styles.trackTitle, { color: colors.text, marginTop: spacing.xs }]}>
                     {content?.title || formatRef(bookId, content?.chapter_no, content?.verse_no)}
                 </Text>
-                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, marginBottom: spacing.xs }]}>{meta.title}</Text>
+                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>{meta.title}</Text>
+
+                <View style={[styles.langToggle, { borderColor: colors.border }]}>
+                    {(['english', 'hindi'] as const).map((l) => {
+                        const active = contentLang === l;
+                        return (
+                            <TouchableOpacity
+                                key={l}
+                                onPress={() => switchLanguage(l)}
+                                style={[styles.langOption, active && { backgroundColor: colors.primary }]}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: active }}
+                            >
+                                <Text style={[styles.langOptionText, { color: active ? colors.textInverse : colors.textSecondary }]}>
+                                    {l === 'english' ? 'English' : 'हिन्दी'}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </View>
             </Animated.View>
 
             {/* ── Auto-scrolling Transcript ── */}
@@ -1045,6 +1080,21 @@ const createStyles = (
         color: colors.textSecondary,
         textAlign: 'center',
         marginBottom: spacing.s,
+    },
+    langToggle: {
+        flexDirection: 'row',
+        alignSelf: 'center',
+        borderWidth: 1,
+        borderRadius: 999,
+        overflow: 'hidden',
+    },
+    langOption: {
+        paddingHorizontal: spacing.m,
+        paddingVertical: spacing.xs,
+    },
+    langOptionText: {
+        fontFamily: typography.fontFamilies.medium,
+        fontSize: typography.sizes.xs,
     },
     // ── Transcript area ──
     transcriptScroll: {
