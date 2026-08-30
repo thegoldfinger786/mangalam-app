@@ -92,6 +92,8 @@ export const CommunityWisdomScreen = () => {
         { label: 'Others are keeping', data: topStats.bookmarked, icon: 'bookmark-outline' },
     ];
 
+    const isEmpty = sections.every(s => s.data.length === 0);
+
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
             <View style={[styles.header, { paddingHorizontal: spacing.m, paddingTop: spacing.m }]}>
@@ -109,6 +111,12 @@ export const CommunityWisdomScreen = () => {
                         A quiet look at the verses others are finding meaningful.
                     </Text>
                 </View>
+
+                {isEmpty ? (
+                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                        Nothing here yet. As people spend time with verses, the ones they return to will show up here.
+                    </Text>
+                ) : null}
 
                 {sections.map((section, idx) => section.data.length > 0 && (
                     <View key={idx} style={styles.statSection}>
@@ -256,5 +264,10 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     verseTitle: {
         fontSize: 15,
         fontWeight: '600',
+    },
+    emptyText: {
+        fontSize: 15,
+        lineHeight: 22,
+        marginTop: spacing.s,
     },
 });
