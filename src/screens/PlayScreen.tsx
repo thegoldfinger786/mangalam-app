@@ -165,7 +165,7 @@ export const PlayScreen = () => {
             if (!bookId || typeof bookId !== 'string') {
                 logger.warn('PlayScreen missing bookId for playback', { params });
                 if (isMountedRef.current) {
-                    setPlaybackError('Missing book identity for this playback request.');
+                    setPlaybackError("We couldn't open this verse.");
                     setLoading(false);
                 }
                 return;
@@ -175,7 +175,7 @@ export const PlayScreen = () => {
             if (!verse) {
                 logger.warn('Verse not found for playback', { params });
                 if (isMountedRef.current) {
-                    setPlaybackError('This verse could not be found for playback.');
+                    setPlaybackError("We couldn't find this verse.");
                     setLoading(false);
                 }
                 return;
@@ -362,7 +362,7 @@ export const PlayScreen = () => {
                 tags: { module: 'audio' }
             });
             if (isMountedRef.current) {
-                setPlaybackError('Failed to load content for playback.');
+                setPlaybackError("We couldn't load this verse just now.");
             }
         } finally {
             if (isMountedRef.current) setLoading(false);
@@ -375,7 +375,7 @@ export const PlayScreen = () => {
 
     // A failed audio load in the store → the same retry screen as a content error.
     useEffect(() => {
-        if (audioLoadError) setPlaybackError('The audio for this verse could not be loaded.');
+        if (audioLoadError) setPlaybackError("The audio for this verse wouldn't load.");
     }, [audioLoadError]);
 
     useEffect(() => {
@@ -574,12 +574,19 @@ export const PlayScreen = () => {
     if (invalidPlaybackContext) {
         logger.warn('PlayScreen missing playback context', { params });
         return (
-            <View style={[styles.center, { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.xl }]}>
-                <Text style={[styles.trackTitle, { color: colors.text, marginBottom: spacing.s }]}>Playback unavailable</Text>
-                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center' }]}>
-                    Missing book context for this playback request.
-                </Text>
-            </View>
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={[styles.header, { paddingTop: spacing.m, paddingHorizontal: spacing.m }]}>
+                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
+                        <Ionicons name="chevron-down" size={26} color={colors.text} />
+                    </TouchableOpacity>
+                </View>
+                <View style={[styles.center, { flex: 1, paddingHorizontal: spacing.xl }]}>
+                    <Ionicons name="cloud-offline-outline" size={40} color={colors.textTertiary} />
+                    <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.m }]}>
+                        We couldn&rsquo;t open this verse.
+                    </Text>
+                </View>
+            </ScreenContainer>
         );
     }
 

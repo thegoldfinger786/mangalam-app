@@ -136,7 +136,7 @@ export const CommunityWisdomScreen = () => {
                                     onPress={() => {
                                         if (!assertValidBookId(item.book_id, 'CommunityWisdomScreen.onPress')) {
                                             logger.error('CommunityWisdom missing playback identity', { context: { item } });
-                                            Alert.alert('Playback unavailable', 'This item is missing book context.');
+                                            Alert.alert('Unavailable', "We couldn't open this verse.");
                                             return;
                                         }
 
