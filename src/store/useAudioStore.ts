@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { upsertUserProgress } from '../lib/queries';
 import { getBackgroundMood, getBackgroundTrackUrl } from '../utils/backgroundAudioUtils';
 import { isRamayan, isGita, isMahabharat, assertBookIdentityConsistency, isBookIdentityReady } from '../lib/bookIdentity';
+import { formatRef } from '../lib/bookTerminology';
 import { useAppStore } from './useAppStore';
 import { logger } from '../lib/logger';
 
@@ -117,36 +118,23 @@ function getBookDisplayName(content: any): string {
     return 'Mangalam';
 }
 
+function getBookRef(content: any): string {
+    const idOrCode = content?.book_id || content?.bookId || getBookSlug(content);
+    return formatRef(idOrCode, getChapterNo(content), getVerseNo(content));
+}
+
 function getDisplayTitle(content: any): string {
     if (content?.title && String(content.title).trim()) {
         return String(content.title).trim();
     }
-
-    const chapterNo = getChapterNo(content);
-    const verseNo = getVerseNo(content);
-    const ref = getRef(content);
-
-    if (ref) return ref;
-    if (chapterNo != null && verseNo != null) return `Chapter ${chapterNo} · Verse ${verseNo}`;
-    if (chapterNo != null) return `Chapter ${chapterNo}`;
-
-    return 'Mangalam Audio';
+    const ref = getRef(content) || getBookRef(content);
+    return ref || 'Mangalam Audio';
 }
 
 function getArtistLine(content: any): string {
     const book = getBookDisplayName(content);
-    const chapterNo = getChapterNo(content);
-    const verseNo = getVerseNo(content);
-
-    if (chapterNo != null && verseNo != null) {
-        return `${book} • Chapter ${chapterNo} • Verse ${verseNo}`;
-    }
-
-    if (chapterNo != null) {
-        return `${book} • Chapter ${chapterNo}`;
-    }
-
-    return book;
+    const ref = getBookRef(content);
+    return ref ? `${book} • ${ref.replace(/ · /g, ' • ')}` : book;
 }
 
 function getArtworkUrl(content: any): string | undefined {

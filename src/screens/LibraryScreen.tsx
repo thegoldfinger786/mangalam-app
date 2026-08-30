@@ -16,6 +16,7 @@ import { LoadError } from '../components/LoadError';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { Skeleton } from '../components/Skeleton';
 import { VerseListRow } from '../components/VerseListRow';
+import { bookTerms, formatRef } from '../lib/bookTerminology';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { COLLECTION_METADATA } from '../data/mockGita';
@@ -47,6 +48,7 @@ export const LibraryScreen = () => {
 
     const { completedVerses, voicePreference } = useAppStore();
     const lang = voicePreference.startsWith('hindi') ? 'hi' : 'en';
+    const terms = bookTerms(selectedBook?.book_id ?? selectedBook?.slug);
 
     useEffect(() => {
         loadBooks();
@@ -135,14 +137,14 @@ export const LibraryScreen = () => {
         if (searchResults.length === 0) {
             return (
                 <Text style={[styles.searchEmpty, { color: colors.textSecondary }]}>
-                    No verse titles match &ldquo;{search.trim()}&rdquo;.
+                    No {terms.unit.toLowerCase()} titles match &ldquo;{search.trim()}&rdquo;.
                 </Text>
             );
         }
         return (
             <View style={styles.listContainer}>
                 {searchResults.map((verse) =>
-                    renderVerseRow(verse, `Chapter ${verse.chapter_no}, Verse ${verse.verse_no}`),
+                    renderVerseRow(verse, formatRef(selectedBook?.book_id, verse.chapter_no, verse.verse_no, ', ')),
                 )}
             </View>
         );
@@ -194,7 +196,7 @@ export const LibraryScreen = () => {
                                 }}
                             >
                                 <Text style={[styles.chapterTileTitle, { color: colors.text }]}>
-                                    Chapter {chNo}
+                                    {terms.group} {chNo}
                                 </Text>
                                 <View
                                     style={[
@@ -229,7 +231,7 @@ export const LibraryScreen = () => {
             <View style={styles.listContainer}>
                 {/* The chapter name lives in the ScreenHeader while a chapter is open. */}
                 {selectedVerses.map((verse) =>
-                    renderVerseRow(verse, `Verse ${verse.verse_no}`),
+                    renderVerseRow(verse, `${terms.unit} ${verse.verse_no}`),
                 )}
             </View>
         );
@@ -249,7 +251,7 @@ export const LibraryScreen = () => {
         return (
             <>
                 <ScreenHeader
-                    title={inChapter ? `Chapter ${selectedChapter}` : bookName}
+                    title={inChapter ? `${terms.group} ${selectedChapter}` : bookName}
                     onBack={() => {
                         if (search) setSearch('');
                         else if (selectedChapter !== null) setSelectedChapter(null);
@@ -297,7 +299,7 @@ export const LibraryScreen = () => {
                                     style={[styles.searchInput, { color: colors.text }]}
                                     value={search}
                                     onChangeText={setSearch}
-                                    placeholder="Search verse titles"
+                                    placeholder={`Search ${terms.unit.toLowerCase()} titles`}
                                     placeholderTextColor={colors.textSecondary}
                                     returnKeyType="search"
                                     autoCorrect={false}

@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { syncBookIdentityCache, getBookByCode } from './bookIdentity';
+import { formatRef } from './bookTerminology';
 import { logger } from '../lib/logger';
 export { supabase };
 
@@ -560,5 +561,8 @@ export const fetchTopContent = async (
         ...r,
         book_id: r.book_id ?? getBookByCode(r.book_slug)?.book_id ?? null,
         verse_title: r.verse_title ?? titleByVerse.get(r.content_id) ?? null,
+        // Re-derive the ref with per-book terminology (POS-01); the RPC always
+        // returns "Chapter N, Verse M".
+        subtitle: formatRef(r.book_slug, r.chapter_no, r.verse_no, ', ') || r.subtitle,
     }));
 };
