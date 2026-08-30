@@ -95,7 +95,14 @@ async function generateTitles(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { response_mime_type: "application/json", temperature: 0.7 },
+            generationConfig: {
+              response_mime_type: "application/json",
+              temperature: 0.7,
+              // A short title needs no chain-of-thought; disabling it cuts each
+              // call from ~10s to ~1-2s, which is what makes a full-catalogue
+              // backfill finish inside the edge worker's budget.
+              thinkingConfig: { thinkingBudget: 0 },
+            },
           }),
         },
       );

@@ -43,24 +43,35 @@ call() {
     -d "$1"
 }
 
-# Exit loudly on an auth / server error instead of silently treating it as "done".
-guard() {
+# Classify a response body:
+#   ok      — a normal result JSON (has .attempted)
+#   retry   — transient worker/gateway failure, safe to call again (resumable)
+#   fatal   — auth / config error, stop
+classify() {
   local body="$1" err
-  err="$(echo "$body" | jq -r '.error // .message // empty' 2>/dev/null || true)"
-  if [[ -n "$err" ]]; then
-    echo "$body" | jq . 2>/dev/null || echo "$body"
-    case "$err" in
-      Forbidden)
-        echo "→ x-admin-secret does not match the project's ADMIN_API_SECRET." >&2
-        echo "  Copy it from Supabase dashboard → Project Settings → Edge Functions → Secrets," >&2
-        echo "  then: export ADMIN_API_SECRET='<exact value>'" >&2 ;;
-      *AUTH_HEADER*|*authorization*)
-        echo "→ gateway rejected the request; anon key missing or wrong." >&2 ;;
-      "Server misconfigured")
-        echo "→ ADMIN_API_SECRET is not set on the function itself." >&2 ;;
-    esac
-    exit 1
-  fi
+  if echo "$body" | jq -e 'has("attempted")' >/dev/null 2>&1; then echo ok; return; fi
+  err="$(echo "$body" | jq -r '.error // .message // .code // empty' 2>/dev/null || true)"
+  case "$err" in
+    Forbidden|"Server misconfigured"|*AUTH_HEADER*|*authorization*) echo fatal ;;
+    *) echo retry ;;   # WORKER_RESOURCE_LIMIT, 5xx, empty body, timeout
+  esac
+}
+
+fatal_hint() {
+  case "$(echo "$1" | jq -r '.error // .message // empty' 2>/dev/null)" in
+    Forbidden)
+      echo "→ x-admin-secret does not match the project's ADMIN_API_SECRET." >&2 ;;
+    *AUTH_HEADER*|*authorization*)
+      echo "→ gateway rejected the request; anon key missing or wrong." >&2 ;;
+    "Server misconfigured")
+      echo "→ ADMIN_API_SECRET is not set on the function itself." >&2 ;;
+  esac
+}
+
+guard() {
+  case "$(classify "$1")" in
+    fatal) echo "$1" | jq . 2>/dev/null || echo "$1"; fatal_hint "$1"; exit 1 ;;
+  esac
 }
 
 cmd="${1:-sample}"
@@ -80,12 +91,31 @@ case "$cmd" in
     done
     ;;
   run)
-    for i in $(seq 1 25); do
-      echo "--- batch $i ---"
-      out="$(call '{"mode": "missing", "limit": 40}')"; guard "$out"
-      echo "$out" | jq '{attempted, succeeded, updated, skipped, failures: (.failures | length)}'
-      attempted="$(echo "$out" | jq -r '.attempted // 0')"
-      [[ "$attempted" == "0" ]] && { echo "nothing left to do"; break; }
+    # Each edge-worker invocation has a bounded CPU budget, and every verse is a
+    # multi-second Gemini call — so keep the per-call limit small and loop a lot.
+    # mode:"missing" makes every call resumable, so a transient
+    # WORKER_RESOURCE_LIMIT / 5xx just means "call again".
+    batch_limit="${2:-6}"
+    empty_streak=0
+    for i in $(seq 1 300); do
+      out="$(call "{\"mode\": \"missing\", \"limit\": $batch_limit}")"
+      case "$(classify "$out")" in
+        fatal) guard "$out" ;;
+        retry)
+          echo "--- $i: transient ($(echo "$out" | jq -rc '.code // .message // .' 2>/dev/null | head -c 60)); retrying ---"
+          sleep 5; continue ;;
+      esac
+      printf '%3d: ' "$i"
+      echo "$out" | jq -c '{attempted, updated, skipped, failures: (.failures | length)}'
+      efail="$(echo "$out" | jq -r '.failures | length')"
+      [[ "$efail" != "0" ]] && echo "$out" | jq -c '.failures'
+      attempted="$(echo "$out" | jq -r '.attempted')"
+      if [[ "$attempted" == "0" ]]; then
+        empty_streak=$((empty_streak + 1))
+        [[ "$empty_streak" -ge 3 ]] && { echo "done — 3 consecutive empty passes"; break; }
+      else
+        empty_streak=0
+      fi
       sleep 2
     done
     ;;
