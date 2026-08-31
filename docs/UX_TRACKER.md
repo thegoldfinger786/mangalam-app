@@ -19,11 +19,11 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-31 (PRs #35–#63 merged — nav IA, Journey enrichment, Home "Today" anchor, Play language toggle + continuous playback, per-book terminology, About/Support de-dup, account deletion, calm error copy, the responsive typography foundation + full screen migration for UX-10, a cruft-consolidation pass to zero ESLint warnings, a single-screen density pass with new design principle #11, the five-step onboarding rebuild, and the Library navigation-stack conversion). Remaining open items need a product/architecture/content decision (see the decision-blocked row below)._
+_Last updated: 2026-08-31 (PRs #35–#64 merged — nav IA, Journey enrichment, Home "Today" anchor, Play language toggle + continuous playback, per-book terminology, About/Support de-dup, account deletion, calm error copy, the responsive typography foundation + full screen migration for UX-10, a cruft-consolidation pass to zero ESLint warnings, a single-screen density pass with new design principle #11, the five-step onboarding rebuild, and the Library navigation-stack conversion). Remaining open items need a product/architecture/content decision (see the decision-blocked row below)._
 
 | Metric | Count |
 |---|---|
-| Total findings | 81 |
+| Total findings | 82 |
 | — GOOD / KEEP | 11 |
 | — NEEDS IMPROVEMENT | 44 |
 | — NEEDS CHANGE | 13 |
@@ -35,7 +35,7 @@ _Last updated: 2026-08-31 (PRs #35–#63 merged — nav IA, Journey enrichment, 
 | Implemented / Merged | Batches 1–26 + PRs #30–#52 (see the change log below). |
 | Verified | Batches 1–26 + PRs #30–#52 (code + running-app / production as noted per row) |
 | Deferred / Rejected | CONTENT-04 (disclosure), PLAY-10 (sleep timer — deferred), CONTENT-05 (catalogue depth — documented, no action), UX-13 (theme/mood taxonomy — future project) |
-| Open — decision-blocked | **CONTENT-02** — `AntarKathaye` slug casing (locked "do nothing" until a future content phase). **CONTENT-04 / CONTENT-05** — "Story" LLM-disclosure + catalogue depth (business/content strategy). **Sanskrit verse-number artifacts** (e.g. "।। 1. 6।।" shown mid-line) — whether to strip at display time or leave as canonical formatting is a Sanskrit-presentation editorial call. |
+| Open — decision-blocked (all parked with the user, 2026-08-31) | **CONTENT-02** — `AntarKathaye` slug/schema/routing/metadata: **do nothing** — it is placeholder/blank content, intentionally parked for the future content phase. **CONTENT-04** — whether/how to disclose that the epic "Story" text includes LLM-invented detail: a content-strategy + editorial-language decision, not engineering. Do not invent disclosure copy. **CONTENT-05** — catalogue depth/evenness: a content-generation + QA effort with its own strategy. Do not fabricate content or edit stored production content. **Sanskrit verse-number handling** (e.g. `।। 1. 6।।` rendered mid-line) — **leave unchanged for now**: the TTS currently pronounces these numbers, so changing the displayed/stored text would desync the Sanskrit shown from the audio. Revisit when the TTS/content pipeline is improved, with the goal of handling the numbering correctly without it being unnecessarily spoken. |
 | Open — decision-free residual (low value) | _(none actionable — PLAY-03 residual reassessed as risky/low-value, SUP-02 closed won't-do; both 2026-08-31)_ |
 
 ### Change log
@@ -299,6 +299,7 @@ _Last updated: 2026-08-31 (PRs #35–#63 merged — nav IA, Journey enrichment, 
 | CONTENT-03 | Generation artifacts in body text | [LIVE] "Welcome to today's lesson…" as transcript; "mine ness"; "Chapter 1 Verse 1" in commentary | NEEDS IMPROVEMENT | Strip on display; content QA pass | P2 | High | **MERGED (display fix)** (PR #36) | New `src/lib/contentText.ts` (`cleanContentText`) applied to translation/commentary/daily-life at display time in `PlayScreen`: comma-less "Chapter N Verse M" → "Chapter N, Verse M", Hindi "अध्याय N श्लोक M" → "अध्याय N, श्लोक M", "mine ness" → "mine-ness". Also consolidated the SSML/markdown stripping duplicated in `HighlightedText` + `PlayScreen` into `stripMarkup`. Stored content untouched, reversible. "Welcome to today's lesson…" is client-generated audio-sync text, never rendered. **Still open**: a content-QA regeneration pass for deeper phrasing issues (separate content effort, not this batch). |
 | CONTENT-04 | "Story" = undisclosed LLM retelling | [SRC+LIVE] Ramayan/Mahabharat "Story" is a "recreate and expand" dramatisation with invented detail, shown under a plain "Story" label | NEEDS IMPROVEMENT | (Disclosure decision) | P2 | High | **DEFERRED** | Acknowledged & deferred in VISION_ALIGNMENT §1.4 / §6. Finding preserved; no action now |
 | CONTENT-05 | Catalogue depth varies | [LIVE] Ramayan has 2 chapters (48 + 52 episodes); Gita ~18 chapters | — | Product/content-strategy note | — | High | **DOCUMENTED — no action** (decision 2026-08-30) | Not a UX defect. Deeper/uneven catalogue coverage is a content-generation/QA effort with its own strategy — do not fabricate content or edit stored production content without one. |
+| CONTENT-06 | Sanskrit verse-number handling | [LIVE] The Devanagari verse block ends with an ASCII-spaced ref like `।। 1. 6।।` — a generation artifact rather than proper `॥ १।६॥` Devanagari numerals | NEEDS IMPROVEMENT | Handle verse numbering correctly at the pipeline level | P2 | Med | **PARKED — future (decision 2026-08-31)** | Explicitly *not* a display-time fix now: the TTS pronounces these numbers, so stripping/rewriting the shown or stored text would desync the Sanskrit from the audio. Revisit together with a TTS/content-pipeline improvement — goal: the number is formatted correctly (or omitted) and not read aloud unnecessarily. No code change. |
 
 ---
 
