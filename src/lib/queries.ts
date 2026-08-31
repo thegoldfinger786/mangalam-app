@@ -37,18 +37,6 @@ export const fetchActiveBooks = async () => {
 
 // --- Verse Queries (Gita / Upanishads) ---
 
-export const fetchVerses = async (bookId: string) => {
-    const { data, error } = await supabase
-        .from('verses')
-        .select('*')
-        .eq('book_id', bookId)
-        .order('chapter_no', { ascending: true })
-        .order('verse_no', { ascending: true });
-
-    if (error) throw error;
-    return data;
-};
-
 export const fetchVerseByIdAndBookId = async (bookId: string, verseId: string) => {
     const { data, error } = await supabase
         .from('verses')
