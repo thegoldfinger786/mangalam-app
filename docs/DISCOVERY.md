@@ -122,7 +122,7 @@ Offline/admin side (not shipped in the app bundle):
 | Google OAuth login | `src/lib/supabaseClient.ts` (`signInWithGoogle`), `AuthProvider` | Uses `expo-auth-session` + `expo-web-browser`, manually extracts tokens from the redirect URL and calls `setSession`. |
 | Apple Sign-In | `src/services/auth/appleSignIn.ts` | Uses `expo-apple-authentication` + Supabase `signInWithIdToken`; on first login, best-effort/idempotent write of `display_name` to `profiles`. |
 | Email/password auth | `src/screens/AuthScreen.tsx` | **[FACT]** Implemented (`signInWithPassword`/`signUp` from `supabaseClient.ts`) but **not wired into navigation** — `src/navigation/index.tsx` only routes to `LoginScreen`. Appears to be superseded, unused code. |
-| Onboarding (display name capture) | `WelcomeScreen.tsx` | Shown when `profiles.display_name` is empty; sets `hasCompletedOnboarding`. |
+| Onboarding | `OnboardingScreen.tsx` | Five-step first-run flow (welcome → language → intent → name → ready). Shown when the user has **no `profiles` row**; on finish it upserts the row and sets `hasCompletedOnboarding`. Language and (optional) intent + name are captured; intent persists locally as `useAppStore.onboardingIntent` for future personalisation. Replaced the single-screen `WelcomeScreen.tsx` (2026-08-31). |
 | Book/Library browsing | `LibraryScreen.tsx`, `BookDashboardScreen.tsx`, `BookCard.tsx` | Book grid → chapter grid (with progress bars) → verse list (with completion badges). |
 | Home "continue journey" | `HomeScreen.tsx` | Resolves last book/verse/position from `user_progress` + local `completedVerses`, shows a resume CTA; also lists "coming soon" books (Shiv Puran, Upanishads) that have no real content yet. |
 | Audio playback | `PlayScreen.tsx`, `useAudioStore.ts` | Narration + looping background ambience mixed via two `expo-audio` players, cross-fades, lock-screen metadata/controls, seek/skip-15s, variable playback speed (0.75×–2×), auto-scrolling transcript synced to playback position via a custom character-weighted progress estimator. |
@@ -210,7 +210,7 @@ Offline/admin side (not shipped in the app bundle):
 - Session bootstrap uses a "single source of truth" pattern: `getSession()` handles the initial session; `onAuthStateChange` explicitly ignores the redundant `INITIAL_SESSION` event to avoid a double-apply race — documented in code comments as an intentional fix for a prior bug class.
 - A `refresh_token_not_found` error is specifically detected and triggers a forced local sign-out, to avoid a "stuck logged-in-but-broken" state.
 - Sign-out order is deliberate and documented in comments: stop audio & force a final progress sync *before* clearing local auth state, then attempt (best-effort) server-side sign-out — local state is always cleared regardless of network success.
-- `profiles.display_name` presence is the sole "has onboarded" signal, driving whether `WelcomeScreen` or the main tabs render after login.
+- **`profiles` row presence** is the "has onboarded" signal (updated 2026-08-31 — was `profiles.display_name` presence). Rows are created lazily by the app on onboarding completion (there is no signup trigger), so a row means the user finished onboarding even if they skipped the optional name. Drives whether `OnboardingScreen` or the main tabs render after login.
 
 ---
 
