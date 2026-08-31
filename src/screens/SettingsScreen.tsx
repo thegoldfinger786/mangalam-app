@@ -52,7 +52,7 @@ export const SettingsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
     const { signOut, deleteAccount } = useAuth();
     const [isDeleting, setIsDeleting] = useState(false);
-    const { session, voicePreference, setVoicePreference, accountStatus, setAccountStatus, themeMode, setThemeMode, userName, setUserName } = useAppStore();
+    const { session, voicePreference, setVoicePreference, themeMode, setThemeMode, userName, setUserName } = useAppStore();
     const { colors, spacing, typography, borderRadius, layout } = useTheme();
     
     const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
