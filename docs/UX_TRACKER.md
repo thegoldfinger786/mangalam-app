@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-31 (PRs #35–#54 merged — nav IA Stages 1/2/4/5, Journey enrichment, Home "Today" anchor, Play language toggle + continuous playback, per-book terminology, About/Support de-dup, account deletion, calm error copy, dead-code sweep, and the responsive typography foundation + full screen migration for UX-10). Remaining open work is mostly decision-blocked — see the Decisions-needed note below the change log._
+_Last updated: 2026-08-31 (PRs #35–#57 merged — nav IA Stages 1/2/4/5, Journey enrichment, Home "Today" anchor, Play language toggle + continuous playback, per-book terminology, About/Support de-dup, account deletion, calm error copy, dead-code sweep, the responsive typography foundation + full screen migration for UX-10, and a post-refactor repo tidy). No decision-free UX/engineering work remains — every open item now needs a product/architecture/content decision (see the decision-blocked row below)._
 
 | Metric | Count |
 |---|---|
@@ -35,7 +35,7 @@ _Last updated: 2026-08-31 (PRs #35–#54 merged — nav IA Stages 1/2/4/5, Journ
 | Implemented / Merged | Batches 1–26 + PRs #30–#52 (see the change log below). |
 | Verified | Batches 1–26 + PRs #30–#52 (code + running-app / production as noted per row) |
 | Deferred / Rejected | CONTENT-04 (disclosure), PLAY-10 (sleep timer — deferred), CONTENT-05 (catalogue depth — documented, no action), UX-13 (theme/mood taxonomy — future project) |
-| Open — decision-blocked | ONB-02 / #3 (multi-screen onboarding rebuild — positioning), LIB-01 Stage 3 (Library `useState` → pushed stack screens — internal refactor), CONTENT-02 (`AntarKathaye` slug casing — future content phase) |
+| Open — decision-blocked | **ONB-02 / #3** — multi-screen onboarding rebuild (positioning-critical editorial direction). **LIB-01 Stage 3** — convert Library's `useState` drilldown to a real `Books → BookDetail → ChapterVerses` stack ([`NAVIGATION_MODEL.md`](./NAVIGATION_MODEL.md) §5): medium-risk refactor of a central screen, no user-visible change, multiple valid navigator structures — an architecture call, not a fix. **CONTENT-02** — `AntarKathaye` slug casing (locked "do nothing" until a future content phase). **CONTENT-04 / CONTENT-05** — "Story" LLM-disclosure + catalogue depth (business/content strategy). **Sanskrit verse-number artifacts** (e.g. "।। 1. 6।।" shown mid-line) — whether to strip at display time or leave as canonical formatting is a Sanskrit-presentation editorial call. |
 | Open — decision-free residual (low value) | _(none actionable — PLAY-03 residual reassessed as risky/low-value, SUP-02 closed won't-do; both 2026-08-31)_ |
 
 ### Change log
