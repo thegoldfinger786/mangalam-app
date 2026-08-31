@@ -1,6 +1,7 @@
 import React, { ReactNode, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 
 interface VerseListRowProps {
     /** Shown in the leading round badge — usually the verse number. */
@@ -22,7 +23,7 @@ interface VerseListRowProps {
  */
 export const VerseListRow = ({ badge, title, subtitle, highlighted, onPress, right }: VerseListRowProps) => {
     const { colors, spacing, typography, borderRadius } = useTheme();
-    const styles = useMemo(() => createStyles(spacing, typography, borderRadius), [spacing, typography, borderRadius]);
+    const styles = useMemo(() => createStyles(spacing, borderRadius), [spacing, borderRadius]);
 
     return (
         <TouchableOpacity
@@ -40,19 +41,28 @@ export const VerseListRow = ({ badge, title, subtitle, highlighted, onPress, rig
                     highlighted && { backgroundColor: colors.primary },
                 ]}
             >
-                <Text style={[styles.badgeText, { color: colors.primary }, highlighted && { color: colors.textInverse }]}>
+                <AppText
+                    variant="body"
+                    style={[
+                        { fontFamily: typography.fontFamilies.semiBold, color: colors.primary },
+                        highlighted && { color: colors.textInverse },
+                    ]}
+                >
                     {badge}
-                </Text>
+                </AppText>
             </View>
 
             <View style={styles.info}>
-                <Text
-                    style={[styles.title, { color: colors.textSecondary }, highlighted && { color: colors.text }]}
+                <AppText
+                    variant="body"
+                    style={[{ color: colors.textSecondary }, highlighted && { color: colors.text }]}
                     numberOfLines={2}
                 >
                     {title}
-                </Text>
-                <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{subtitle}</Text>
+                </AppText>
+                <AppText variant="bodySmall" style={[styles.subtitle, { color: colors.textSecondary }]}>
+                    {subtitle}
+                </AppText>
             </View>
 
             {right ? <View style={styles.right}>{right}</View> : null}
@@ -62,7 +72,6 @@ export const VerseListRow = ({ badge, title, subtitle, highlighted, onPress, rig
 
 const createStyles = (
     spacing: ReturnType<typeof useTheme>['spacing'],
-    typography: ReturnType<typeof useTheme>['typography'],
     borderRadius: ReturnType<typeof useTheme>['borderRadius'],
 ) =>
     StyleSheet.create({
@@ -86,18 +95,10 @@ const createStyles = (
             alignItems: 'center',
             marginRight: spacing.m,
         },
-        badgeText: {
-            fontSize: typography.sizes.m,
-            fontWeight: '600',
-        },
         info: {
             flex: 1,
         },
-        title: {
-            fontSize: typography.sizes.m,
-        },
         subtitle: {
-            fontSize: typography.sizes.s,
             marginTop: spacing.xs,
         },
         right: {

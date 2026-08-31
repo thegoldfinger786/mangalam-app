@@ -62,4 +62,38 @@ Show the Sanskrit prominently and beautifully — and put a single plain-languag
 
 ---
 
+## Typography
+
+The typography foundation lives in [`src/theme/typography.ts`](../src/theme/typography.ts) and is consumed through [`src/components/AppText.tsx`](../src/components/AppText.tsx). It is the long-term home for every text-size decision in the app.
+
+**Three layers:**
+
+1. `fontFamilies` — the three bundled Outfit weights (`regular` / `medium` / `semiBold`). Always set a family; a bare `fontWeight` on a `<Text>` renders in the system font (San Francisco / Roboto), not Outfit.
+2. `sizes` / `lineHeights` — the primitive numeric ramp (`xs`…`hero`). Every value is already run through `fontScale()`. Kept for existing call sites and genuine one-offs.
+3. `roles` — the semantic scale. **New code uses these.**
+
+**The semantic roles:**
+
+| role | ~pt | Use for |
+|---|---|---|
+| `display` | 32 | screen hero titles ("Mangalam"), large hero numbers |
+| `title` | 24 | greeting, primary card titles, screen section heroes |
+| `heading` | 20 | card titles, section headers, dialog titles |
+| `subheading` | 18 | sub-headers, list-group headers, prominent labels |
+| `body` | 16 | primary reading / paragraph text |
+| `bodySmall` | 14 | secondary text, descriptions, helper copy |
+| `caption` | 13 | footnotes, timestamps, disclaimers |
+| `label` | 12 | uppercase tags, tab-bar labels, metadata, overlines |
+| `button` | 16 | text inside buttons / primary tap targets |
+
+**How responsive scaling works.** `fontScale(size)` applies a gentle, clamped curve keyed off the device's shorter edge against a 390 pt baseline (iPhone 13–16 width). Mainstream phones land at ≈1.0 — the visual design is unchanged there. Small phones (SE, 320 pt) ease down to ~0.92; large phones and tablets ease up, hard-capped at 1.08. It is deliberately **not** a flat width multiplier — that ruins typography on tablets and small Android devices. The app is portrait-locked, so the value is read once at module load.
+
+**How accessibility font scaling is handled.** OS font-size settings still apply (`allowFontScaling` stays on). Each role carries a `maxFontSizeMultiplier` (headings ~1.3, body ~1.6) that `AppText` passes through, so a large accessibility setting enlarges text without breaking headers, buttons and fixed-height rows. Fixed-height chrome that must match a native control (the tab bar, the Apple/Google sign-in buttons) caps tighter or opts out — this is called out at each such site.
+
+**When to use a semantic token.** Any new `<Text>`. Reach for `<AppText variant="…">` and layer colour / alignment / (occasionally) weight on top via `style`. If you're about to type `fontSize:` in a stylesheet, stop — pick the closest role instead.
+
+**When an explicit size is acceptable.** Only when a value is genuinely dictated by a specific component constraint that no role fits — e.g. text inside a fixed 40 pt badge, or matching a platform control's exact metrics. Leave a one-line comment saying why, and still pass a `maxFontSizeMultiplier`. Do not introduce a new arbitrary number just to avoid a role that's 1–2 pt off.
+
+---
+
 _Maintained alongside [`UX_TRACKER.md`](./UX_TRACKER.md). Update when a principle is refined by a real product decision; record the decision in the tracker's decision log._

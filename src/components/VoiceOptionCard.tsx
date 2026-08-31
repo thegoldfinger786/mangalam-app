@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 
 interface VoiceOptionCardProps {
     language: string;
@@ -70,7 +71,8 @@ export const VoiceOptionCard = ({
             </View>
 
             {/* Line 1: Language — never wraps */}
-            <Text
+            <AppText
+                variant="body"
                 style={[
                     styles.language,
                     { color: isSelected ? colors.primary : colors.text },
@@ -79,10 +81,11 @@ export const VoiceOptionCard = ({
                 adjustsFontSizeToFit
             >
                 {language}
-            </Text>
+            </AppText>
 
             {/* Line 2: Voice — never wraps */}
-            <Text
+            <AppText
+                variant="bodySmall"
                 style={[
                     styles.voice,
                     { color: isSelected ? colors.primary : colors.textSecondary },
@@ -91,7 +94,7 @@ export const VoiceOptionCard = ({
                 adjustsFontSizeToFit
             >
                 {voice}
-            </Text>
+            </AppText>
         </TouchableOpacity>
     );
 };
@@ -130,12 +133,10 @@ const createStyles = (
             marginBottom: spacing.s,
         },
         language: {
-            fontSize: typography.sizes.m,
-            fontWeight: '600',
+            fontFamily: typography.fontFamilies.semiBold,
             textAlign: 'center',
         },
         voice: {
-            fontSize: typography.sizes.s,
             textAlign: 'center',
             marginTop: spacing.xs,
         },

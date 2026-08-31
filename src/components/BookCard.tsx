@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 
 interface BookCardProps {
     icon: React.ReactNode;
@@ -53,13 +54,14 @@ export const BookCard = ({
             <View style={[styles.iconBox, { backgroundColor: resolvedAccent + '15' }]}>
                 {icon}
             </View>
-            <Text
+            <AppText
+                variant="bodySmall"
                 style={[styles.title, { color: colors.text }]}
                 numberOfLines={2}
                 textBreakStrategy="simple"
             >
                 {title}
-            </Text>
+            </AppText>
         </TouchableOpacity>
     );
 };
@@ -94,8 +96,7 @@ const createStyles = (
             marginBottom: spacing.m,
         },
         title: {
-            fontSize: typography.sizes.s,
+            fontFamily: typography.fontFamilies.medium,
             textAlign: 'center',
-            fontWeight: '500',
         },
     });

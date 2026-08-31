@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 import { Button } from './Button';
 
 interface LoadErrorProps {
@@ -18,15 +19,15 @@ interface LoadErrorProps {
  * Deliberately quiet: no red, no alarm, matching the Mangalam voice.
  */
 export const LoadError = ({ onRetry, message, style }: LoadErrorProps) => {
-    const { colors, spacing, typography } = useTheme();
-    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
+    const { colors, spacing } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     return (
         <View style={[styles.container, style]}>
             <Ionicons name="cloud-offline-outline" size={40} color={colors.textTertiary} />
-            <Text style={[styles.message, { color: colors.textSecondary }]}>
+            <AppText variant="body" style={[styles.message, { color: colors.textSecondary }]}>
                 {message ?? "We couldn't load this just now."}
-            </Text>
+            </AppText>
             <Button title="Try again" variant="secondary" onPress={onRetry} style={styles.button} />
         </View>
     );
@@ -34,7 +35,6 @@ export const LoadError = ({ onRetry, message, style }: LoadErrorProps) => {
 
 const createStyles = (
     spacing: ReturnType<typeof useTheme>['spacing'],
-    typography: ReturnType<typeof useTheme>['typography'],
 ) =>
     StyleSheet.create({
         container: {
@@ -44,8 +44,6 @@ const createStyles = (
             paddingHorizontal: spacing.xl,
         },
         message: {
-            fontFamily: typography.fontFamilies.regular,
-            fontSize: typography.sizes.m,
             textAlign: 'center',
             marginTop: spacing.m,
             marginBottom: spacing.l,
