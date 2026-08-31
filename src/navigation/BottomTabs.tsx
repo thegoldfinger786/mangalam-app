@@ -3,12 +3,12 @@ import { createBottomTabNavigator, useBottomTabBarHeight } from '@react-navigati
 import React, { useEffect } from 'react';
 
 import { HomeScreen } from '../screens/HomeScreen';
-import { LibraryScreen } from '../screens/LibraryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StreaksScreen } from '../screens/StreaksScreen';
 
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
+import { LibraryStack } from './LibraryStack';
 import { BottomTabParamList } from './types';
 import { View } from 'react-native';
 
@@ -76,7 +76,7 @@ export const BottomTabs = () => {
                     </>
                 )}
             </Tab.Screen>
-            <Tab.Screen name="Library" component={LibraryScreen} />
+            <Tab.Screen name="Library" component={LibraryStack} />
             <Tab.Screen name="Journey" component={StreaksScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
         </Tab.Navigator>

@@ -1,8 +1,21 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
+/** Minimal book identity carried between the Library stack screens. */
+export type LibraryBook = {
+    bookId: string;
+    slug: string;
+    title: string;
+};
+
+export type LibraryStackParamList = {
+    LibraryBooks: undefined;
+    BookDetail: { book: LibraryBook };
+    ChapterVerses: { book: LibraryBook; chapterNo: number };
+};
+
 export type BottomTabParamList = {
     Home: undefined;
-    Library: undefined;
+    Library: NavigatorScreenParams<LibraryStackParamList> | undefined;
     Journey: undefined;
     Settings: undefined;
 };
