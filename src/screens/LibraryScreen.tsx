@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     FlatList,
     ScrollView,
@@ -19,7 +19,7 @@ import { VerseListRow } from '../components/VerseListRow';
 import { bookTerms, formatRef } from '../lib/bookTerminology';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
-import { COLLECTION_METADATA } from '../data/mockGita';
+import { COLLECTION_METADATA } from '../data/collectionMetadata';
 import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchActiveBooks, fetchVersesWithContent } from '../lib/queries';
 import { RootStackParamList } from '../navigation/types';
@@ -68,7 +68,7 @@ export const LibraryScreen = () => {
         }
     };
 
-    const loadItems = async (book: any) => {
+    const loadItems = useCallback(async (book: any) => {
         try {
             setItemsLoading(true);
             setItemsError(false);
@@ -80,7 +80,7 @@ export const LibraryScreen = () => {
         } finally {
             setItemsLoading(false);
         }
-    };
+    }, [lang]);
 
     useEffect(() => {
         setSearch('');
@@ -91,7 +91,7 @@ export const LibraryScreen = () => {
         } else {
             setItems([]);
         }
-    }, [selectedBook, lang]);
+    }, [selectedBook, lang, loadItems]);
 
     // Book-wide title search over the already-loaded verses (client-side only).
     const trimmedSearch = search.trim().toLowerCase();

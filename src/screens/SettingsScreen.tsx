@@ -12,7 +12,7 @@ import { VoiceOptionCard } from '../components/VoiceOptionCard';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { RootStackParamList } from '../navigation/types';
 import { VoicePreference } from '../data/types';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../auth/AuthProvider';
 import { useAudioStore } from '../store/useAudioStore';
 import { useAppStore } from '../store/useAppStore';

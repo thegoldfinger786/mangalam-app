@@ -15,8 +15,7 @@ import { ContentPath } from '../data/types';
 import { auditBookIds, assertValidBookId, assertBookIdentityConsistency, getBookByCode } from '../lib/bookIdentity';
 import { formatRef } from '../lib/bookTerminology';
 import { DailyVerse, fetchActiveBooks, fetchBookById, fetchDailyVerse, fetchStreakData, fetchUserProgress, fetchVerseByIdAndBookId } from '../lib/queries';
-import { supabase } from '../lib/supabase';
-import { ROUTES } from '../navigation/routes';
+import { supabase } from '../lib/supabaseClient';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
@@ -206,7 +205,7 @@ export const HomeScreen = () => {
                 const navBookId = resumeState.book_id;
                 const navVerseId = resumeState.verse_id;
                 assertBookIdentityConsistency({ source: 'HomeScreen.resume', bookId: navBookId });
-                navigation.navigate(ROUTES.PLAY, {
+                navigation.navigate('Play', {
                     bookId: navBookId,
                     verseId: navVerseId,
                     autoPlay: true,
@@ -227,7 +226,7 @@ export const HomeScreen = () => {
     const handleOpenDailyVerse = () => {
         if (!dailyVerse || !assertValidBookId(dailyVerse.book_id, 'HomeScreen.handleOpenDailyVerse')) return;
         setActiveBookId(dailyVerse.book_id);
-        navigation.navigate(ROUTES.PLAY, { itemId: dailyVerse.verse_id, bookId: dailyVerse.book_id });
+        navigation.navigate('Play', { itemId: dailyVerse.verse_id, bookId: dailyVerse.book_id });
     };
 
     // Memoize derived UI values to improve stability

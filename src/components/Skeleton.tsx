@@ -33,7 +33,7 @@ export const Skeleton = ({ width, height, borderRadius = 8, style }: SkeletonPro
             -1,
             false
         );
-    }, []);
+    }, [translateX]);
 
     const animatedStyle = useAnimatedStyle(() => {
         return {

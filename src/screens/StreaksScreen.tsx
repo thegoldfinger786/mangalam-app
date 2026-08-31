@@ -11,7 +11,7 @@ import { VerseListRow } from '../components/VerseListRow';
 import { WeeklyStreak } from '../components/WeeklyStreak';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
-import { COLLECTION_METADATA } from '../data/mockGita';
+import { COLLECTION_METADATA } from '../data/collectionMetadata';
 import {
     BookmarkedVerse,
     fetchActiveBooks,
@@ -22,7 +22,6 @@ import {
     removeBookmark,
 } from '../lib/queries';
 import { formatRef } from '../lib/bookTerminology';
-import { ROUTES } from '../navigation/routes';
 import { RootStackParamList } from '../navigation/types';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
@@ -139,7 +138,7 @@ export const StreaksScreen = () => {
     }, [streakRows]);
 
     const handleOpenBookmark = (b: BookmarkedVerse) => {
-        navigation.navigate(ROUTES.PLAY, { itemId: b.verse_id, bookId: b.book_id });
+        navigation.navigate('Play', { itemId: b.verse_id, bookId: b.book_id });
     };
 
     const handleRemoveBookmark = async (b: BookmarkedVerse) => {

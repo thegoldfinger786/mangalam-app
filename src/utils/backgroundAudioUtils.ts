@@ -4,6 +4,11 @@ const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://yhuvjcmems
 
 export type AudioMood = 'calm' | 'devotional' | 'storytelling';
 
+// One background bed length for everything: most narration runs under 8 minutes,
+// and the player loops the bed for the few episodes that run longer. There is no
+// per-length bed asset, so track selection depends only on mood.
+const BACKGROUND_BED_MINUTES = 8;
+
 export const getBackgroundMood = (bookId?: string | null): AudioMood => {
     if (isRamayan(bookId) || isMahabharat(bookId)) {
         return 'storytelling';
@@ -14,18 +19,8 @@ export const getBackgroundMood = (bookId?: string | null): AudioMood => {
     return 'calm';
 };
 
-export const getBackgroundDuration = (durationMs: number): number => {
-    // User requested to use 8 mins everywhere since most narration is under 8 mins.
-    // Loop will handle the very few cases that exceed 8 mins.
-    return 8;
-};
-
-export const getBackgroundTrackUrl = (mood: AudioMood, durationMs: number): string => {
-    const durationMinutes = getBackgroundDuration(durationMs);
-    
-    // Example: mangalam_bed_calm_15min.mp3
-    const fileName = `mangalam_bed_${mood}_${durationMinutes}min.mp3`;
-    
-    // Construct the public Supabase storage URL
+export const getBackgroundTrackUrl = (mood: AudioMood): string => {
+    // e.g. mangalam_bed_calm_8min.mp3
+    const fileName = `mangalam_bed_${mood}_${BACKGROUND_BED_MINUTES}min.mp3`;
     return `${SUPABASE_URL}/storage/v1/object/public/background-audio/${fileName}`;
 };

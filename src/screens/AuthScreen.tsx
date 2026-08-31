@@ -5,7 +5,7 @@ import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
-import { signInWithPassword, signOut, signUp } from '../lib/supabase';
+import { signInWithPassword, signOut, signUp } from '../lib/supabaseClient';
 import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
 
