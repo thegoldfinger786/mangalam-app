@@ -114,7 +114,7 @@ const createStyles = (
              */
             flex: 1,
             alignItems: 'center',
-            paddingVertical: spacing.l,
+            paddingVertical: spacing.m,
             paddingHorizontal: spacing.s,
             borderRadius: borderRadius.l,
             // iOS shadow
@@ -125,8 +125,8 @@ const createStyles = (
             elevation: 3,
         },
         iconBox: {
-            width: spacing.xxl,      // 48 × 48 — consistent with BookCard
-            height: spacing.xxl,
+            width: spacing.xl,       // 40 × 40
+            height: spacing.xl,
             borderRadius: borderRadius.round,
             justifyContent: 'center',
             alignItems: 'center',

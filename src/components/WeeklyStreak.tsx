@@ -77,7 +77,7 @@ export const WeeklyStreak = ({ activeDates }: WeeklyStreakProps) => {
     const dayCount = week.filter((d) => d.isActive).length;
 
     return (
-        <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.xl, padding: spacing.l }]}>
+        <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.xl, padding: spacing.m }]}>
             <View style={styles.headerRow}>
                 <AppText variant="subheading" style={{ color: colors.text }}>
                     Last 7 days
@@ -119,13 +119,13 @@ export const WeeklyStreak = ({ activeDates }: WeeklyStreakProps) => {
 
 const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
-        marginBottom: spacing.xl,
+        marginBottom: spacing.l,
     },
     headerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.l,
+        marginBottom: spacing.m,
     },
     daysRow: {
         flexDirection: 'row',

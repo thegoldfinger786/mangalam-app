@@ -240,10 +240,10 @@ export const HomeScreen = () => {
         ? formatRef(resumeState.book_id, resumeState.chapter_no, resumeState.verse_no)
         : 'Choose a path below to start listening.', [resumeState]);
 
-    const currentPathMeta = useMemo(() => {
-        if (!resumeState) return 'Take a few quiet minutes whenever you are ready.';
-        const seconds = Math.max(0, Math.floor(resumeState.last_position_seconds));
-        if (seconds < 5) return 'Ready when you are';
+    // The resume position rides on the button label rather than a separate line.
+    const continueLabel = useMemo(() => {
+        const seconds = Math.max(0, Math.floor(resumeState?.last_position_seconds ?? 0));
+        if (!resumeState || seconds < 5) return 'Continue';
         const minutes = Math.floor(seconds / 60);
         const remainder = seconds % 60;
         return `Continue from ${minutes}:${remainder < 10 ? '0' : ''}${remainder}`;
@@ -343,7 +343,6 @@ export const HomeScreen = () => {
                                         <View style={styles.cardInfo}>
                                             <AppText variant="title" style={[styles.cardTitle, { color: colors.text }]}>{currentPathTitle}</AppText>
                                             <AppText variant="body" style={{ color: colors.textSecondary }}>{currentPathDesc}</AppText>
-                                            <AppText variant="caption" style={[styles.cardMeta, { color: colors.textTertiary }]}>{currentPathMeta}</AppText>
                                         </View>
                                         <View style={[styles.cardIconBox, { backgroundColor: currentPathColor + '15' }]}>
                                             {getScriptureIcon(resumeState?.book_slug || 'book', 32, currentPathColor)}
@@ -351,7 +350,7 @@ export const HomeScreen = () => {
                                     </View>
                                 )}
                                 <Button
-                                    title="Continue"
+                                    title={continueLabel}
                                     onPress={() => handleOpenPath?.()}
                                     style={styles.continueButton}
                                     disabled={resumeLoading}
@@ -377,9 +376,6 @@ export const HomeScreen = () => {
                                         </AppText>
                                         <AppText variant="body" style={{ color: colors.textSecondary }}>
                                             Bhagavad Gita · {formatRef(dailyVerse.book_id, dailyVerse.chapter_no, dailyVerse.verse_no, ', ')}
-                                        </AppText>
-                                        <AppText variant="caption" style={[styles.cardMeta, { color: colors.textTertiary }]}>
-                                            A few quiet minutes to begin.
                                         </AppText>
                                     </View>
                                     <View style={[styles.cardIconBox, { backgroundColor: colors.primary + '15' }]}>
@@ -447,7 +443,7 @@ const createStyles = (
         marginBottom: spacing.s,
     },
     sectionTitle: {
-        marginBottom: spacing.m,
+        marginBottom: spacing.s,
         paddingHorizontal: spacing.l,
         flexDirection: 'row',
         alignItems: 'center',
@@ -455,7 +451,7 @@ const createStyles = (
     },
     discoveryBar: {
         marginHorizontal: spacing.l,
-        marginBottom: spacing.l,
+        marginBottom: spacing.m,
         padding: spacing.m,
         borderRadius: 16,
         flexDirection: 'row',
@@ -475,32 +471,28 @@ const createStyles = (
     },
     primaryCard: {
         marginHorizontal: spacing.l,
-        marginBottom: spacing.xl,
-        padding: spacing.xl,
+        marginBottom: spacing.l,
+        padding: spacing.l,
     },
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: spacing.xl,
+        marginBottom: spacing.m,
     },
     cardInfo: {
         flex: 1,
         marginRight: spacing.m,
     },
     cardIconBox: {
-        width: 56,
-        height: 56,
-        borderRadius: 28,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
     },
     cardTitle: {
         marginBottom: spacing.xs,
-    },
-    cardMeta: {
-        marginTop: spacing.s,
-        fontFamily: typography.fontFamilies.medium,
     },
     continueButton: {
         width: '100%',

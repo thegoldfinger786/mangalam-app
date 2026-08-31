@@ -186,30 +186,30 @@ export const StreaksScreen = () => {
                     paddingBottom: layout.miniPlayerHeight + spacing.m,
                 }}
             >
-                <AppText variant="display" style={{ color: colors.text, marginBottom: spacing.l }}>Your Journey</AppText>
+                <AppText variant="display" style={{ color: colors.text, marginBottom: spacing.m }}>Your Journey</AppText>
 
-                <Card style={[styles.practiceCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
-                    <View style={[styles.practiceHeader, { marginBottom: spacing.xl }]}>
+                <Card style={[styles.practiceCard, { paddingVertical: spacing.l, marginBottom: spacing.l }]}>
+                    <View style={styles.practiceHeader}>
                         <AppText variant="display" maxFontSizeMultiplier={1.15} style={[styles.practiceNumber, { color: colors.primary }]}>{daysOfPractice}</AppText>
                         <AppText variant="body" style={{ color: colors.textSecondary }}>
                             {daysOfPractice === 1 ? 'day of practice' : 'days of practice'}
                         </AppText>
                     </View>
 
-                    <AppText variant="bodySmall" style={[styles.encouragementText, { color: colors.textSecondary, paddingHorizontal: spacing.m }]}>
-                        Consistency over intensity. Taking ten minutes a day for reflection builds a resilient mind.
+                    <AppText variant="caption" style={[styles.encouragementText, { color: colors.textSecondary }]}>
+                        Consistency over intensity — ten quiet minutes a day builds a resilient mind.
                     </AppText>
                 </Card>
 
                 <WeeklyStreak activeDates={activeDates} />
 
-                <AppText variant="subheading" style={{ color: colors.textSecondary, marginBottom: spacing.m }}>Stats</AppText>
+                <AppText variant="subheading" style={{ color: colors.textSecondary, marginBottom: spacing.s }}>Stats</AppText>
                 <View style={[styles.statsRow, { gap: spacing.m }]}>
-                    <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
+                    <Card style={[styles.statCard, { paddingVertical: spacing.m }]}>
                         <AppText variant="title" style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{usageToday}</AppText>
                         <AppText variant="caption" style={{ color: colors.textSecondary }}>Sessions today</AppText>
                     </Card>
-                    <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
+                    <Card style={[styles.statCard, { paddingVertical: spacing.m }]}>
                         <AppText variant="title" style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{sessionsThisWeek}</AppText>
                         <AppText variant="caption" style={{ color: colors.textSecondary }}>Sessions this week</AppText>
                     </Card>
@@ -218,7 +218,7 @@ export const StreaksScreen = () => {
                 {/* ── Your progress ── */}
                 {bookProgress.length > 0 && (
                     <>
-                        <AppText variant="subheading" style={{ color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.m }}>
+                        <AppText variant="subheading" style={{ color: colors.textSecondary, marginTop: spacing.l, marginBottom: spacing.s }}>
                             Your progress
                         </AppText>
                         <Card style={{ paddingVertical: spacing.xs }}>
@@ -254,7 +254,7 @@ export const StreaksScreen = () => {
                 )}
 
                 {/* ── Your bookmarks ── */}
-                <AppText variant="subheading" style={{ color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.m }}>
+                <AppText variant="subheading" style={{ color: colors.textSecondary, marginTop: spacing.l, marginBottom: spacing.s }}>
                     Your bookmarks
                 </AppText>
                 {bookmarks.length === 0 ? (
@@ -295,13 +295,15 @@ const createStyles = (
     practiceHeader: {
         alignItems: 'center',
     },
-    // The one genuine hero number on the screen — not a role.
+    // The hero practice count — a deliberate size between `display` and `hero`.
     practiceNumber: {
-        fontSize: typography.sizes.hero,
-        lineHeight: typography.sizes.hero,
+        fontSize: typography.sizes.xxxl,
+        lineHeight: typography.sizes.xxxl,
     },
     encouragementText: {
         textAlign: 'center',
+        marginTop: spacing.m,
+        paddingHorizontal: spacing.s,
     },
     statsRow: {
         flexDirection: 'row',

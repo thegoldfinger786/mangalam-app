@@ -60,6 +60,23 @@ Missing audio, no progress yet, an empty list, a lost connection, a failed load 
 
 Show the Sanskrit prominently and beautifully — and put a single plain-language line above it so a newcomer knows what they're looking at. Keep "Chapter / Verse" as the canonical reference — and let a friendlier label ("Reflection 12") carry the everyday UI. Keep the devotional sign-off — and label it ("a traditional closing blessing") and place it at the close, not the opening. Every piece of tradition can stay; each just needs a low step up to it.
 
+## 11. Efficient use of screen space — prefer a complete single screen
+
+Aim for a **complete single-screen experience** wherever it's reasonable — especially on the primary, high-frequency screens (**Home, Journey, Settings**). On a common phone (≈375–402 pt wide, ≈"iPhone 15" height), the important content and the primary action should be visible in one viewport without scrolling.
+
+Get there by using space well, not by shrinking things:
+
+- tighter but still comfortable vertical rhythm between sections
+- card padding sized to its content, not a fixed generous default
+- no purely decorative whitespace or oversized spacers
+- combine related facts into one row or one block instead of stacking them
+- more efficient section layouts (a 2-up row instead of two stacked cards, etc.)
+- a sensible type hierarchy doing the separating work that blank space was doing
+- compact rows when the information allows it
+- no repeated headings, and no explanatory copy the screen doesn't need
+
+**Never** buy density with uncomfortably small text, sub-44 pt touch targets, or unrelated things crammed together. Single-screen is a **preference, not a rule**: let a screen scroll when its content genuinely needs the room, or when forcing one viewport would hurt readability, hierarchy, accessibility or usability. When a screen stays scrollable on purpose, say why in the tracker.
+
 ---
 
 ## Typography
