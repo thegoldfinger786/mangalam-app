@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { AppText } from './AppText';
 import Animated, {
     useDerivedValue,
     useAnimatedStyle,
@@ -78,12 +79,12 @@ export const WeeklyStreak = ({ activeDates }: WeeklyStreakProps) => {
     return (
         <View style={[styles.container, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.xl, padding: spacing.l }]}>
             <View style={styles.headerRow}>
-                <Text style={[styles.title, { color: colors.text, fontFamily: typography.fontFamilies.semiBold, fontSize: typography.sizes.l }]}>
+                <AppText variant="subheading" style={{ color: colors.text }}>
                     Last 7 days
-                </Text>
-                <Text style={[styles.count, { color: colors.textSecondary, fontFamily: typography.fontFamilies.medium, fontSize: typography.sizes.m }]}>
+                </AppText>
+                <AppText variant="body" style={{ color: colors.textSecondary, fontFamily: typography.fontFamilies.medium }}>
                     {dayCount === 1 ? '1 day' : `${dayCount} days`}
-                </Text>
+                </AppText>
             </View>
 
             <View style={styles.daysRow}>
@@ -101,14 +102,13 @@ export const WeeklyStreak = ({ activeDates }: WeeklyStreakProps) => {
                             <View style={styles.iconContainer}>
                                 <DayDot isActive={item.isActive} isToday={item.isToday} color={iconColor} delay={300 + i * 100} />
                             </View>
-                            <Text style={[
-                                styles.dayText,
-                                { color: colors.textSecondary, fontFamily: typography.fontFamilies.medium },
+                            <AppText variant="label" style={[
+                                { color: colors.textSecondary },
                                 item.isActive && { color: colors.secondary },
                                 item.isToday && { color: colors.primary },
                             ]}>
                                 {item.label}
-                            </Text>
+                            </AppText>
                         </View>
                     );
                 })}
@@ -127,8 +127,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         alignItems: 'center',
         marginBottom: spacing.l,
     },
-    title: {},
-    count: {},
     daysRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -139,8 +137,5 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     },
     iconContainer: {
         marginBottom: spacing.xs,
-    },
-    dayText: {
-        fontSize: 12,
     },
 });

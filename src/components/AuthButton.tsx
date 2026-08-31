@@ -67,7 +67,10 @@ export const GoogleAuthButton = ({ onPress, disabled, loading }: { onPress: () =
                     <View style={styles.iconContainer}>
                         <GoogleIcon size={20} />
                     </View>
-                    <Text style={[styles.googleButtonText, { fontFamily: typography.fontFamilies.medium, color: '#1F2937' }]}>
+                    <Text
+                        maxFontSizeMultiplier={1.2}
+                        style={[styles.googleButtonText, { fontFamily: typography.fontFamilies.medium, color: '#1F2937' }]}
+                    >
                         Continue with Google
                     </Text>
                 </>

@@ -7,7 +7,6 @@ import {
     Dimensions,
     Pressable,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchAdjacentVerse } from '../lib/queries';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 import { getScriptureIcon } from './ScriptureIcons';
 import { logger } from '../lib/logger';
 
@@ -123,12 +123,22 @@ export const MiniPlayer = () => {
 
                     {/* Text info */}
                     <View style={styles.textContainer}>
-                        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                        <AppText
+                            variant="bodySmall"
+                            maxFontSizeMultiplier={1.3}
+                            style={[styles.title, { color: colors.text }]}
+                            numberOfLines={1}
+                        >
                             {currentContent.title}
-                        </Text>
-                        <Text style={[styles.subtitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                        </AppText>
+                        <AppText
+                            variant="label"
+                            maxFontSizeMultiplier={1.3}
+                            style={[styles.subtitle, { color: colors.textSecondary }]}
+                            numberOfLines={1}
+                        >
                             {isPlaying ? 'Now Playing' : 'Paused'}
-                        </Text>
+                        </AppText>
                     </View>
 
                     {/* Controls */}
@@ -208,11 +218,9 @@ const createStyles = (
         justifyContent: 'center',
     },
     title: {
-        fontSize: typography.sizes.s,
         fontFamily: typography.fontFamilies.semiBold,
     },
     subtitle: {
-        fontSize: typography.sizes.xs,
         fontFamily: typography.fontFamilies.regular,
         marginTop: spacing.micro,
     },

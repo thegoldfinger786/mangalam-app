@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import React, { ReactNode, useMemo } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 
 interface ScreenHeaderProps {
     title: string;
@@ -24,8 +25,8 @@ interface ScreenHeaderProps {
  */
 export const ScreenHeader = ({ title, onBack, variant = 'push', right }: ScreenHeaderProps) => {
     const navigation = useNavigation();
-    const { colors, spacing, typography } = useTheme();
-    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
+    const { colors, spacing } = useTheme();
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
 
     const showBack = onBack !== null;
     const handleBack = onBack || (() => navigation.goBack());
@@ -39,9 +40,9 @@ export const ScreenHeader = ({ title, onBack, variant = 'push', right }: ScreenH
                     </TouchableOpacity>
                 )}
             </View>
-            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+            <AppText variant="subheading" style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                 {title}
-            </Text>
+            </AppText>
             <View style={[styles.side, styles.rightSide]}>{right}</View>
         </View>
     );
@@ -49,7 +50,6 @@ export const ScreenHeader = ({ title, onBack, variant = 'push', right }: ScreenH
 
 const createStyles = (
     spacing: ReturnType<typeof useTheme>['spacing'],
-    typography: ReturnType<typeof useTheme>['typography'],
 ) =>
     StyleSheet.create({
         header: {
@@ -76,7 +76,5 @@ const createStyles = (
         title: {
             flex: 1,
             textAlign: 'center',
-            fontSize: typography.sizes.l,
-            fontWeight: '700',
         },
     });

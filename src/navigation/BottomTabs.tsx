@@ -60,9 +60,12 @@ export const BottomTabs = () => {
                     shadowOpacity: 0,
                 },
                 tabBarLabelStyle: {
-                    fontFamily: typography.fontFamilies.medium,
-                    fontSize: 12,
-                }
+                    fontFamily: typography.roles.label.fontFamily,
+                    fontSize: typography.roles.label.fontSize,
+                },
+                // The bar is a fixed height and the icon already carries the
+                // meaning; match native tab bars and don't scale the terse label.
+                tabBarAllowFontScaling: false,
             })}
         >
             <Tab.Screen name="Home">

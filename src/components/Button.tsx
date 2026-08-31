@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleProp, StyleSheet, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
 import { useTheme } from '../theme';
+import { AppText } from './AppText';
 
 interface ButtonProps {
     title: string;
@@ -12,7 +13,7 @@ interface ButtonProps {
 }
 
 export const Button = ({ title, onPress, variant = 'primary', style, textStyle, disabled }: ButtonProps) => {
-    const { colors, spacing, typography, borderRadius } = useTheme();
+    const { colors, spacing, borderRadius } = useTheme();
     const isPrimary = variant === 'primary';
     const isOutline = variant === 'outline';
 
@@ -35,13 +36,9 @@ export const Button = ({ title, onPress, variant = 'primary', style, textStyle, 
             activeOpacity={0.8}
             disabled={disabled}
         >
-            <Text
+            <AppText
+                variant="button"
                 style={[
-                    styles.text,
-                    {
-                        fontFamily: typography.fontFamilies.medium,
-                        fontSize: typography.sizes.m,
-                    },
                     isPrimary && { color: colors.textInverse },
                     isOutline && { color: colors.textSecondary },
                     !isPrimary && !isOutline && { color: colors.primary },
@@ -49,7 +46,7 @@ export const Button = ({ title, onPress, variant = 'primary', style, textStyle, 
                 ]}
             >
                 {title}
-            </Text>
+            </AppText>
         </TouchableOpacity>
     );
 };
@@ -58,9 +55,6 @@ const styles = StyleSheet.create({
     button: {
         alignItems: 'center',
         justifyContent: 'center',
-    },
-    text: {
-        // base text styles
     },
     disabledButton: {
         opacity: 0.5,
