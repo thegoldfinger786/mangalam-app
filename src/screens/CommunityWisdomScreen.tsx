@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { LoadError } from '../components/LoadError';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { Skeleton } from '../components/Skeleton';
 import { assertValidBookId } from '../lib/bookIdentity';
 import { fetchTopContent } from '../lib/queries';
@@ -60,20 +61,20 @@ export const CommunityWisdomScreen = () => {
 
     if (loading) {
         return (
-            <ScreenContainer
-                edges={['top']}
-                style={[styles.container, { backgroundColor: colors.background, paddingHorizontal: spacing.l, paddingTop: spacing.xl }]}
-            >
-                <Skeleton width="70%" height={26} borderRadius={6} style={{ marginBottom: spacing.s }} />
-                <Skeleton width="90%" height={16} borderRadius={4} style={{ marginBottom: spacing.xl }} />
-                {[0, 1].map((s) => (
-                    <View key={s} style={{ marginBottom: spacing.xl }}>
-                        <Skeleton width={160} height={20} borderRadius={4} style={{ marginBottom: spacing.m }} />
-                        {[0, 1, 2].map((r) => (
-                            <Skeleton key={r} width="100%" height={64} borderRadius={12} style={{ marginBottom: spacing.s }} />
-                        ))}
-                    </View>
-                ))}
+            <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <ScreenHeader title="Community Wisdom" variant="modal" />
+                <View style={{ paddingHorizontal: spacing.l, paddingTop: spacing.xl }}>
+                    <Skeleton width="70%" height={26} borderRadius={6} style={{ marginBottom: spacing.s }} />
+                    <Skeleton width="90%" height={16} borderRadius={4} style={{ marginBottom: spacing.xl }} />
+                    {[0, 1].map((s) => (
+                        <View key={s} style={{ marginBottom: spacing.xl }}>
+                            <Skeleton width={160} height={20} borderRadius={4} style={{ marginBottom: spacing.m }} />
+                            {[0, 1, 2].map((r) => (
+                                <Skeleton key={r} width="100%" height={64} borderRadius={12} style={{ marginBottom: spacing.s }} />
+                            ))}
+                        </View>
+                    ))}
+                </View>
             </ScreenContainer>
         );
     }
@@ -81,6 +82,7 @@ export const CommunityWisdomScreen = () => {
     if (loadError) {
         return (
             <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
+                <ScreenHeader title="Community Wisdom" variant="modal" />
                 <LoadError onRetry={loadData} />
             </ScreenContainer>
         );
@@ -96,13 +98,7 @@ export const CommunityWisdomScreen = () => {
 
     return (
         <ScreenContainer edges={['top']} style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { paddingHorizontal: spacing.m, paddingTop: spacing.m }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                    <Ionicons name="chevron-back" size={28} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Community Wisdom</Text>
-                <View style={{ width: 28 }} />
-            </View>
+            <ScreenHeader title="Community Wisdom" variant="modal" />
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.introSection}>
@@ -178,19 +174,6 @@ export const CommunityWisdomScreen = () => {
 const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
     container: {
         flex: 1,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        height: 60,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '700',
-    },
-    iconButton: {
-        padding: spacing.xs,
     },
     scrollContent: {
         paddingHorizontal: spacing.l,

@@ -6,18 +6,23 @@ import { useTheme } from '../theme';
 
 interface ScreenHeaderProps {
     title: string;
-    /** Defaults to `navigation.goBack()`. Pass `null` to hide the back control. */
+    /** Defaults to `navigation.goBack()`. Pass `null` to hide the dismiss control. */
     onBack?: (() => void) | null;
+    /**
+     * `'push'` (default) → back chevron, for pushed stack screens.
+     * `'modal'` → downward chevron, for slide-up modals. See docs/NAVIGATION_MODEL.md.
+     */
+    variant?: 'push' | 'modal';
     /** Optional trailing control (icon button, etc.). */
     right?: ReactNode;
 }
 
 /**
- * The one header for pushed stack screens: back chevron on the left, centred
- * title, optional trailing control. `chevron-back` here is deliberate — a
- * downward chevron is reserved for modals (Play). See docs/NAVIGATION_MODEL.md.
+ * The one header for pushed stack screens and simple modals: a dismiss chevron
+ * on the left, centred title, optional trailing control. `chevron-back` for
+ * pushes, `chevron-down` for modals. See docs/NAVIGATION_MODEL.md.
  */
-export const ScreenHeader = ({ title, onBack, right }: ScreenHeaderProps) => {
+export const ScreenHeader = ({ title, onBack, variant = 'push', right }: ScreenHeaderProps) => {
     const navigation = useNavigation();
     const { colors, spacing, typography } = useTheme();
     const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
@@ -29,8 +34,8 @@ export const ScreenHeader = ({ title, onBack, right }: ScreenHeaderProps) => {
         <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.background }]}>
             <View style={styles.side}>
                 {showBack && (
-                    <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={8} accessibilityLabel="Back">
-                        <Ionicons name="chevron-back" size={26} color={colors.text} />
+                    <TouchableOpacity onPress={handleBack} style={styles.backButton} hitSlop={8} accessibilityLabel={variant === 'modal' ? 'Close' : 'Back'}>
+                        <Ionicons name={variant === 'modal' ? 'chevron-down' : 'chevron-back'} size={26} color={colors.text} />
                     </TouchableOpacity>
                 )}
             </View>
