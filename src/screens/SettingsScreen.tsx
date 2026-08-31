@@ -256,21 +256,24 @@ export const SettingsScreen = () => {
                     Help keep Mangalam free and ad-free.
                 </AppText>
 
-                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.m, marginHorizontal: spacing.m }} />
-                <TouchableOpacity onPress={handleSignOut} style={styles.optionRow}>
-                    <AppText variant="body" style={{ color: colors.error }}>Sign Out</AppText>
-                    <Ionicons name="log-out-outline" size={18} color={colors.error} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={handleDeleteAccount}
-                    disabled={isDeleting}
-                    style={[styles.optionRow, { opacity: isDeleting ? 0.5 : 1 }]}
-                >
-                    <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
-                        {isDeleting ? 'Deleting account…' : 'Delete Account'}
-                    </AppText>
-                    <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
-                </TouchableOpacity>
+                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.s }} />
+                <View style={styles.accountActions}>
+                    <TouchableOpacity onPress={handleSignOut} style={styles.accountAction} hitSlop={8}>
+                        <Ionicons name="log-out-outline" size={18} color={colors.error} />
+                        <AppText variant="body" style={{ color: colors.error }}>Sign Out</AppText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={handleDeleteAccount}
+                        disabled={isDeleting}
+                        style={[styles.accountAction, { opacity: isDeleting ? 0.5 : 1 }]}
+                        hitSlop={8}
+                    >
+                        <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
+                        <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
+                            {isDeleting ? 'Deleting…' : 'Delete account'}
+                        </AppText>
+                    </TouchableOpacity>
+                </View>
             </Card>
 
             {/* Language & Voice */}
@@ -343,7 +346,7 @@ export const SettingsScreen = () => {
                     />
                 </View>
 
-                <View style={styles.sliderRow}>
+                <View style={[styles.sliderRow, { marginBottom: 0 }]}>
                     <AppText variant="body" style={{ color: colors.textSecondary, marginBottom: spacing.s }}>Background Volume</AppText>
                     <Slider
                         minimumValue={0}
@@ -359,11 +362,11 @@ export const SettingsScreen = () => {
                 </View>
             </Card>
 
-            {/* Display Preferences */}
+            {/* App-level: appearance + about */}
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="color-palette-outline" size={24} color={colors.primary} />
-                    <AppText variant="heading" style={styles.sectionTitle}>Display</AppText>
+                    <AppText variant="heading" style={styles.sectionTitle}>App</AppText>
                 </View>
                 <View style={[styles.toggleRow, { paddingVertical: spacing.s }]}>
                     <AppText variant="body" style={{ color: colors.text }}>Dark Mode</AppText>
@@ -375,28 +378,16 @@ export const SettingsScreen = () => {
                         value={isDarkMode}
                     />
                 </View>
-            </Card>
-
-            {/* About Section */}
-            <Card style={styles.sectionCard}>
-                <View style={styles.sectionHeader}>
-                    <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
-                    <AppText variant="heading" style={styles.sectionTitle}>About</AppText>
-                </View>
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('About')}
-                    style={[styles.optionRow, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}
-                >
+                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.xs }} />
+                <TouchableOpacity onPress={() => navigation.navigate('About')} style={styles.optionRow}>
                     <AppText variant="body" style={{ color: colors.text }}>About Mangalam</AppText>
                     <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
-                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.s, marginHorizontal: spacing.m }} />
-                <View style={{ marginTop: spacing.s, paddingHorizontal: spacing.m }}>
-                    <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
-                        Version {appVersion}
-                    </AppText>
-                </View>
             </Card>
+
+            <AppText variant="caption" style={[styles.versionLabel, { color: colors.textTertiary }]}>
+                Version {appVersion}
+            </AppText>
         </ScrollView>
         </ScreenContainer>
     );
@@ -412,16 +403,16 @@ const createStyles = (
     content: {
     },
     headerRow: {
-        marginBottom: spacing.l,
+        marginBottom: spacing.m,
     },
     sectionCard: {
-        marginBottom: spacing.l,
-        padding: spacing.l,
+        marginBottom: spacing.m,
+        padding: spacing.m,
     },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: spacing.l,
+        marginBottom: spacing.m,
     },
     sectionTitle: {
         marginLeft: spacing.s,
@@ -430,7 +421,11 @@ const createStyles = (
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: spacing.l,
+        marginBottom: spacing.s,
+    },
+    versionLabel: {
+        textAlign: 'center',
+        marginTop: spacing.s,
     },
     accountValue: {
         fontFamily: typography.fontFamilies.semiBold,
@@ -482,7 +477,19 @@ const createStyles = (
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: spacing.m,
+        paddingVertical: spacing.m,
+    },
+    accountActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: spacing.s,
+    },
+    accountAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.s,
+        paddingVertical: spacing.s,
     },
     toggleRow: {
         flexDirection: 'row',
