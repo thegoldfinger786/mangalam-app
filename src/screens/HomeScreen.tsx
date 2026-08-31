@@ -11,6 +11,7 @@ import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { Skeleton } from '../components/Skeleton';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { WeeklyStreak } from '../components/WeeklyStreak';
+import { COLLECTION_METADATA } from '../data/collectionMetadata';
 import { ContentPath } from '../data/types';
 import { auditBookIds, assertValidBookId, assertBookIdentityConsistency, getBookByCode } from '../lib/bookIdentity';
 import { formatRef } from '../lib/bookTerminology';
@@ -33,21 +34,9 @@ type ResumeState = {
     book_title: string;
 };
 
-const EXPLORE_PATHS = [
-    { id: 'gita', title: 'Bhagavad Gita', icon: 'book-outline', color: '#E88B4A' },
-    { id: 'ramayan', title: 'Ramayan', icon: 'navigate-outline', color: '#DE5D3D' },
-    { id: 'mahabharat', title: 'Mahabharat', icon: 'flash-outline', color: '#D6A621' },
-    { id: 'shiv_puran', title: 'Shiv Puran', icon: 'moon-outline', color: '#5C7485', isComingSoon: true },
-    { id: 'upanishads', title: 'Upanishads', icon: 'leaf-outline', color: '#568E65', isComingSoon: true },
-];
-
-const EXPLORE_PATH_DISPLAY: Record<string, { title: string; color: string }> = {
-    gita: { title: 'Bhagavad Gita', color: '#E88B4A' },
-    ramayan: { title: 'Ramayan', color: '#DE5D3D' },
-    mahabharat: { title: 'Mahabharat', color: '#D6A621' },
-    shiv_puran: { title: 'Shiv Puran', color: '#5C7485' },
-    upanishads: { title: 'Upanishads', color: '#568E65' },
-};
+// Pillars not yet in the catalogue — surfaced as a gentle "on the way" line.
+// Titles/colours come from the shared COLLECTION_METADATA, not a local copy.
+const COMING_SOON: ContentPath[] = ['shiv_puran', 'upanishads'];
 
 export const HomeScreen = () => {
     const { colors, spacing, typography, layout } = useTheme();
@@ -231,7 +220,7 @@ export const HomeScreen = () => {
 
     // Memoize derived UI values to improve stability
     const currentPathColor = useMemo(() => resumeState
-        ? (EXPLORE_PATH_DISPLAY[resumeState.book_slug]?.color || colors.primary)
+        ? (COLLECTION_METADATA[resumeState.book_slug]?.color || colors.primary)
         : colors.primary, [resumeState, colors.primary]);
 
     const currentPathTitle = useMemo(() => resumeState?.book_title || 'Ready to begin', [resumeState]);
@@ -413,7 +402,7 @@ export const HomeScreen = () => {
                         <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
                     </TouchableOpacity>
                     <AppText variant="bodySmall" style={[styles.exploreSubtext, { color: colors.textTertiary, paddingHorizontal: spacing.l, marginTop: spacing.s }]}>
-                        {EXPLORE_PATHS.filter((p) => p.isComingSoon).map((p) => p.title).join(' and ')} are on the way.
+                        {COMING_SOON.map((id) => COLLECTION_METADATA[id]?.title).filter(Boolean).join(' and ')} are on the way.
                     </AppText>
                 </View>
             </ScrollView>
