@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useMemo } from 'react';
-import { Alert, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
+import { AppText } from '../components/AppText';
 import { Card } from '../components/Card';
 import { ScreenHeader } from '../components/ScreenHeader';
 
@@ -20,7 +21,7 @@ const LEGAL_LINKS = [
 ];
 
 export const AboutScreen = () => {
-    const { colors, spacing, borderRadius } = useTheme();
+    const { colors, spacing, typography, borderRadius } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
 
@@ -37,8 +38,8 @@ export const AboutScreen = () => {
 
     const SectionCard = ({ title, content, bulletPoints, quote }: { title?: string, content?: string, bulletPoints?: string[], quote?: string }) => (
         <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
-            {title && <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.m }]}>{title}</Text>}
-            {content && <Text style={[styles.contentBody, { color: colors.text }]}>{content}</Text>}
+            {title && <AppText variant="subheading" style={{ color: colors.text, marginBottom: spacing.m }}>{title}</AppText>}
+            {content && <AppText variant="body" style={{ color: colors.text }}>{content}</AppText>}
             {bulletPoints && (
                 <View style={{ marginTop: spacing.m }}>
                     {bulletPoints.map((point, index) => (
@@ -46,14 +47,14 @@ export const AboutScreen = () => {
                             <View style={[styles.bulletPoint, { backgroundColor: colors.primaryLight }]}>
                                 <Ionicons name="sparkles-outline" size={12} color={colors.primary} />
                             </View>
-                            <Text style={[styles.contentBody, { color: colors.textSecondary, flex: 1 }]}>{point}</Text>
+                            <AppText variant="body" style={{ color: colors.textSecondary, flex: 1 }}>{point}</AppText>
                         </View>
                     ))}
                 </View>
             )}
             {quote && (
                 <View style={[styles.quoteContainer, { borderLeftColor: colors.primary, marginTop: spacing.m }]}>
-                    <Text style={[styles.quoteText, { color: colors.textSecondary }]}>{quote}</Text>
+                    <AppText variant="body" style={[styles.quoteText, { color: colors.textSecondary }]}>{quote}</AppText>
                 </View>
             )}
         </Card>
@@ -73,8 +74,8 @@ export const AboutScreen = () => {
                             resizeMode="cover"
                         />
                     </View>
-                    <Text style={[styles.brandName, { color: colors.text }]}>Mangalam</Text>
-                    <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Ancient Wisdom • Modern Life</Text>
+                    <AppText variant="display" style={[styles.brandName, { color: colors.text }]}>Mangalam</AppText>
+                    <AppText variant="bodySmall" style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Ancient Wisdom • Modern Life</AppText>
                 </View>
 
                 {/* What Mangalam is */}
@@ -136,22 +137,22 @@ export const AboutScreen = () => {
                 {/* One contextual Support mention — the full page is in Settings → Support */}
                 <TouchableOpacity onPress={() => navigation.navigate('SupportMangalam')} style={styles.supportLine}>
                     <Ionicons name="heart-outline" size={16} color={colors.primary} />
-                    <Text style={[styles.contentBody, { color: colors.primary, marginLeft: spacing.s }]}>
+                    <AppText variant="body" style={{ color: colors.primary, marginLeft: spacing.s }}>
                         Mangalam is kept free by optional contributions — learn more
-                    </Text>
+                    </AppText>
                 </TouchableOpacity>
 
                 {/* Final Closing */}
                 <View style={styles.closingSection}>
                     <Ionicons name="flower-outline" size={40} color={colors.primary} />
-                    <Text style={[styles.closingText, { color: colors.textSecondary, marginTop: spacing.m }]}>
+                    <AppText variant="body" style={[styles.closingText, { color: colors.textSecondary, marginTop: spacing.m }]}>
                         May each reflection bring a little more clarity, calm, and understanding into your day.
-                    </Text>
-                    <Text style={[styles.brandBottom, { color: colors.text, marginTop: spacing.l }]}>Mangalam</Text>
+                    </AppText>
+                    <AppText variant="title" style={{ color: colors.text, marginTop: spacing.l }}>Mangalam</AppText>
                 </View>
 
                 <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
-                    <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.m }]}>Legal &amp; Support</Text>
+                    <AppText variant="subheading" style={{ color: colors.text, marginBottom: spacing.m }}>Legal &amp; Support</AppText>
                     <View style={[styles.linkGroup, { borderColor: colors.border, backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.l }]}>
                         {LEGAL_LINKS.map((item, index) => (
                             <View key={item.label}>
@@ -159,7 +160,7 @@ export const AboutScreen = () => {
                                     style={[styles.linkRow, { paddingVertical: spacing.m, paddingHorizontal: spacing.m }]}
                                     onPress={() => openLink(item.url)}
                                 >
-                                    <Text style={[styles.linkText, { color: colors.text }]}>{item.label}</Text>
+                                    <AppText variant="body" style={{ color: colors.text, fontFamily: typography.fontFamilies.semiBold }}>{item.label}</AppText>
                                     <Ionicons name={item.url.startsWith('mailto:') ? 'mail-outline' : 'chevron-forward'} size={18} color={colors.textSecondary} />
                                 </TouchableOpacity>
                                 {index < LEGAL_LINKS.length - 1 && (
@@ -195,26 +196,15 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         height: '100%',
     },
     brandName: {
-        fontSize: 32,
-        fontWeight: 'bold',
         letterSpacing: 0.5,
     },
     heroSubtitle: {
-        fontSize: 14,
         letterSpacing: 0.5,
         marginTop: spacing.xs,
     },
     sectionCard: {
         padding: spacing.l,
         borderRadius: 24,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    contentBody: {
-        fontSize: 16,
-        lineHeight: 24,
     },
     bulletRow: {
         flexDirection: 'row',
@@ -234,9 +224,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         borderLeftWidth: 3,
     },
     quoteText: {
-        fontSize: 15,
         fontStyle: 'italic',
-        lineHeight: 22,
     },
     linkGroup: {
         borderWidth: 1,
@@ -247,10 +235,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    linkText: {
-        fontSize: 16,
-        fontWeight: '600',
-    },
     linkDivider: {
         height: 1,
     },
@@ -260,15 +244,9 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         paddingBottom: spacing.xxxl,
     },
     closingText: {
-        fontSize: 16,
         textAlign: 'center',
-        lineHeight: 24,
         fontStyle: 'italic',
         paddingHorizontal: spacing.xl,
-    },
-    brandBottom: {
-        fontSize: 24,
-        fontWeight: 'bold',
     },
     supportLine: {
         flexDirection: 'row',

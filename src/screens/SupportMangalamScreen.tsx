@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import React, { useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -22,8 +23,8 @@ export const SupportMangalamScreen = () => {
 
     const SectionCard = ({ title, content, children }: { title?: string, content?: string, children?: React.ReactNode }) => (
         <Card style={[styles.sectionCard, { backgroundColor: colors.surface, marginBottom: spacing.l }]}>
-            {title && <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: spacing.m }]}>{title}</Text>}
-            {content && <Text style={[styles.contentBody, { color: colors.text }]}>{content}</Text>}
+            {title && <AppText variant="subheading" style={{ color: colors.text, marginBottom: spacing.m }}>{title}</AppText>}
+            {content && <AppText variant="body" style={{ color: colors.text }}>{content}</AppText>}
             {children}
         </Card>
     );
@@ -42,8 +43,8 @@ export const SupportMangalamScreen = () => {
                             resizeMode="cover"
                         />
                     </View>
-                    <Text style={[styles.brandName, { color: colors.text }]}>Support Mangalam</Text>
-                    <Text style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Helping preserve and share ancient wisdom</Text>
+                    <AppText variant="display" style={[styles.brandName, { color: colors.text }]}>Support Mangalam</AppText>
+                    <AppText variant="bodySmall" style={[styles.heroSubtitle, { color: colors.textSecondary }]}>Helping preserve and share ancient wisdom</AppText>
                 </View>
 
                 {/* Why support helps */}
@@ -59,9 +60,9 @@ export const SupportMangalamScreen = () => {
                         onPress={handleSupport}
                         style={[styles.gridButton, styles.highlightedButton]}
                     />
-                    <Text style={[styles.paymentNote, { color: colors.textTertiary, marginTop: spacing.l }]}>
+                    <AppText variant="caption" style={[styles.paymentNote, { color: colors.textTertiary, marginTop: spacing.l }]}>
                         Choose any amount. Secure payments via Apple Pay, Google Pay, and cards.
-                    </Text>
+                    </AppText>
                 </SectionCard>
 
                 {/* Transparency Section */}
@@ -71,25 +72,25 @@ export const SupportMangalamScreen = () => {
                             <View style={[styles.bulletPoint, { backgroundColor: colors.primaryLight }]}>
                                 <Ionicons name="sparkles-outline" size={12} color={colors.primary} />
                             </View>
-                            <Text style={[styles.contentBody, { color: colors.textSecondary, flex: 1 }]}>Audio narration generation</Text>
+                            <AppText variant="body" style={{ color: colors.textSecondary, flex: 1 }}>Audio narration generation</AppText>
                         </View>
                         <View style={styles.bulletRow}>
                             <View style={[styles.bulletPoint, { backgroundColor: colors.primaryLight }]}>
                                 <Ionicons name="sparkles-outline" size={12} color={colors.primary} />
                             </View>
-                            <Text style={[styles.contentBody, { color: colors.textSecondary, flex: 1 }]}>Hosting and infrastructure</Text>
+                            <AppText variant="body" style={{ color: colors.textSecondary, flex: 1 }}>Hosting and infrastructure</AppText>
                         </View>
                         <View style={styles.bulletRow}>
                             <View style={[styles.bulletPoint, { backgroundColor: colors.primaryLight }]}>
                                 <Ionicons name="sparkles-outline" size={12} color={colors.primary} />
                             </View>
-                            <Text style={[styles.contentBody, { color: colors.textSecondary, flex: 1 }]}>New scripture translations</Text>
+                            <AppText variant="body" style={{ color: colors.textSecondary, flex: 1 }}>New scripture translations</AppText>
                         </View>
                         <View style={styles.bulletRow}>
                             <View style={[styles.bulletPoint, { backgroundColor: colors.primaryLight }]}>
                                 <Ionicons name="sparkles-outline" size={12} color={colors.primary} />
                             </View>
-                            <Text style={[styles.contentBody, { color: colors.textSecondary, flex: 1 }]}>Preservation of ancient texts</Text>
+                            <AppText variant="body" style={{ color: colors.textSecondary, flex: 1 }}>Preservation of ancient texts</AppText>
                         </View>
                     </View>
                 </SectionCard>
@@ -97,10 +98,10 @@ export const SupportMangalamScreen = () => {
                 {/* Final Closing - Mirrored from AboutScreen */}
                 <View style={styles.closingSection}>
                     <Ionicons name="heart-outline" size={40} color={colors.primary} />
-                    <Text style={[styles.closingText, { color: colors.textSecondary, marginTop: spacing.m }]}>
+                    <AppText variant="body" style={[styles.closingText, { color: colors.textSecondary, marginTop: spacing.m }]}>
                         Thank you for helping keep this knowledge accessible to everyone. Your support allows Mangalam to continue sharing wisdom that has guided generations.
-                    </Text>
-                    <Text style={[styles.brandBottom, { color: colors.text, marginTop: spacing.l }]}>Mangalam</Text>
+                    </AppText>
+                    <AppText variant="title" style={{ color: colors.text, marginTop: spacing.l }}>Mangalam</AppText>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -128,13 +129,10 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         height: '100%',
     },
     brandName: {
-        fontSize: 32,
-        fontWeight: 'bold',
         letterSpacing: 0.5,
         textAlign: 'center',
     },
     heroSubtitle: {
-        fontSize: 14,
         letterSpacing: 0.5,
         marginTop: spacing.xs,
         textAlign: 'center',
@@ -143,14 +141,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     sectionCard: {
         padding: spacing.l,
         borderRadius: 24,
-    },
-    sectionTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    contentBody: {
-        fontSize: 16,
-        lineHeight: 24,
     },
     gridButton: {
         width: '100%',
@@ -173,7 +163,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginRight: spacing.m,
     },
     paymentNote: {
-        fontSize: 13,
         textAlign: 'center',
         fontStyle: 'italic',
     },
@@ -183,14 +172,8 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         paddingBottom: spacing.xxxl,
     },
     closingText: {
-        fontSize: 16,
         textAlign: 'center',
-        lineHeight: 24,
         fontStyle: 'italic',
         paddingHorizontal: spacing.xl,
     },
-    brandBottom: {
-        fontSize: 24,
-        fontWeight: 'bold',
-    }
 });

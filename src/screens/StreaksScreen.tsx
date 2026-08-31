@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Card } from '../components/Card';
 import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
@@ -186,41 +187,41 @@ export const StreaksScreen = () => {
                     paddingBottom: layout.miniPlayerHeight + spacing.m,
                 }}
             >
-                <Text style={[styles.screenTitle, { color: colors.text, marginBottom: spacing.l }]}>Your Journey</Text>
+                <AppText variant="display" style={{ color: colors.text, marginBottom: spacing.l }}>Your Journey</AppText>
 
                 <Card style={[styles.practiceCard, { paddingVertical: spacing.xxl, marginBottom: spacing.xl }]}>
                     <View style={[styles.practiceHeader, { marginBottom: spacing.xl }]}>
-                        <Text style={[styles.practiceNumber, { color: colors.primary }]}>{daysOfPractice}</Text>
-                        <Text style={[styles.practiceLabel, { color: colors.textSecondary }]}>
+                        <AppText variant="display" maxFontSizeMultiplier={1.15} style={[styles.practiceNumber, { color: colors.primary }]}>{daysOfPractice}</AppText>
+                        <AppText variant="body" style={{ color: colors.textSecondary }}>
                             {daysOfPractice === 1 ? 'day of practice' : 'days of practice'}
-                        </Text>
+                        </AppText>
                     </View>
 
-                    <Text style={[styles.encouragementText, { color: colors.textSecondary, paddingHorizontal: spacing.m }]}>
+                    <AppText variant="bodySmall" style={[styles.encouragementText, { color: colors.textSecondary, paddingHorizontal: spacing.m }]}>
                         Consistency over intensity. Taking ten minutes a day for reflection builds a resilient mind.
-                    </Text>
+                    </AppText>
                 </Card>
 
                 <WeeklyStreak activeDates={activeDates} />
 
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: spacing.m }]}>Stats</Text>
+                <AppText variant="subheading" style={{ color: colors.textSecondary, marginBottom: spacing.m }}>Stats</AppText>
                 <View style={[styles.statsRow, { gap: spacing.m }]}>
                     <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
-                        <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{usageToday}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions today</Text>
+                        <AppText variant="title" style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{usageToday}</AppText>
+                        <AppText variant="caption" style={{ color: colors.textSecondary }}>Sessions today</AppText>
                     </Card>
                     <Card style={[styles.statCard, { paddingVertical: spacing.l }]}>
-                        <Text style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{sessionsThisWeek}</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Sessions this week</Text>
+                        <AppText variant="title" style={[styles.statValue, { color: colors.primary, marginBottom: spacing.xs }]}>{sessionsThisWeek}</AppText>
+                        <AppText variant="caption" style={{ color: colors.textSecondary }}>Sessions this week</AppText>
                     </Card>
                 </View>
 
                 {/* ── Your progress ── */}
                 {bookProgress.length > 0 && (
                     <>
-                        <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.m }]}>
+                        <AppText variant="subheading" style={{ color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.m }}>
                             Your progress
-                        </Text>
+                        </AppText>
                         <Card style={{ paddingVertical: spacing.xs }}>
                             {bookProgress.map((bp, i) => {
                                 const pct = bp.total > 0 ? Math.min(1, bp.completed / bp.total) : 0;
@@ -236,16 +237,16 @@ export const StreaksScreen = () => {
                                             {getScriptureIcon(bp.slug, 18, colors.primary)}
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[styles.progressName, { color: colors.text }]}>{bp.name}</Text>
+                                            <AppText variant="body" style={[styles.progressName, { color: colors.text }]}>{bp.name}</AppText>
                                             {pct > 0 && pct < 1 && (
                                                 <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSecondary }]}>
                                                     <View style={[styles.progressFill, { backgroundColor: colors.primary, width: `${pct * 100}%` }]} />
                                                 </View>
                                             )}
                                         </View>
-                                        <Text style={[styles.progressStatus, { color: colors.textSecondary }]}>
+                                        <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
                                             {progressLabel(bp)}
-                                        </Text>
+                                        </AppText>
                                     </View>
                                 );
                             })}
@@ -254,13 +255,13 @@ export const StreaksScreen = () => {
                 )}
 
                 {/* ── Your bookmarks ── */}
-                <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.m }]}>
+                <AppText variant="subheading" style={{ color: colors.textSecondary, marginTop: spacing.xl, marginBottom: spacing.m }}>
                     Your bookmarks
-                </Text>
+                </AppText>
                 {bookmarks.length === 0 ? (
-                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    <AppText variant="body" style={{ color: colors.textSecondary }}>
                         Verses you bookmark while listening will gather here.
-                    </Text>
+                    </AppText>
                 ) : (
                     bookmarks.map((b) => (
                         <VerseListRow
@@ -289,30 +290,19 @@ const createStyles = (
     container: {
         flex: 1,
     },
-    screenTitle: {
-        fontWeight: 'bold',
-        fontSize: typography.sizes.xxl,
-    },
     practiceCard: {
         alignItems: 'center',
     },
     practiceHeader: {
         alignItems: 'center',
     },
+    // The one genuine hero number on the screen — not a role.
     practiceNumber: {
         fontSize: typography.sizes.hero,
-        fontWeight: 'bold',
-    },
-    practiceLabel: {
-        fontSize: 18,
+        lineHeight: typography.sizes.hero,
     },
     encouragementText: {
-        fontSize: 14,
         textAlign: 'center',
-        lineHeight: 20,
-    },
-    sectionTitle: {
-        fontSize: 18,
     },
     statsRow: {
         flexDirection: 'row',
@@ -323,11 +313,7 @@ const createStyles = (
         alignItems: 'center',
     },
     statValue: {
-        fontWeight: 'bold',
-        fontSize: 28,
-    },
-    statLabel: {
-        fontSize: 12,
+        textAlign: 'center',
     },
     progressRow: {
         flexDirection: 'row',
@@ -344,8 +330,7 @@ const createStyles = (
         alignItems: 'center',
     },
     progressName: {
-        fontSize: typography.sizes.m,
-        fontWeight: '600',
+        fontFamily: typography.fontFamilies.semiBold,
     },
     progressTrack: {
         height: spacing.xs,
@@ -355,12 +340,5 @@ const createStyles = (
     },
     progressFill: {
         height: '100%',
-    },
-    progressStatus: {
-        fontSize: typography.sizes.s,
-    },
-    emptyText: {
-        fontSize: 15,
-        lineHeight: 22,
     },
 });

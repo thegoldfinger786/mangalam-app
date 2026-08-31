@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TextInput, TouchableWithoutFeedback, View } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { supabase } from '../lib/supabase';
@@ -50,15 +51,15 @@ export const WelcomeScreen = () => {
                         {/* Branding/Logo Area */}
                         <View style={styles.brandingContainer}>
                             <View style={[styles.sunCircle, { backgroundColor: colors.primaryLight, marginBottom: spacing.l }]} />
-                            <Text style={[styles.appName, { color: colors.text, marginBottom: spacing.s }]}>Mangalam</Text>
-                            <Text style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>
+                            <AppText style={[styles.appName, { color: colors.text, marginBottom: spacing.s }]} maxFontSizeMultiplier={1.2}>Mangalam</AppText>
+                            <AppText variant="body" style={[styles.tagline, { color: colors.textSecondary, paddingHorizontal: spacing.l }]}>
                                 A calm space to pause, listen and reflect — a few minutes at a time.
-                            </Text>
+                            </AppText>
                         </View>
 
                         {/* Input Area */}
                         <View style={styles.inputContainer}>
-                            <Text style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>What should we call you?</Text>
+                            <AppText variant="body" style={[styles.inputLabel, { color: colors.textSecondary, marginBottom: spacing.m }]}>What should we call you?</AppText>
                             <TextInput
                                 style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: borderRadius.m, padding: spacing.l, color: colors.text, marginBottom: spacing.xl }]}
                                 placeholder="Your name"
@@ -117,19 +118,18 @@ const createStyles = (
         marginBottom: spacing.l,
         opacity: 0.8,
     },
+    // The one giant word on the first screen — a deliberate hero size, not a role.
     appName: {
         fontFamily: typography.fontFamilies.semiBold,
         fontSize: typography.sizes.xxxl,
+        lineHeight: typography.sizes.xxxl,
         color: colors.text,
         marginBottom: spacing.s,
         textAlign: 'center',
     },
     tagline: {
-        fontFamily: typography.fontFamilies.regular,
-        fontSize: typography.sizes.l,
         color: colors.textSecondary,
         textAlign: 'center',
-        lineHeight: typography.lineHeights.l,
         paddingHorizontal: spacing.l,
     },
     inputContainer: {
@@ -138,7 +138,6 @@ const createStyles = (
     },
     inputLabel: {
         fontFamily: typography.fontFamilies.medium,
-        fontSize: typography.sizes.m,
         color: colors.textSecondary,
         marginBottom: spacing.m,
         textAlign: 'center',

@@ -21,6 +21,7 @@ import Animated, {
     withSpring,
     withTiming
 } from 'react-native-reanimated';
+import { AppText } from '../components/AppText';
 import { HighlightedText } from '../components/HighlightedText';
 import { LoadError } from '../components/LoadError';
 import { Skeleton } from '../components/Skeleton';
@@ -596,9 +597,9 @@ export const PlayScreen = () => {
                 </View>
                 <View style={[styles.center, { flex: 1, paddingHorizontal: spacing.xl }]}>
                     <Ionicons name="cloud-offline-outline" size={40} color={colors.textTertiary} />
-                    <Text style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.m }]}>
+                    <AppText variant="body" style={[styles.trackSubtitle, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.m }]}>
                         We couldn&rsquo;t open this verse.
-                    </Text>
+                    </AppText>
                 </View>
             </ScreenContainer>
         );
@@ -652,13 +653,13 @@ export const PlayScreen = () => {
                 )}
 
                 <View style={styles.headerCenter}>
-                    <Text style={[styles.headerTitle, { color: colors.textSecondary }]} numberOfLines={1}>
+                    <AppText variant="bodySmall" style={[styles.headerTitle, { color: colors.textSecondary }]} numberOfLines={1}>
                         {headerBookName || 'Now Playing'}
-                    </Text>
+                    </AppText>
                     {headerRef ? (
-                        <Text style={[styles.headerRef, { color: colors.textTertiary }]} numberOfLines={1}>
+                        <AppText variant="caption" style={[styles.headerRef, { color: colors.textTertiary }]} numberOfLines={1}>
                             {headerRef}
-                        </Text>
+                        </AppText>
                     ) : null}
                 </View>
                 <View style={styles.headerRight}>
@@ -689,10 +690,10 @@ export const PlayScreen = () => {
                         </View>
                     )}
                 </View>
-                <Text style={[styles.trackTitle, { color: colors.text, marginTop: spacing.xs }]}>
+                <AppText variant="subheading" style={[styles.trackTitle, { color: colors.text, marginTop: spacing.xs }]}>
                     {content?.title || formatRef(bookId, content?.chapter_no, content?.verse_no)}
-                </Text>
-                <Text style={[styles.trackSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>{meta.title}</Text>
+                </AppText>
+                <AppText variant="body" style={[styles.trackSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>{meta.title}</AppText>
 
                 <View style={[styles.langToggle, { borderColor: colors.border }]}>
                     {(['english', 'hindi'] as const).map((l) => {
@@ -705,9 +706,9 @@ export const PlayScreen = () => {
                                 accessibilityRole="button"
                                 accessibilityState={{ selected: active }}
                             >
-                                <Text style={[styles.langOptionText, { color: active ? colors.textInverse : colors.textSecondary }]}>
+                                <AppText variant="label" style={[styles.langOptionText, { color: active ? colors.textInverse : colors.textSecondary }]}>
                                     {l === 'english' ? 'English' : 'हिन्दी'}
-                                </Text>
+                                </AppText>
                             </TouchableOpacity>
                         );
                     })}
@@ -828,9 +829,9 @@ export const PlayScreen = () => {
                     return (
                         <>
                             {showSanskrit ? (
-                                <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
+                                <AppText variant="body" style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
                                     Sanskrit verse
-                                </Text>
+                                </AppText>
                             ) : null}
                             {showSanskrit ? (
                                 <HighlightedText
@@ -842,9 +843,9 @@ export const PlayScreen = () => {
                                 />
                             ) : null}
 
-                            <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
+                            <AppText variant="body" style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
                                 {(isRamayan || isMahabharat) ? 'Story' : 'Translation'}
-                            </Text>
+                            </AppText>
                             <HighlightedText
                                 text={translationText}
                                 progress={getLocalProgress(translationText)}
@@ -853,7 +854,7 @@ export const PlayScreen = () => {
                                 inactiveColor={colors.textSecondary}
                             />
 
-                            <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>Commentary</Text>
+                            <AppText variant="body" style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>Commentary</AppText>
                             <HighlightedText
                                 text={commentaryText}
                                 progress={getLocalProgress(commentaryText)}
@@ -864,7 +865,7 @@ export const PlayScreen = () => {
 
                             {appBullets.length > 0 && (
                                 <>
-                                    <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>Daily Life Application</Text>
+                                    <AppText variant="body" style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>Daily Life Application</AppText>
                                     {appBullets.map((bullet: string, idx: number) => (
                                         <View key={`app-${idx}`} style={{ flexDirection: 'row', marginBottom: isNumberedList ? spacing.m : spacing.l }}>
                                             {isNumberedList && <Text style={{ color: colors.text, marginRight: spacing.s, marginTop: spacing.xs }}>•</Text>}
@@ -882,9 +883,9 @@ export const PlayScreen = () => {
 
                             {pe.length > 0 && (
                                 <>
-                                    <Text style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
+                                    <AppText variant="body" style={[styles.contentSubtitle, { color: colors.textSecondary, marginBottom: spacing.s }]}>
                                         {isEpic ? 'A traditional closing blessing' : 'Practical Examples'}
-                                    </Text>
+                                    </AppText>
                                     {pe.map((ex: string, idx: number) => (
                                         <View key={idx} style={{ flexDirection: 'row', marginBottom: spacing.m }}>
                                             {!isEpic && <Text style={{ color: colors.text, marginRight: spacing.s }}>•</Text>}
@@ -920,11 +921,11 @@ export const PlayScreen = () => {
                     thumbTintColor={colors.secondary}
                 />
                 <View style={styles.timeAndSpeedRow}>
-                    <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(position)}</Text>
+                    <AppText variant="label" style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(position)}</AppText>
                     <TouchableOpacity onPress={toggleSpeed} style={[styles.speedPill, { backgroundColor: colors.surfaceSecondary, borderColor: colors.border, marginTop: spacing.s, paddingHorizontal: spacing.m }]}>
-                        <Text style={[styles.speedPillText, { color: colors.primary }]}>{playbackRate}x</Text>
+                        <AppText variant="bodySmall" style={[styles.speedPillText, { color: colors.primary }]}>{playbackRate}x</AppText>
                     </TouchableOpacity>
-                    <Text style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(duration)}</Text>
+                    <AppText variant="label" style={[styles.timeText, { color: colors.textSecondary }]}>{formatTime(duration)}</AppText>
                 </View>
 
                 <View style={[styles.controlsRow, { marginTop: spacing.m, marginBottom: spacing.s }]}>
@@ -938,7 +939,7 @@ export const PlayScreen = () => {
 
                     <TouchableOpacity onPress={skipBackward} style={styles.skipBtn}>
                         <Ionicons name="play-back" size={24} color={colors.text} />
-                        <Text style={[styles.skipLabel, { color: colors.textSecondary }]}>15</Text>
+                        <AppText variant="label" maxFontSizeMultiplier={1.1} style={[styles.skipLabel, { color: colors.textSecondary }]}>15</AppText>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={togglePlayPause}>
@@ -961,7 +962,7 @@ export const PlayScreen = () => {
 
                     <TouchableOpacity onPress={skipForward} style={styles.skipBtn}>
                         <Ionicons name="play-forward" size={24} color={colors.text} />
-                        <Text style={[styles.skipLabel, { color: colors.textSecondary }]}>15</Text>
+                        <AppText variant="label" maxFontSizeMultiplier={1.1} style={[styles.skipLabel, { color: colors.textSecondary }]}>15</AppText>
                     </TouchableOpacity>
 
                     <TouchableOpacity

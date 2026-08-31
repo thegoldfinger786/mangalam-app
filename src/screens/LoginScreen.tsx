@@ -5,9 +5,9 @@ import {
     Linking,
     ScrollView,
     StyleSheet,
-    Text,
     View,
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { AppleAuthButton, AuthButtonWrapper, GoogleAuthButton } from '../components/AuthButton';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -19,9 +19,9 @@ const TERMS_URL = 'https://www.mangalamapp.com/terms';
 const PRIVACY_URL = 'https://www.mangalamapp.com/privacy';
 
 export const LoginScreen = () => {
-    const { colors, spacing, typography } = useTheme();
+    const { colors, spacing } = useTheme();
     const { signInWithGoogle, signInWithApple, authLoading } = useAuth();
-    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
+    const styles = useMemo(() => createStyles(spacing), [spacing]);
     const [activeProvider, setActiveProvider] = useState<'apple' | 'google' | null>(null);
 
     const handleGoogleLogin = async () => {
@@ -59,14 +59,14 @@ export const LoginScreen = () => {
                             resizeMode="cover"
                         />
                     </View>
-                    <Text style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</Text>
-                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</Text>
+                    <AppText variant="display" style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</AppText>
+                    <AppText variant="body" style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</AppText>
                 </View>
 
                 <Card style={[styles.authCard, { backgroundColor: colors.surface, marginTop: spacing.xl }]}>
-                    <Text style={[styles.instructionText, { color: colors.text, marginBottom: spacing.l }]}>
+                    <AppText variant="heading" style={[styles.instructionText, { color: colors.text, marginBottom: spacing.l }]}>
                         Sign in to get started
-                    </Text>
+                    </AppText>
 
                     <AuthButtonWrapper>
                         <AppleAuthButton
@@ -81,29 +81,31 @@ export const LoginScreen = () => {
                         />
                     </AuthButtonWrapper>
 
-                    <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
+                    <AppText variant="caption" style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
                         Mangalam is a quiet space for reflection.{'\n'}No ads, and we never sell your data.
-                    </Text>
+                    </AppText>
                 </Card>
 
                 <View style={[styles.footer, { paddingVertical: spacing.xl }]}>
-                    <Text style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
+                    <AppText variant="caption" style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
                         By continuing you agree to our{' '}
-                        <Text
+                        <AppText
+                            variant="caption"
                             style={{ color: colors.primary }}
                             onPress={() => Linking.openURL(TERMS_URL).catch(() => {})}
                         >
                             Terms of Service
-                        </Text>
+                        </AppText>
                         {' '}and{' '}
-                        <Text
+                        <AppText
+                            variant="caption"
                             style={{ color: colors.primary }}
                             onPress={() => Linking.openURL(PRIVACY_URL).catch(() => {})}
                         >
                             Privacy Policy
-                        </Text>
+                        </AppText>
                         .
-                    </Text>
+                    </AppText>
                 </View>
             </ScrollView>
         </ScreenContainer>
@@ -112,7 +114,6 @@ export const LoginScreen = () => {
 
 const createStyles = (
     spacing: ReturnType<typeof useTheme>['spacing'],
-    typography: ReturnType<typeof useTheme>['typography'],
 ) => StyleSheet.create({
     container: {
         flex: 1,
@@ -140,13 +141,9 @@ const createStyles = (
         height: '100%',
     },
     title: {
-        fontFamily: typography.fontFamilies.semiBold,
-        fontSize: 32,
         letterSpacing: 0.5,
     },
     subtitle: {
-        fontFamily: typography.fontFamilies.regular,
-        fontSize: 16,
         textAlign: 'center',
         opacity: 0.8,
     },
@@ -158,22 +155,15 @@ const createStyles = (
         shadowRadius: 8,
     },
     instructionText: {
-        fontFamily: typography.fontFamilies.semiBold,
-        fontSize: 20,
         textAlign: 'center',
     },
     privacyNote: {
-        fontFamily: typography.fontFamilies.regular,
-        fontSize: 13,
         textAlign: 'center',
-        lineHeight: 18,
     },
     footer: {
         alignItems: 'center',
     },
     footerText: {
-        fontFamily: typography.fontFamilies.regular,
-        fontSize: 12,
         textAlign: 'center',
     },
 });

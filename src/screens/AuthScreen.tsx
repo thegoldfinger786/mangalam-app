@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
@@ -78,15 +79,15 @@ export const AuthScreen = () => {
                                 resizeMode="cover"
                             />
                         </View>
-                        <Text style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</Text>
-                        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</Text>
+                        <AppText variant="display" style={[styles.title, { color: colors.text, marginTop: spacing.m }]}>Mangalam</AppText>
+                        <AppText variant="body" style={[styles.subtitle, { color: colors.textSecondary }]}>Ancient Wisdom for Modern Life</AppText>
                     </View>
 
                     {/* Auth Box */}
                     <Card style={[styles.authCard, { backgroundColor: colors.surface, marginTop: spacing.xl }]}>
-                        <Text style={[styles.instructionText, { color: colors.text, marginBottom: spacing.l }]}>
+                        <AppText variant="heading" style={[styles.instructionText, { color: colors.text, marginBottom: spacing.l }]}>
                             {isSignUp ? 'Create Your Account' : 'Welcome Back'}
-                        </Text>
+                        </AppText>
 
                         <View style={[styles.inputGroup, { backgroundColor: colors.background, borderRadius: borderRadius.m, borderColor: colors.border }]}>
                             <Ionicons name="mail-outline" size={20} color={colors.textSecondary} style={styles.inputIcon} />
@@ -118,7 +119,7 @@ export const AuthScreen = () => {
                                 style={[styles.forgotPassword, { marginTop: spacing.s }]} 
                                 onPress={handleForgotPassword}
                             >
-                                <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>Forgot Password?</Text>
+                                <AppText variant="bodySmall" style={{ color: colors.primary }}>Forgot Password?</AppText>
                             </TouchableOpacity>
                         )}
 
@@ -132,9 +133,9 @@ export const AuthScreen = () => {
                                     size={20} 
                                     color={agreedToTerms ? colors.primary : colors.textSecondary} 
                                 />
-                                <Text style={[styles.termsText, { color: colors.textSecondary, marginLeft: spacing.s }]}>
-                                    I agree to the <Text style={{ color: colors.primary }}>Terms & Conditions</Text>
-                                </Text>
+                                <AppText variant="bodySmall" style={{ color: colors.textSecondary, marginLeft: spacing.s }}>
+                                    I agree to the <AppText variant="bodySmall" style={{ color: colors.primary }}>Terms & Conditions</AppText>
+                                </AppText>
                             </TouchableOpacity>
                         )}
 
@@ -148,21 +149,21 @@ export const AuthScreen = () => {
                             style={[styles.switchMode, { marginTop: spacing.l }]} 
                             onPress={() => setIsSignUp(!isSignUp)}
                         >
-                            <Text style={[styles.switchModeText, { color: colors.textSecondary }]}>
+                            <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
                                 {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-                                <Text style={{ color: colors.primary }}>{isSignUp ? 'Sign In' : 'Sign Up'}</Text>
-                            </Text>
+                                <AppText variant="bodySmall" style={{ color: colors.primary }}>{isSignUp ? 'Sign In' : 'Sign Up'}</AppText>
+                            </AppText>
                         </TouchableOpacity>
                         
-                        <Text style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
+                        <AppText variant="caption" style={[styles.privacyNote, { color: colors.textSecondary, marginTop: spacing.xl }]}>
                             Mangalam is a quiet space for reflection. No ads, and we never sell your data.
-                        </Text>
+                        </AppText>
                     </Card>
 
                     <View style={[styles.footer, { paddingVertical: spacing.xl }]}>
-                        <Text style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
+                        <AppText variant="caption" style={[styles.footerText, { color: colors.textTertiary || colors.textSecondary }]}>
                             Guided reflection for your spiritual journey.
-                        </Text>
+                        </AppText>
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
@@ -197,12 +198,9 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         height: '100%',
     },
     title: {
-        fontWeight: 'bold',
-        fontSize: 32,
         letterSpacing: 0.5,
     },
     subtitle: {
-        fontSize: 16,
         textAlign: 'center',
         opacity: 0.8,
     },
@@ -214,8 +212,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         shadowRadius: 8,
     },
     instructionText: {
-        fontWeight: '600',
-        fontSize: 20,
         textAlign: 'center',
     },
     inputGroup: {
@@ -235,38 +231,22 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     forgotPassword: {
         alignSelf: 'flex-end',
     },
-    forgotPasswordText: {
-        fontSize: 14,
-        fontWeight: '500',
-    },
     termsRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
-    termsText: {
-        fontSize: 14,
-    },
     switchMode: {
         alignItems: 'center',
     },
-    switchModeText: {
-        fontSize: 14,
-    },
     privacyNote: {
-        fontSize: 13,
         textAlign: 'center',
-        lineHeight: 18,
         fontStyle: 'italic',
         opacity: 0.8,
-    },
-    footerLabel: {
-        fontFamily: 'Inter_400Regular', // Use Inter if available or default
     },
     footer: {
         marginTop: 'auto',
     },
     footerText: {
-        fontSize: 12,
         textAlign: 'center',
         opacity: 0.7,
     }
