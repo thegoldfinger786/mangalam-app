@@ -281,7 +281,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     },
 
     setBgVolume: async (volume, persist = true) => {
-        const { narrationVolume, bgSound, bgEnabled, lastBgVolume } = get();
+        const { narrationVolume, bgSound, lastBgVolume } = get();
         const nextVolume = clampBgVolume(volume);
         const nextEnabled = nextVolume > MIN_BG_VOLUME;
         const nextLastBgVolume = nextVolume > MIN_BG_VOLUME ? nextVolume : lastBgVolume;
@@ -786,11 +786,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 } catch (err) {
                 }
 
-                // ===== DIAGNOSTIC: Final sourceUrl analysis =====
-                const isLocalFile = !sourceUrl.startsWith('http://') && !sourceUrl.startsWith('https://');
-                const startsWithFileProtocol = sourceUrl.startsWith('file://');
-                                                                                                                
-                                newBgSound = createAudioPlayer(sourceUrl, {
+                newBgSound = createAudioPlayer(sourceUrl, {
                     updateInterval: 500,
                     // downloadFirst: false — let the native HTTP streamer open the connection
                     // independently. downloadFirst: true caused the player to silently ignore
@@ -876,8 +872,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     if (get().sound !== newSound) {
                                                 return; // guard: verse changed during delay
                     }
-                    const bgBeforePlay = get().bgSound;
-                                                            try {
+                    try {
                                                 capturedBg?.play();
                                                                     } catch (e) {
                                             }
@@ -923,7 +918,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
     },
 
     togglePlayPause: async () => {
-        const { sound, bgSound, isPlaying, position, duration, targetBgVolume, currentContent, bgEnabled } = get();
+        const { sound, bgSound, isPlaying, position, duration, targetBgVolume, bgEnabled } = get();
         if (!sound) return;
 
         if (isPlaying) {

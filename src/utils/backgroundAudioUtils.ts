@@ -1,8 +1,8 @@
+import { isRamayan, isMahabharat, isGita } from '../lib/bookIdentity';
+
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://yhuvjcmemsqjkttizxem.supabase.co';
 
 export type AudioMood = 'calm' | 'devotional' | 'storytelling';
-
-import { isRamayan, isMahabharat, isGita } from '../lib/bookIdentity';
 
 export const getBackgroundMood = (bookId?: string | null): AudioMood => {
     if (isRamayan(bookId) || isMahabharat(bookId)) {
