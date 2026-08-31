@@ -10,8 +10,8 @@ import { useTheme } from '../theme';
 import { logger } from '../lib/logger';
 
 export const AuthScreen = () => {
-    const { colors, spacing, borderRadius } = useTheme();
-    const styles = useMemo(() => createStyles(spacing), [spacing]);
+    const { colors, spacing, typography, borderRadius } = useTheme();
+    const styles = useMemo(() => createStyles(spacing, typography), [spacing, typography]);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -171,7 +171,10 @@ export const AuthScreen = () => {
     );
 };
 
-const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleSheet.create({
+const createStyles = (
+    spacing: ReturnType<typeof useTheme>['spacing'],
+    typography: ReturnType<typeof useTheme>['typography'],
+) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -226,7 +229,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
     input: {
         flex: 1,
         height: 52,
-        fontSize: 16,
+        fontSize: typography.sizes.m,
     },
     forgotPassword: {
         alignSelf: 'flex-end',
