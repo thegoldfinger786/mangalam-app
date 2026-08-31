@@ -4,7 +4,8 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Constants from 'expo-constants';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, TextInput, TouchableOpacity, View } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { VoiceOptionCard } from '../components/VoiceOptionCard';
@@ -188,32 +189,32 @@ export const SettingsScreen = () => {
                 }}
             >
                 <View style={styles.headerRow}>
-                    <Text style={[styles.screenTitle, { color: colors.text }]}>Settings</Text>
+                    <AppText variant="display" style={{ color: colors.text }}>Settings</AppText>
                 </View>
 
             {/* Account Section */}
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="person-circle-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
+                    <AppText variant="heading" style={styles.sectionTitle}>Account</AppText>
                 </View>
 
                 <View style={[styles.accountStatus, { marginBottom: spacing.s, alignItems: 'flex-start' }]}>
-                    <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Email:</Text>
+                    <AppText variant="body" style={{ color: colors.textSecondary }}>Email:</AppText>
                     <View style={{ alignItems: 'flex-end', flex: 1, paddingLeft: spacing.m }}>
-                        <Text style={[styles.accountValue, { color: colors.text, textAlign: 'right' }]}>
+                        <AppText variant="body" style={[styles.accountValue, { color: colors.text, textAlign: 'right' }]}>
                             {currentDisplayEmail}
-                        </Text>
+                        </AppText>
                         {isPrivateEmail(session?.user?.email) && (
-                            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4, opacity: 0.8, textAlign: 'right' }}>
+                            <AppText variant="label" style={{ color: colors.textSecondary, marginTop: 4, opacity: 0.8, textAlign: 'right' }}>
                                 Your email is protected by your sign-in provider
-                            </Text>
+                            </AppText>
                         )}
                     </View>
                 </View>
 
                 <View style={styles.accountStatus}>
-                    <Text style={[styles.accountLabel, { color: colors.textSecondary }]}>Display Name:</Text>
+                    <AppText variant="body" style={{ color: colors.textSecondary }}>Display Name:</AppText>
                     {isEditing ? (
                         <View style={[styles.inlineEditRow, { marginLeft: spacing.m, borderColor: colors.border, backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}>
                             <TextInput
@@ -238,9 +239,9 @@ export const SettingsScreen = () => {
                             activeOpacity={0.7}
                             onPress={() => setIsEditing(true)}
                         >
-                            <Text style={[styles.accountValue, { color: colors.text, flex: 1, textAlign: 'right' }]}>
+                            <AppText variant="body" style={[styles.accountValue, { color: colors.text, flex: 1, textAlign: 'right' }]}>
                                 {displayName || 'Add name'}
-                            </Text>
+                            </AppText>
                         </TouchableOpacity>
                     )}
                 </View>
@@ -251,13 +252,13 @@ export const SettingsScreen = () => {
                     onPress={handleBecomeSupporter}
                     style={styles.accountButton}
                 />
-                <Text style={{ fontSize: 13, color: colors.textSecondary, textAlign: 'center', marginTop: -spacing.s, fontStyle: 'italic' }}>
+                <AppText variant="caption" style={{ color: colors.textSecondary, textAlign: 'center', marginTop: -spacing.s, fontStyle: 'italic' }}>
                     Help keep Mangalam free and ad-free.
-                </Text>
+                </AppText>
 
                 <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.m, marginHorizontal: spacing.m }} />
                 <TouchableOpacity onPress={handleSignOut} style={styles.optionRow}>
-                    <Text style={[styles.optionText, { color: colors.error }]}>Sign Out</Text>
+                    <AppText variant="body" style={{ color: colors.error }}>Sign Out</AppText>
                     <Ionicons name="log-out-outline" size={18} color={colors.error} />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -265,9 +266,9 @@ export const SettingsScreen = () => {
                     disabled={isDeleting}
                     style={[styles.optionRow, { opacity: isDeleting ? 0.5 : 1 }]}
                 >
-                    <Text style={[styles.deleteAccountText, { color: colors.textSecondary }]}>
+                    <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
                         {isDeleting ? 'Deleting account…' : 'Delete Account'}
-                    </Text>
+                    </AppText>
                     <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
             </Card>
@@ -276,7 +277,7 @@ export const SettingsScreen = () => {
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="volume-high-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Language &amp; Voice</Text>
+                    <AppText variant="heading" style={styles.sectionTitle}>Language &amp; Voice</AppText>
                 </View>
                 <View style={styles.voiceGrid}>
                     {/* Row 1: English */}
@@ -311,12 +312,12 @@ export const SettingsScreen = () => {
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="musical-notes-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Audio</Text>
+                    <AppText variant="heading" style={styles.sectionTitle}>Audio</AppText>
                 </View>
 
                 <View style={styles.sliderRow}>
                     <View style={styles.toggleRow}>
-                        <Text style={[styles.optionText, { color: colors.text }]}>Background Music</Text>
+                        <AppText variant="body" style={{ color: colors.text }}>Background Music</AppText>
                         <Switch
                             trackColor={{ false: '#E5E7EB', true: colors.primary }}
                             thumbColor="#FFFFFF"
@@ -328,7 +329,7 @@ export const SettingsScreen = () => {
                 </View>
 
                 <View style={styles.sliderRow}>
-                    <Text style={[styles.accountLabel, { color: colors.textSecondary, marginBottom: spacing.s }]}>Narration Volume</Text>
+                    <AppText variant="body" style={{ color: colors.textSecondary, marginBottom: spacing.s }}>Narration Volume</AppText>
                     <Slider
                         minimumValue={0.5}
                         maximumValue={1.0}
@@ -343,7 +344,7 @@ export const SettingsScreen = () => {
                 </View>
 
                 <View style={styles.sliderRow}>
-                    <Text style={[styles.accountLabel, { color: colors.textSecondary, marginBottom: spacing.s }]}>Background Volume</Text>
+                    <AppText variant="body" style={{ color: colors.textSecondary, marginBottom: spacing.s }}>Background Volume</AppText>
                     <Slider
                         minimumValue={0}
                         maximumValue={0.8}
@@ -362,10 +363,10 @@ export const SettingsScreen = () => {
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="color-palette-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Display</Text>
+                    <AppText variant="heading" style={styles.sectionTitle}>Display</AppText>
                 </View>
                 <View style={[styles.toggleRow, { paddingVertical: spacing.s }]}>
-                    <Text style={[styles.optionText, { color: colors.text }]}>Dark Mode</Text>
+                    <AppText variant="body" style={{ color: colors.text }}>Dark Mode</AppText>
                     <Switch
                         trackColor={{ false: '#E5E7EB', true: colors.primary }}
                         thumbColor="#FFFFFF"
@@ -380,20 +381,20 @@ export const SettingsScreen = () => {
             <Card style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                     <Ionicons name="information-circle-outline" size={24} color={colors.primary} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
+                    <AppText variant="heading" style={styles.sectionTitle}>About</AppText>
                 </View>
                 <TouchableOpacity
                     onPress={() => navigation.navigate('About')}
                     style={[styles.optionRow, { backgroundColor: colors.surfaceSecondary, borderRadius: borderRadius.m }]}
                 >
-                    <Text style={[styles.optionText, { color: colors.text }]}>About Mangalam</Text>
+                    <AppText variant="body" style={{ color: colors.text }}>About Mangalam</AppText>
                     <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </TouchableOpacity>
                 <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.s, marginHorizontal: spacing.m }} />
                 <View style={{ marginTop: spacing.s, paddingHorizontal: spacing.m }}>
-                    <Text style={{ color: colors.textSecondary }}>
+                    <AppText variant="bodySmall" style={{ color: colors.textSecondary }}>
                         Version {appVersion}
-                    </Text>
+                    </AppText>
                 </View>
             </Card>
         </ScrollView>
@@ -410,10 +411,6 @@ const createStyles = (
     },
     content: {
     },
-    screenTitle: {
-        fontWeight: 'bold',
-        fontSize: typography.sizes.xxl,
-    },
     headerRow: {
         marginBottom: spacing.l,
     },
@@ -427,7 +424,6 @@ const createStyles = (
         marginBottom: spacing.l,
     },
     sectionTitle: {
-        fontSize: 20, // typography.sizes.l
         marginLeft: spacing.s,
     },
     accountStatus: {
@@ -436,12 +432,8 @@ const createStyles = (
         alignItems: 'center',
         marginBottom: spacing.l,
     },
-    accountLabel: {
-        fontSize: 16, // typography.sizes.m
-    },
     accountValue: {
-        fontSize: 16, // typography.sizes.m
-        fontWeight: '600',
+        fontFamily: typography.fontFamilies.semiBold,
     },
     accountButton: {
         marginBottom: spacing.m,
@@ -467,7 +459,7 @@ const createStyles = (
     inlineInput: {
         flex: 1,
         fontSize: typography.sizes.m,
-        fontWeight: '600',
+        fontFamily: typography.fontFamilies.semiBold,
         textAlign: 'right',
     },
     inlineCheckButton: {
@@ -491,12 +483,6 @@ const createStyles = (
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: spacing.m,
-    },
-    optionText: {
-        fontSize: typography.sizes.m,
-    },
-    deleteAccountText: {
-        fontSize: typography.sizes.s,
     },
     toggleRow: {
         flexDirection: 'row',

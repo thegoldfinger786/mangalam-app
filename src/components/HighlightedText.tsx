@@ -63,7 +63,7 @@ export const HighlightedText = ({ text, progress, style, activeColor, inactiveCo
     if (!sentenceData.length) return null;
 
     return (
-        <Text style={style}>
+        <Text style={style} maxFontSizeMultiplier={1.5}>
             {sentenceData.map((data, index) => {
                 // A sentence is active if the progress falls within its range
                 const isActive = progress >= data.start && progress < data.end;

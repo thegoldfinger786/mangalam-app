@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
 import { DynamicBackground } from '../components/DynamicBackground';
@@ -291,8 +292,8 @@ export const HomeScreen = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.header}>
-                    <Text style={[styles.greeting, { color: colors.textSecondary }]}>Namaste, </Text>
-                    <Text style={[styles.userName, { color: colors.text }]}>{userName || 'Seeker'}</Text>
+                    <AppText variant="title" style={{ color: colors.textSecondary }}>Namaste, </AppText>
+                    <AppText variant="title" style={{ color: colors.text }}>{userName || 'Seeker'}</AppText>
                 </View>
 
                 {/* Community Discovery Bar */}
@@ -304,17 +305,17 @@ export const HomeScreen = () => {
                     <View style={[styles.discoveryIconBox, { backgroundColor: colors.primary + '15' }]}>
                         <Ionicons name="sparkles" size={16} color={colors.primary} />
                     </View>
-                    <Text style={[styles.discoveryText, { color: colors.textSecondary }]}>
+                    <AppText variant="bodySmall" style={[styles.discoveryText, { color: colors.textSecondary }]}>
                         See what others are finding meaningful
-                    </Text>
+                    </AppText>
                     <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
                 </TouchableOpacity>
 
                 {/* Current Path Section */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+                    <AppText variant="subheading" style={[styles.sectionTitle, { color: colors.textSecondary }]}>
                         {resumeState || resumeLoading ? 'Continue' : 'Today'}
-                    </Text>
+                    </AppText>
                     {resumeState || resumeLoading ? (
                         <TouchableOpacity activeOpacity={0.85} onPress={() => handleOpenPath?.()} disabled={resumeLoading}>
                             <Card style={[
@@ -341,9 +342,9 @@ export const HomeScreen = () => {
                                 ) : (
                                     <View style={styles.cardHeader}>
                                         <View style={styles.cardInfo}>
-                                            <Text style={[styles.cardTitle, { color: colors.text }]}>{currentPathTitle}</Text>
-                                            <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>{currentPathDesc}</Text>
-                                            <Text style={[styles.cardMeta, { color: colors.textTertiary }]}>{currentPathMeta}</Text>
+                                            <AppText variant="title" style={[styles.cardTitle, { color: colors.text }]}>{currentPathTitle}</AppText>
+                                            <AppText variant="body" style={{ color: colors.textSecondary }}>{currentPathDesc}</AppText>
+                                            <AppText variant="caption" style={[styles.cardMeta, { color: colors.textTertiary }]}>{currentPathMeta}</AppText>
                                         </View>
                                         <View style={[styles.cardIconBox, { backgroundColor: currentPathColor + '15' }]}>
                                             {getScriptureIcon(resumeState?.book_slug || 'book', 32, currentPathColor)}
@@ -372,15 +373,15 @@ export const HomeScreen = () => {
                             ]}>
                                 <View style={styles.cardHeader}>
                                     <View style={styles.cardInfo}>
-                                        <Text style={[styles.cardTitle, { color: colors.text }]}>
+                                        <AppText variant="title" style={[styles.cardTitle, { color: colors.text }]}>
                                             {dailyVerse.title || dailyVerse.sanskrit || 'Today’s verse'}
-                                        </Text>
-                                        <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
+                                        </AppText>
+                                        <AppText variant="body" style={{ color: colors.textSecondary }}>
                                             Bhagavad Gita · {formatRef(dailyVerse.book_id, dailyVerse.chapter_no, dailyVerse.verse_no, ', ')}
-                                        </Text>
-                                        <Text style={[styles.cardMeta, { color: colors.textTertiary }]}>
+                                        </AppText>
+                                        <AppText variant="caption" style={[styles.cardMeta, { color: colors.textTertiary }]}>
                                             A few quiet minutes to begin.
-                                        </Text>
+                                        </AppText>
                                     </View>
                                     <View style={[styles.cardIconBox, { backgroundColor: colors.primary + '15' }]}>
                                         {getScriptureIcon('gita', 32, colors.primary)}
@@ -399,7 +400,7 @@ export const HomeScreen = () => {
 
                 {/* Explore Section — a single entry into the Library tab */}
                 <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Explore</Text>
+                    <AppText variant="subheading" style={[styles.sectionTitle, { color: colors.textSecondary }]}>Explore</AppText>
                     <TouchableOpacity
                         style={[styles.discoveryBar, { backgroundColor: colors.surfaceSecondary }]}
                         onPress={() => navigation.navigate('MainTabs', { screen: 'Library' })}
@@ -409,16 +410,16 @@ export const HomeScreen = () => {
                             <Ionicons name="book-outline" size={16} color={colors.primary} />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={[styles.discoveryText, { color: colors.text }]}>Browse the library</Text>
-                            <Text style={[styles.exploreSubtext, { color: colors.textSecondary }]}>
+                            <AppText variant="bodySmall" style={[styles.discoveryText, { color: colors.text }]}>Browse the library</AppText>
+                            <AppText variant="bodySmall" style={[styles.exploreSubtext, { color: colors.textSecondary }]}>
                                 Bhagavad Gita, Ramayan, Mahabharat and more
-                            </Text>
+                            </AppText>
                         </View>
                         <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
                     </TouchableOpacity>
-                    <Text style={[styles.exploreSubtext, { color: colors.textTertiary, paddingHorizontal: spacing.l, marginTop: spacing.s }]}>
+                    <AppText variant="bodySmall" style={[styles.exploreSubtext, { color: colors.textTertiary, paddingHorizontal: spacing.l, marginTop: spacing.s }]}>
                         {EXPLORE_PATHS.filter((p) => p.isComingSoon).map((p) => p.title).join(' and ')} are on the way.
-                    </Text>
+                    </AppText>
                 </View>
             </ScrollView>
             </ScreenContainer>
@@ -433,10 +434,6 @@ const createStyles = (
     container: {
         flex: 1,
     },
-    center: {
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
     content: {
         paddingTop: spacing.m,
         paddingBottom: spacing.xl,
@@ -447,18 +444,10 @@ const createStyles = (
         flexDirection: 'row',
         alignItems: 'baseline',
     },
-    greeting: {
-        fontSize: 24,
-    },
-    userName: {
-        fontSize: 24,
-        fontWeight: 'bold',
-    },
     section: {
         marginBottom: spacing.s,
     },
     sectionTitle: {
-        fontSize: 18,
         marginBottom: spacing.m,
         paddingHorizontal: spacing.l,
         flexDirection: 'row',
@@ -483,8 +472,7 @@ const createStyles = (
     },
     discoveryText: {
         flex: 1,
-        fontSize: 14,
-        fontWeight: '500',
+        fontFamily: typography.fontFamilies.medium,
     },
     primaryCard: {
         marginHorizontal: spacing.l,
@@ -509,87 +497,16 @@ const createStyles = (
         alignItems: 'center',
     },
     cardTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
         marginBottom: spacing.xs,
     },
-    cardDesc: {
-        fontSize: 15,
-        lineHeight: 22,
-    },
     cardMeta: {
-        fontSize: 13,
-        lineHeight: 18,
         marginTop: spacing.s,
-        fontWeight: '500',
+        fontFamily: typography.fontFamilies.medium,
     },
     continueButton: {
         width: '100%',
     },
     exploreSubtext: {
-        fontSize: typography.sizes.s,
         marginTop: spacing.xs,
-    },
-    statGroup: {
-        marginBottom: spacing.l,
-    },
-    statHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.m,
-    },
-    statLabel: {
-        fontSize: 13,
-        fontWeight: '700',
-        marginLeft: spacing.s,
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-    },
-    statCard: {
-        width: 220,
-        padding: spacing.m,
-        borderRadius: 20,
-        marginRight: spacing.m,
-        borderWidth: 1,
-        // Premium shadow
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    statCardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.m,
-    },
-    miniIconBox: {
-        width: 32,
-        height: 32,
-        borderRadius: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    actionBadge: {
-        paddingHorizontal: spacing.s,
-        paddingVertical: spacing.xs,
-        borderRadius: 8,
-    },
-    actionBadgeText: {
-        fontSize: 10,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-    },
-    statCardTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-        lineHeight: 20,
-        marginBottom: spacing.xs,
-        height: 40, // Ensure fixed height for 2 lines
-    },
-    statCardSubtitle: {
-        fontSize: typography.sizes.xs,
-        fontWeight: '500',
     },
 });

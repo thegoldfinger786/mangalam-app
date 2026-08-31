@@ -6,10 +6,10 @@ import {
     Alert,
     ScrollView,
     StyleSheet,
-    Text,
     TouchableOpacity,
     View
 } from 'react-native';
+import { AppText } from '../components/AppText';
 import { getScriptureIcon } from '../components/ScriptureIcons';
 import { LoadError } from '../components/LoadError';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -25,7 +25,7 @@ import { logger } from '../lib/logger';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const CommunityWisdomScreen = () => {
-    const { colors, spacing } = useTheme();
+    const { colors, spacing, typography } = useTheme();
     const navigation = useNavigation<NavigationProp>();
     const styles = useMemo(() => createStyles(spacing), [spacing]);
     const lang = useAppStore(s => s.voicePreference).startsWith('hindi') ? 'hi' : 'en';
@@ -102,23 +102,23 @@ export const CommunityWisdomScreen = () => {
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.introSection}>
-                    <Text style={[styles.title, { color: colors.text }]}>Ancient Wisdom in Modern Hearts</Text>
-                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                    <AppText variant="title" style={[styles.title, { color: colors.text }]}>Ancient Wisdom in Modern Hearts</AppText>
+                    <AppText variant="body" style={{ color: colors.textSecondary }}>
                         A quiet look at the verses others are finding meaningful.
-                    </Text>
+                    </AppText>
                 </View>
 
                 {isEmpty ? (
-                    <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    <AppText variant="body" style={[styles.emptyText, { color: colors.textSecondary }]}>
                         Nothing here yet. As people spend time with verses, the ones they return to will show up here.
-                    </Text>
+                    </AppText>
                 ) : null}
 
                 {sections.map((section, idx) => section.data.length > 0 && (
                     <View key={idx} style={styles.statSection}>
                         <View style={styles.sectionHeader}>
                             <Ionicons name={section.icon as any} size={22} color={colors.primary} />
-                            <Text style={[styles.sectionLabel, { color: colors.text }]}>{section.label}</Text>
+                            <AppText variant="subheading" style={[styles.sectionLabel, { color: colors.text }]}>{section.label}</AppText>
                         </View>
 
                         {section.data.map((item, i) => {
@@ -148,14 +148,21 @@ export const CommunityWisdomScreen = () => {
                                                 <View style={[styles.miniIconBox, { backgroundColor: colors.surfaceSecondary }]}>
                                                     {getScriptureIcon(item.book_slug, 12, colors.primary)}
                                                 </View>
-                                                <Text style={[styles.bookName, { color: colors.primary }]}>
+                                                <AppText
+                                                    variant="label"
+                                                    style={[styles.bookName, { color: colors.primary, fontFamily: typography.fontFamilies.semiBold }]}
+                                                >
                                                     {item.title}  ·  {item.subtitle}
-                                                </Text>
+                                                </AppText>
                                             </View>
                                             {item.verse_title ? (
-                                                <Text style={[styles.verseTitle, { color: colors.text }]} numberOfLines={2}>
+                                                <AppText
+                                                    variant="body"
+                                                    style={{ color: colors.text, fontFamily: typography.fontFamilies.semiBold }}
+                                                    numberOfLines={2}
+                                                >
                                                     {item.verse_title}
-                                                </Text>
+                                                </AppText>
                                             ) : null}
                                         </View>
 
@@ -184,13 +191,7 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginBottom: spacing.xl,
     },
     title: {
-        fontSize: 22,
-        fontWeight: '700',
         marginBottom: spacing.s,
-    },
-    subtitle: {
-        fontSize: 16,
-        lineHeight: 24,
     },
     statSection: {
         marginBottom: spacing.xl,
@@ -201,8 +202,6 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginBottom: spacing.m,
     },
     sectionLabel: {
-        fontSize: 15,
-        fontWeight: '600',
         marginLeft: spacing.s,
     },
     wisdomCard: {
@@ -239,18 +238,10 @@ const createStyles = (spacing: ReturnType<typeof useTheme>['spacing']) => StyleS
         marginRight: spacing.s,
     },
     bookName: {
-        fontSize: 11,
-        fontWeight: '700',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
-    verseTitle: {
-        fontSize: 15,
-        fontWeight: '600',
-    },
     emptyText: {
-        fontSize: 15,
-        lineHeight: 22,
         marginTop: spacing.s,
     },
 });
