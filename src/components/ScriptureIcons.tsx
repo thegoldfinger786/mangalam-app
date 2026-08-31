@@ -194,14 +194,20 @@ export const BookFeatherIcon: React.FC<IconProps> = ({ size = 32, color = '#568E
  * Drop-in replacement for <Ionicons name={...} size={...} color={...} />
  */
 export const getScriptureIcon = (slug: string, size: number = 32, color?: string): React.ReactElement => {
-    switch (slug) {
+    // Tolerate slug casing / separator drift (e.g. "AntarKathaye", "shiv-puran").
+    const key = (slug || '').toLowerCase().replace(/[-\s]/g, '_');
+    switch (key) {
         case 'gita':
+        case 'bhagavad_gita':
             return <SudarshanChakraIcon size={size} color={color || '#E88B4A'} />;
         case 'ramayan':
+        case 'ramayana':
             return <BowArrowIcon size={size} color={color || '#DE5D3D'} />;
         case 'mahabharat':
+        case 'mahabharata':
             return <CrossedSwordsIcon size={size} color={color || '#D6A621'} />;
         case 'shiv_puran':
+        case 'shiva_purana':
             return <TridentIcon size={size} color={color || '#5C7485'} />;
         case 'upanishads':
             return <BookFeatherIcon size={size} color={color || '#568E65'} />;
