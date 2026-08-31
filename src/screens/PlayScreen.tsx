@@ -248,7 +248,7 @@ export const PlayScreen = () => {
                 usageCountedForRef.current = itemId;
                 try {
                     await incrementDailyUsage(currentSession.user.id);
-                } catch (usageError: any) {
+                } catch {
                     // Ignore usage error silently
                 }
             }
