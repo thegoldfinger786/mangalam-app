@@ -14,7 +14,7 @@ import { CommunityWisdomScreen } from '../screens/CommunityWisdomScreen';
 import { LoginScreen } from '../screens/LoginScreen';
 import { PlayScreen } from '../screens/PlayScreen';
 import { SupportMangalamScreen } from '../screens/SupportMangalamScreen';
-import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { OnboardingScreen } from '../screens/OnboardingScreen';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 import { BottomTabs } from './BottomTabs';
@@ -53,7 +53,7 @@ const AuthenticatedApp = () => {
                 }}
             >
                 {!hasCompletedOnboarding ? (
-                    <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                    <Stack.Screen name="Onboarding" component={OnboardingScreen} />
                 ) : (
                     <>
                         <Stack.Screen name="MainTabs" component={BottomTabs} />

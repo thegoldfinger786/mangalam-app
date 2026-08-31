@@ -153,13 +153,17 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
                 const profile = await fetchUserProfile(nextSession.user.id);
                 const { setHasCompletedOnboarding, setUserName } = useAppStore.getState();
 
-                if (!profile?.display_name) {
-                    logger.log('[AUTH] First-time user → navigate to Welcome');
-                    setHasCompletedOnboarding(false);
-                } else {
-                    logger.log('[AUTH] Existing user → navigate to Home');
+                // A `profiles` row only exists once onboarding has been finished
+                // (rows are app-created — there is no signup trigger). Row presence,
+                // not display_name presence, is the completion signal, so a listener
+                // who skipped the optional name step is still treated as onboarded.
+                if (profile) {
+                    logger.log('[AUTH] Returning user → Home');
                     setHasCompletedOnboarding(true);
-                    setUserName(profile.display_name);
+                    if (profile.display_name) setUserName(profile.display_name);
+                } else {
+                    logger.log('[AUTH] First-time user → Onboarding');
+                    setHasCompletedOnboarding(false);
                 }
             }
 

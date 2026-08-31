@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { AccountStatus, VoicePreference } from '../data/types';
+import { AccountStatus, OnboardingIntent, VoicePreference } from '../data/types';
 
 interface AppState {
     activeBookId: string | null;
@@ -17,6 +17,8 @@ interface AppState {
     // User Info & Onboarding
     hasCompletedOnboarding: boolean;
     userName: string;
+    /** Optional "what brings you here" answer from onboarding. Seed for future personalisation. */
+    onboardingIntent: OnboardingIntent | null;
 
     // Streaks & Usage (Placeholders, will be fetched from Supabase)
     currentStreak: number;
@@ -33,6 +35,7 @@ interface AppState {
     setAccountStatus: (status: AccountStatus) => void;
     setHasCompletedOnboarding: (status: boolean) => void;
     setUserName: (name: string) => void;
+    setOnboardingIntent: (intent: OnboardingIntent | null) => void;
     addCompletedVerse: (verseId: string) => void;
     setPlaybackRate: (rate: number) => void;
     
@@ -55,6 +58,7 @@ export const useAppStore = create<AppState>()(
 
             hasCompletedOnboarding: false,
             userName: '',
+            onboardingIntent: null,
 
             currentStreak: 0,
             session: null,
@@ -71,6 +75,7 @@ export const useAppStore = create<AppState>()(
             setAccountStatus: (status) => set({ accountStatus: status }),
             setHasCompletedOnboarding: (status) => set({ hasCompletedOnboarding: status }),
             setUserName: (name) => set({ userName: name }),
+            setOnboardingIntent: (intent) => set({ onboardingIntent: intent }),
             addCompletedVerse: (verseId: string) =>
                 set((state) => ({
                     completedVerses: state.completedVerses.includes(verseId)
@@ -91,6 +96,7 @@ export const useAppStore = create<AppState>()(
                 accountStatus: state.accountStatus,
                 hasCompletedOnboarding: state.hasCompletedOnboarding,
                 userName: state.userName,
+                onboardingIntent: state.onboardingIntent,
                 currentStreak: state.currentStreak,
                 completedVerses: state.completedVerses,
                 playbackRate: state.playbackRate,

@@ -9,7 +9,7 @@ export type BottomTabParamList = {
 
 export type RootStackParamList = {
     Auth: undefined;
-    Welcome: undefined;
+    Onboarding: undefined;
     MainTabs: NavigatorScreenParams<BottomTabParamList>;
     Play:
         | { verseId: string; bookId: string; autoPlay?: boolean; position?: number; startPosition?: number; resumeSource?: string }
