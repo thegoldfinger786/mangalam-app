@@ -1,8 +1,7 @@
-import { supabase } from './supabase';
+import { supabase } from './supabaseClient';
 import { syncBookIdentityCache, getBookByCode } from './bookIdentity';
 import { formatRef } from './bookTerminology';
 import { logger } from '../lib/logger';
-export { supabase };
 
 // --- Book Queries ---
 

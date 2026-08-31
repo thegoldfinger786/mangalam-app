@@ -3,7 +3,7 @@ import { Alert, Keyboard, KeyboardAvoidingView, Platform, StyleSheet, TextInput,
 import { AppText } from '../components/AppText';
 import { Button } from '../components/Button';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 import { useAppStore } from '../store/useAppStore';
 import { useTheme } from '../theme';
 

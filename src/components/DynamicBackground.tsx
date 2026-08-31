@@ -110,7 +110,8 @@ export const DynamicBackground = ({ children, style }: DynamicBackgroundProps) =
             -1,
             true
         );
-    }, []);
+        // Shared values have stable identity, so this still runs once on mount.
+    }, [translateY1, translateX1, scale1, translateY2, translateX2]);
 
     const animatedStyle1 = useAnimatedStyle(() => ({
         transform: [

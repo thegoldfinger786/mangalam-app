@@ -28,14 +28,14 @@ import { Skeleton } from '../components/Skeleton';
 import { BottomSafeAreaContainer } from '../components/layout/BottomSafeAreaContainer';
 import { ScreenContainer } from '../components/layout/ScreenContainer';
 import { getScriptureIcon } from '../components/ScriptureIcons';
-import { COLLECTION_METADATA } from '../data/mockGita';
+import { COLLECTION_METADATA } from '../data/collectionMetadata';
 import { assertValidBookId, assertBookIdentityConsistency, getBookCode } from '../lib/bookIdentity';
 import { formatRef } from '../lib/bookTerminology';
 import { cleanContentText, stripMarkup } from '../lib/contentText';
 import { checkAudioCache, fetchAdjacentVerse, fetchIsBookmarked, fetchUserProgress, fetchVerseAudio, fetchVerseByIdAndBookId, incrementDailyUsage, logActivity, toggleBookmark, upsertUserProgress } from '../lib/queries';
 import { navigationRef } from '../navigation/navigationRef';
 import { RootStackParamList } from '../navigation/types';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 import { useAppStore } from '../store/useAppStore';
 import { useAudioStore } from '../store/useAudioStore';
 import { useTheme } from '../theme';
@@ -109,11 +109,11 @@ export const PlayScreen = () => {
 
     useEffect(() => {
         playPauseAnim.value = withSpring(isPlaying ? 1 : 0, { damping: 15 });
-    }, [isPlaying]);
+    }, [isPlaying, playPauseAnim]);
 
     useEffect(() => {
         focusModeAnim.value = withTiming(isFocusMode ? 1 : 0, { duration: 400 });
-    }, [isFocusMode]);
+    }, [isFocusMode, focusModeAnim]);
 
     const scrollRef = useRef<ScrollView>(null);
     // Timestamp until which the transcript follow-along stays out of the listener's way.
@@ -375,6 +375,10 @@ export const PlayScreen = () => {
         } finally {
             if (isMountedRef.current) setLoading(false);
         }
+        // `session` is read fresh via `useAppStore.getState()` on purpose, so it is
+        // not a dep — otherwise an hourly token refresh would reload all content.
+        // The identity helpers and `navigateToVerse` are stable (memoised on bookId).
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [autoPlay, itemId, loadAudio, params, bookId, resumePosition, resumeSource, setPlaybackRate, voicePreference]);
 
     useEffect(() => {
@@ -391,6 +395,9 @@ export const PlayScreen = () => {
             setHasLoggedListen(true);
             logActivity(session.user.id, itemId, 'verse', 'listen');
         }
+        // Fires only on play/pause transitions; the `hasLoggedListen` guard is
+        // reset per verse elsewhere, so it must not itself be a dep.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isPlaying]);
 
     useEffect(() => {
@@ -414,6 +421,9 @@ export const PlayScreen = () => {
         const maxScroll = scrollContentHeight - scrollViewHeight;
         const targetY = progress * maxScroll;
         scrollRef.current?.scrollTo({ y: targetY, animated: true });
+        // Deliberately driven by `position` alone (the ~4Hz ticker); the other
+        // values are always fresh by the next tick. See PLAY-04 / PLAY-16.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [position]);
 
     const deferAutoScroll = useCallback(() => {

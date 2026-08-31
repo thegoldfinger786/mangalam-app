@@ -399,13 +399,13 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
             try {
                 bgSound.volume = currentVolume;
-            } catch (e) {
+            } catch {
             }
 
             if (stepCount >= steps) {
                 try {
                     bgSound.volume = toVolume;
-                                    } catch (e) {
+                                    } catch {
                 }
                 get()._stopFade();
             }
@@ -573,7 +573,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
         }
 
         const expectedMood = getBackgroundMood(content?.book_id);
-        const expectedBgUrl = getBackgroundTrackUrl(expectedMood, 60000);
+        const expectedBgUrl = getBackgroundTrackUrl(expectedMood);
         const keepBg = existingBgSound !== null && get().currentBgUrl === expectedBgUrl;
         const currentContent = get().currentContent;
         const nextContentId = getContentId(content);
@@ -684,7 +684,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                                                             void get().syncRemoteProgress('pause', { force: true, positionMs: status.positionMillis ?? positionMs });
                     // Narration paused (e.g. by lock screen or OS interruption)
                     if (currentState.bgSound) {
-                        try { currentState.bgSound.pause(); } catch (e) {
+                        try { currentState.bgSound.pause(); } catch {
                                                     }
                     }
                 } else if (!isInitialPlayback && !wasPlaying && isNowPlaying) {
@@ -700,7 +700,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                             } else {
                                 currentState.bgSound.pause();
                             }
-                        } catch (e) {
+                        } catch {
                         }
                     }
                 }
@@ -755,13 +755,8 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                 tries += 1;
             }
 
-            const durationMsForBed =
-                newSound.duration && newSound.duration > 0
-                    ? Math.floor(newSound.duration * 1000)
-                    : 60000;
-
             const mood = getBackgroundMood(content?.book_id);
-            const bgUrl = getBackgroundTrackUrl(mood, durationMsForBed);
+            const bgUrl = getBackgroundTrackUrl(mood);
 
             if (get().loadToken !== nextToken) {
                 try { newSound.remove(); } catch { }
@@ -783,7 +778,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     } else {
                                             }
                     sourceUrl = localPath;
-                } catch (err) {
+                } catch {
                 }
 
                 newBgSound = createAudioPlayer(sourceUrl, {
@@ -874,7 +869,7 @@ export const useAudioStore = create<AudioState>((set, get) => ({
                     }
                     try {
                                                 capturedBg?.play();
-                                                                    } catch (e) {
+                                                                    } catch {
                                             }
                     if (!capturedKeepBg) {
                                                 if (get().bgEnabled) {
