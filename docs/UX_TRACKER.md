@@ -19,7 +19,7 @@ Living backlog of UX and design findings. Companion to [`UX_REVIEW.md`](./UX_REV
 
 ## Summary
 
-_Last updated: 2026-08-30 (CONTENT-01 **DONE** — Gita titles generated + verified in production; LIB-03 / COMM-02 / MINI-01 resolved)_
+_Last updated: 2026-08-31 (PRs #35–#52 merged — nav IA Stages 1/2/4/5, Journey enrichment, Home "Today" anchor, Play language toggle + continuous playback, per-book terminology, About/Support de-dup, account deletion, calm error copy, dead-code sweep). Remaining open work is mostly decision-blocked — see the Decisions-needed note below the change log._
 
 | Metric | Count |
 |---|---|
@@ -32,10 +32,11 @@ _Last updated: 2026-08-30 (CONTENT-01 **DONE** — Gita titles generated + verif
 | P1 | 30 |
 | P2 | 39 |
 | KEEP | 11 |
-| Implemented / Merged | Batches 1–24 (see rows below); Batch 25 (PR #27 — UX-08 partial); Batch 26 (PR #28 — PLAY-15). CONTENT-01 (PRs #30–#34 — Gita titles generated + live). Dep cleanup: PR #26 (react-native-webview). |
-| Verified | 54 (Batches 1–26; CONTENT-01 / LIB-03 / COMM-02 / MINI-01 verified on the running app) |
-| Deferred / Rejected | 1 (CONTENT-04) |
-| Open | 27 (CONTENT-02, CONTENT-03, SUP-01, SUP-03, UX-08 PARTIAL, …) |
+| Implemented / Merged | Batches 1–26 + PRs #30–#52 (see the change log below). |
+| Verified | Batches 1–26 + PRs #30–#52 (code + running-app / production as noted per row) |
+| Deferred / Rejected | CONTENT-04 (disclosure), PLAY-10 (sleep timer — deferred), CONTENT-05 (catalogue depth — documented, no action), UX-13 (theme/mood taxonomy — future project) |
+| Open — decision-blocked | ONB-02 / #3 (multi-screen onboarding rebuild — positioning), LIB-01 Stage 3 (Library `useState` → pushed stack screens — internal refactor), CONTENT-02 (`AntarKathaye` slug casing — future content phase) |
+| Open — decision-free residual (low value) | UX-10 (typography tokens on remaining screens — most hardcoded sizes don't map to existing tokens, needs a design pass not mechanical cleanup), PLAY-03 residual (mid-stream audio `status.error`), SUP-02 (post-donation thank-you — `accountStatus` non-wiring is intentional per VISION_ALIGNMENT §6) |
 
 ### Change log
 
@@ -265,7 +266,7 @@ _Last updated: 2026-08-30 (CONTENT-01 **DONE** — Gita titles generated + verif
 |---|---|---|---|---|---|---|---|---|
 | NAV-01 | `GO_BACK` dead-end | [SRC+LIVE] Play screen shows an unhandled `GO_BACK` on the close chevron; swipe-dismiss also fails. Root cause (confirmed by reproduction): an **unfocused** PlayScreen driving `navigation.replace('Play')` via the audio store's `onFinish` callback — not the modal-dismiss sequence originally hypothesised. See PLAY-01. | NEEDS CHANGE | See PLAY-01 | **P0** | High | **MERGED** (PR #1) | Fixed with PLAY-01 (focus guard in `navigateToVerse`). Verified on simulator 2026-08-28; merged 2026-08-28 (`9c51ba1`). |
 | NAV-02 | Modal-over-tabs vs in-tab | [SRC+LIVE] Home→Dashboard→Play hides the tab bar; Library's parallel flow keeps it | NEEDS IMPROVEMENT | One navigation model for browse→play | P1 | High | **MERGED** (PR #49) | The modal Book Dashboard is gone — browse is now entirely in-tab (Library), only Play and Community are modal. |
-| NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | **PARTIAL** (Stage 1 — PR #40) | Shared `src/components/ScreenHeader.tsx` (chevron-back + centred title; chevron-down reserved for modals). Adopted in Library (book + chapter views — replaces the "Books"/"Back" pills), About, Support. Still on bespoke headers: `CommunityWisdom` (modal), `BookDashboard` (modal, folds away in Stage 4), `Play` (modal — keeps chevron-down). |
+| NAV-03 | Five header styles | [SRC+LIVE] chevron-down modal / "Books"/"Back" pills / ALL-CAPS SafeAreaView / centered chevron-back | NEEDS IMPROVEMENT | One header component & back convention | P2 | High | **MERGED** (PRs #40, #51) | Shared `src/components/ScreenHeader.tsx` (chevron-back + centred title for pushes; `variant="modal"` chevron-down for modals). Adopted in Library (book + chapter views — replaced the "Books"/"Back" pills), About, Support, and Community Wisdom (PR #51, incl. loading/error states). `BookDashboard` deleted (PR #49). Only `Play` keeps a bespoke header — a deliberate exception (share / focus / bookmark controls, chevron-down dismiss). |
 
 ### Positioning (spiritual wellness vs religious)
 
@@ -297,15 +298,15 @@ _Last updated: 2026-08-30 (CONTENT-01 **DONE** — Gita titles generated + verif
 | # | Change | Tracker refs | Priority | Status |
 |---|---|---|---|---|
 | 1 | Fix the Play-screen `GO_BACK` dead-end | PLAY-01, NAV-01 | P0 | **MERGED** (PR #1, 2026-08-28; verified on simulator) |
-| 2 | Home "Today" anchor + fix stale/empty resume card | HOME-01, HOME-02, UX-15 | P1 | **PARTIAL** — HOME-02 done (Batch 2); HOME-01 / UX-15 ("Today" anchor + empty state) still open |
+| 2 | Home "Today" anchor + fix stale/empty resume card | HOME-01, HOME-02, UX-15 | P1 | **MERGED** — HOME-02 (Batch 2 · PR #2); HOME-01 + UX-15 "Today" daily-verse card in the empty Continue slot (PR #41) |
 | 3 | Rebuild onboarding around the practice; fix blank strings | ONB-01, ONB-02, POS-06 | P1 | IDENTIFIED |
-| 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | **PARTIAL** — HOME-03 (Batch 2), Welcome blanks (Batch 8), **loading states all done (Batches 21–23)**. Remaining: UX-08 error/retry affordances; UX-01 residual error microcopy; designed *empty* states (HOME-01, COMM-04). |
-| 5 | Consolidate the two content-browse UIs | UX-02, DASH-01, LIB-01, NAV-02 | P1 | IDENTIFIED |
+| 4 | Replace developer microcopy; design every empty/loading/error state | UX-01, UX-05, UX-08, HOME-03 | P1 | **PARTIAL** — HOME-03 (Batch 2), Welcome blanks (Batch 8), loading states all done (Batches 21–23), error/retry across Library/Community/Journey/Play (PRs #27, #43, #45), empty states for Home (Today card, PR #41) + Community (PR #35). Remaining: mid-stream audio `status.error` (PLAY-03 residual); Home partial-data failure still falls back to the old placeholder. |
+| 5 | Consolidate the two content-browse UIs | UX-02, DASH-01, LIB-01, NAV-02 | P1 | **MERGED** — Book Dashboard deleted, browse folded into the Library tab (PR #49); Play + Community are the only modals (NAV-02). Residual: LIB-01 Stage 3 converts Library's `useState` drilldown to real pushed screens ([`NAVIGATION_MODEL.md`](./NAVIGATION_MODEL.md)) — internal follow-up. |
 | 6 | Honest metrics + one streak widget | UX-03, UX-04, STREAK-01, STREAK-02, STREAK-04 | P1 | **MERGED** — Batch 3 (PR #4); STREAK-08 30-day cap (Batch 14 · PR #15); LIB-06 "completed" on open (Batch 16 · PR #17). Fully resolved. |
 | 7 | De-gamify Community Wisdom | UX-09, COMM-01, POS-05 | P1 | **MERGED** (Batch 5 · PR #6, 2026-08-29) |
 | 8 | Remove the "Change Path?" gate; free movement between books | UX-12, HOME-04, POS-03 | P1 | **MERGED** (Batch 4 · PR #5, 2026-08-29) |
 | 9 | Tame the transcript auto-scroll | PLAY-04 | P1 | **MERGED** (Batch 2 · PR #2, 2026-08-29) |
-| 10 | Language at point of use · sleep timer · account deletion · human titles for every unit | UX-11, SET-02, SET-06, PLAY-10, CONTENT-01 | P1 / P2 | IDENTIFIED |
+| 10 | Language at point of use · sleep timer · account deletion · human titles for every unit | UX-11, SET-02, SET-06, PLAY-10, CONTENT-01 | P1 / P2 | **MERGED** — Play-screen language toggle (PR #48), account deletion (PR #38), Gita human titles ×701 en/hi (PRs #30–#34). PLAY-10 sleep timer **deferred** (decision 2026-08-30). |
 
 ---
 
