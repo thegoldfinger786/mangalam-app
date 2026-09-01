@@ -345,7 +345,7 @@ const createStyles = (
         heroBlock: {
             alignItems: 'center',
             paddingTop: spacing.l,
-            marginBottom: spacing.xxl,
+            marginBottom: spacing.xl,
         },
         brandMark: { marginBottom: spacing.l },
         sun: {
@@ -374,10 +374,13 @@ const createStyles = (
             alignItems: 'center',
             justifyContent: 'center',
         },
-        stepHeading: { marginBottom: spacing.xl },
+        stepHeading: { marginBottom: spacing.l },
+        // Interactive content sits in the upper-middle and lets whitespace flow
+        // down toward the CTA — the same rhythm as step 1 — rather than floating
+        // dead-centre (which looks sparse on tall devices).
         stepMiddle: {
             flex: 1,
-            justifyContent: 'center',
+            paddingTop: spacing.l,
         },
         languageRow: {
             flexDirection: 'row',
